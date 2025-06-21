@@ -1,0 +1,17 @@
+# Configuration for search arena data cleaning workflow
+
+# Data paths
+raw_data_path: "../../data/raw_data/search-arena-chat-24k.parquet"
+intermediate_dir: "../../data/intermediate/cleaned_arena_data"
+output_dir: "../../data/output/cleaned_arena_data"
+
+# Processing parameters
+max_sample_size: 1000  # For testing and development
+validate_urls: true    # Whether to validate citation URLs
+extract_domains: true  # Whether to extract domain names from URLs
+
+# Schema configuration
+thread_id_prefix: "thread_"
+question_id_prefix: "q_"
+response_id_prefix: "resp_"
+citation_id_prefix: "cite_"
