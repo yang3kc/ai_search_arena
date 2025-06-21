@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+Exploration script to understand the structure of search arena data.
+This script analyzes turn distribution and validates our understanding
+of the nested data structure before extraction.
+"""
+
+import pandas as pd
+import logging
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+def explore_arena_data():
+    """Explore the search arena data structure and turn distribution."""
+
+    # Get paths from Snakemake
+    input_file = snakemake.input[0]
+    output_file = snakemake.output[0]
+
+    logger.info(f"Loading data from {input_file}")
+
+    # Load the data
+    try:
+        df = pd.read_parquet(input_file)
+        logger.info(f"Loaded {len(df)} rows with {len(df.columns)} columns")
+    except Exception as e:
+        logger.error(f"Failed to load data: {e}")
+        return
+
+    # Capture output for writing to file
+    report_lines = []
+    report_lines.append(f"=== SEARCH ARENA DATA EXPLORATION REPORT ===\n")
+    report_lines.append(f"Generated: {pd.Timestamp.now()}\n")
+    report_lines.append(f"Input file: {input_file}\n")
+
+    # Basic statistics
+    logger.info("\n=== BASIC DATA OVERVIEW ===")
+    logger.info(f"Shape: {df.shape}")
+    logger.info(f"Columns: {list(df.columns)}")
+
+    # Turn distribution analysis
+    logger.info("\n=== TURN DISTRIBUTION ANALYSIS ===")
+    turn_counts = df["turn"].value_counts().sort_index()
+    logger.info(f"Turn distribution:\n{turn_counts}")
+
+    total_turns = (df["turn"] * len(df)).sum()
+    logger.info(f"Total conversation turns across all threads: {total_turns}")
+
+    # Analyze multi-turn conversations
+    multi_turn_threads = df[df["turn"] > 1]
+    logger.info(
+        f"Threads with multiple turns: {len(multi_turn_threads)} ({len(multi_turn_threads) / len(df) * 100:.1f}%)"
+    )
+
+    if len(multi_turn_threads) > 0:
+        logger.info(f"Max turns in a thread: {df['turn'].max()}")
+        logger.info(
+            f"Average turns per multi-turn thread: {multi_turn_threads['turn'].mean():.2f}"
+        )
+
+    # Winner field analysis
+    logger.info("\n=== WINNER FIELD ANALYSIS ===")
+    winner_counts = df["winner"].value_counts(dropna=False)
+    logger.info(f"Winner distribution:\n{winner_counts}")
+    logger.info(
+        f"Winner completeness: {df['winner'].notna().sum()}/{len(df)} ({df['winner'].notna().mean() * 100:.1f}%)"
+    )
+
+    # Judge field analysis
+    logger.info("\n=== JUDGE FIELD ANALYSIS ===")
+    judge_counts = df["judge"].value_counts()
+    logger.info(f"Judge distribution:\n{judge_counts}")
+
+    # Intent analysis
+    logger.info("\n=== INTENT ANALYSIS ===")
+    if "primary_intent" in df.columns:
+        primary_intent_counts = df["primary_intent"].value_counts()
+        logger.info(
+            f"Primary intent distribution (top 10):\n{primary_intent_counts.head(10)}"
+        )
+
+    # Model analysis
+    logger.info("\n=== MODEL ANALYSIS ===")
+    model_a_counts = df["model_a"].value_counts()
+    model_b_counts = df["model_b"].value_counts()
+    logger.info(f"Model A distribution (top 10):\n{model_a_counts.head(10)}")
+    logger.info(f"Model B distribution (top 10):\n{model_b_counts.head(10)}")
+
+    # Message structure analysis
+    logger.info("\n=== MESSAGE STRUCTURE ANALYSIS ===")
+    sample_messages_a = df["messages_a"].iloc[0]
+
+    logger.info(f"Sample messages_a type: {type(sample_messages_a)}")
+    logger.info(
+        f"Sample messages_a length: {len(sample_messages_a) if hasattr(sample_messages_a, '__len__') else 'N/A'}"
+    )
+
+    if hasattr(sample_messages_a, "__len__") and len(sample_messages_a) > 0:
+        logger.info(
+            f"First message_a structure: {sample_messages_a[0] if len(sample_messages_a) > 0 else 'Empty'}"
+        )
+
+    # Check for conversation IDs in metadata
+    logger.info("\n=== CONVERSATION ID ANALYSIS ===")
+    sample_metadata_a = df["system_a_metadata"].iloc[0]
+    if isinstance(sample_metadata_a, dict) and "conv_id" in sample_metadata_a:
+        conv_ids_a = df["system_a_metadata"].apply(
+            lambda x: x.get("conv_id") if isinstance(x, dict) else None
+        )
+        unique_conv_ids = conv_ids_a.nunique()
+        logger.info(f"Unique conversation IDs in system_a_metadata: {unique_conv_ids}")
+
+        # Check if conv_id is unique per row
+        if unique_conv_ids == len(df):
+            logger.info("✓ Each row has a unique conversation ID")
+        else:
+            logger.info(
+                "⚠ Some rows share conversation IDs - this might indicate multi-turn threads"
+            )
+
+    # Languages analysis
+    logger.info("\n=== LANGUAGES ANALYSIS ===")
+    if "languages" in df.columns:
+        # Sample a few language entries to understand structure
+        sample_languages = df["languages"].dropna().iloc[:5]
+        logger.info(f"Sample language entries: {list(sample_languages)}")
+
+    # Add key findings to report
+    report_lines.append(f"Shape: {df.shape}\n")
+    report_lines.append(f"Turn distribution:\n{turn_counts}\n")
+    report_lines.append(
+        f"Multi-turn threads: {len(multi_turn_threads)} ({len(multi_turn_threads) / len(df) * 100:.1f}%)\n"
+    )
+    report_lines.append(
+        f"Winner completeness: {df['winner'].notna().sum()}/{len(df)} ({df['winner'].notna().mean() * 100:.1f}%)\n"
+    )
+
+    # Write report to output file
+    with open(output_file, "w") as f:
+        f.writelines(report_lines)
+
+    logger.info(f"\n=== EXPLORATION COMPLETE ===")
+    logger.info(f"Report written to {output_file}")
+
+
+if __name__ == "__main__":
+    explore_arena_data()
