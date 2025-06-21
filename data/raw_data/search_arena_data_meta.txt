@@ -1,0 +1,595 @@
+
+############ file meta data ############
+created_by: parquet-cpp-arrow version 20.0.0
+num_columns: 53
+num_rows: 24069
+num_row_groups: 1
+format_version: 2.6
+serialized_size: 20928
+
+
+############ Columns ############
+model_a
+model_b
+winner
+judge
+turn
+timestamp
+content
+role
+content
+role
+citation_format_standardized
+client_country
+conv_id
+content
+role
+name
+max_completion_tokens
+max_output_tokens
+max_tokens
+temperature
+top_p
+search_context_size
+country
+type
+content
+role
+context_manager
+scrape_engine
+search_engine
+element
+citation_format_standardized
+client_country
+conv_id
+content
+role
+name
+max_completion_tokens
+max_output_tokens
+max_tokens
+temperature
+top_p
+search_context_size
+country
+type
+content
+role
+context_manager
+scrape_engine
+search_engine
+element
+primary_intent
+secondary_intent
+element
+
+############ Column(model_a) ############
+name: model_a
+path: model_a
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 1%)
+
+############ Column(model_b) ############
+name: model_b
+path: model_b
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 1%)
+
+############ Column(winner) ############
+name: winner
+path: winner
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 0%)
+
+############ Column(judge) ############
+name: judge
+path: judge
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 2%)
+
+############ Column(turn) ############
+name: turn
+path: turn
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 33%)
+
+############ Column(timestamp) ############
+name: timestamp
+path: timestamp
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: INT64
+logical_type: Timestamp(isAdjustedToUTC=false, timeUnit=nanoseconds, is_from_converted_type=false, force_set_converted_type=false)
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 3%)
+
+############ Column(content) ############
+name: content
+path: messages_a.list.element.content
+max_definition_level: 4
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 48%)
+
+############ Column(role) ############
+name: role
+path: messages_a.list.element.role
+max_definition_level: 4
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 57%)
+
+############ Column(content) ############
+name: content
+path: messages_b.list.element.content
+max_definition_level: 4
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 48%)
+
+############ Column(role) ############
+name: role
+path: messages_b.list.element.role
+max_definition_level: 4
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 57%)
+
+############ Column(citation_format_standardized) ############
+name: citation_format_standardized
+path: system_a_metadata.citation_format_standardized
+max_definition_level: 2
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(client_country) ############
+name: client_country
+path: system_a_metadata.client_country
+max_definition_level: 2
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 5%)
+
+############ Column(conv_id) ############
+name: conv_id
+path: system_a_metadata.conv_id
+max_definition_level: 2
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 9%)
+
+############ Column(content) ############
+name: content
+path: system_a_metadata.formatted_messages.list.element.content
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 62%)
+
+############ Column(role) ############
+name: role
+path: system_a_metadata.formatted_messages.list.element.role
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 57%)
+
+############ Column(name) ############
+name: name
+path: system_a_metadata.llm_config.name
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 1%)
+
+############ Column(max_completion_tokens) ############
+name: max_completion_tokens
+path: system_a_metadata.llm_config.params.max_completion_tokens
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 18%)
+
+############ Column(max_output_tokens) ############
+name: max_output_tokens
+path: system_a_metadata.llm_config.params.max_output_tokens
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 12%)
+
+############ Column(max_tokens) ############
+name: max_tokens
+path: system_a_metadata.llm_config.params.max_tokens
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 15%)
+
+############ Column(temperature) ############
+name: temperature
+path: system_a_metadata.llm_config.params.temperature
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: DOUBLE
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 15%)
+
+############ Column(top_p) ############
+name: top_p
+path: system_a_metadata.llm_config.params.top_p
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: DOUBLE
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 15%)
+
+############ Column(search_context_size) ############
+name: search_context_size
+path: system_a_metadata.llm_config.params.web_search_options.search_context_size
+max_definition_level: 5
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 17%)
+
+############ Column(country) ############
+name: country
+path: system_a_metadata.llm_config.params.web_search_options.user_location.approximate.country
+max_definition_level: 7
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 2%)
+
+############ Column(type) ############
+name: type
+path: system_a_metadata.llm_config.params.web_search_options.user_location.type
+max_definition_level: 6
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 0%)
+
+############ Column(content) ############
+name: content
+path: system_a_metadata.llm_trace.list.element.content
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 48%)
+
+############ Column(role) ############
+name: role
+path: system_a_metadata.llm_trace.list.element.role
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 16%)
+
+############ Column(context_manager) ############
+name: context_manager
+path: system_a_metadata.web_search_config.context_manager
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -5%)
+
+############ Column(scrape_engine) ############
+name: scrape_engine
+path: system_a_metadata.web_search_config.scrape_engine
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -5%)
+
+############ Column(search_engine) ############
+name: search_engine
+path: system_a_metadata.web_search_config.search_engine
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -5%)
+
+############ Column(element) ############
+name: element
+path: system_a_metadata.web_search_trace.list.element.list.element.list.element
+max_definition_level: 8
+max_repetition_level: 3
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 46%)
+
+############ Column(citation_format_standardized) ############
+name: citation_format_standardized
+path: system_b_metadata.citation_format_standardized
+max_definition_level: 2
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(client_country) ############
+name: client_country
+path: system_b_metadata.client_country
+max_definition_level: 2
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 5%)
+
+############ Column(conv_id) ############
+name: conv_id
+path: system_b_metadata.conv_id
+max_definition_level: 2
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 9%)
+
+############ Column(content) ############
+name: content
+path: system_b_metadata.formatted_messages.list.element.content
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 62%)
+
+############ Column(role) ############
+name: role
+path: system_b_metadata.formatted_messages.list.element.role
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 57%)
+
+############ Column(name) ############
+name: name
+path: system_b_metadata.llm_config.name
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 1%)
+
+############ Column(max_completion_tokens) ############
+name: max_completion_tokens
+path: system_b_metadata.llm_config.params.max_completion_tokens
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(max_output_tokens) ############
+name: max_output_tokens
+path: system_b_metadata.llm_config.params.max_output_tokens
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: 19%)
+
+############ Column(max_tokens) ############
+name: max_tokens
+path: system_b_metadata.llm_config.params.max_tokens
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: INT64
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(temperature) ############
+name: temperature
+path: system_b_metadata.llm_config.params.temperature
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: DOUBLE
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(top_p) ############
+name: top_p
+path: system_b_metadata.llm_config.params.top_p
+max_definition_level: 4
+max_repetition_level: 0
+physical_type: DOUBLE
+logical_type: None
+converted_type (legacy): NONE
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(search_context_size) ############
+name: search_context_size
+path: system_b_metadata.llm_config.params.web_search_options.search_context_size
+max_definition_level: 5
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(country) ############
+name: country
+path: system_b_metadata.llm_config.params.web_search_options.user_location.approximate.country
+max_definition_level: 7
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 1%)
+
+############ Column(type) ############
+name: type
+path: system_b_metadata.llm_config.params.web_search_options.user_location.type
+max_definition_level: 6
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(content) ############
+name: content
+path: system_b_metadata.llm_trace.list.element.content
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 49%)
+
+############ Column(role) ############
+name: role
+path: system_b_metadata.llm_trace.list.element.role
+max_definition_level: 5
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 14%)
+
+############ Column(context_manager) ############
+name: context_manager
+path: system_b_metadata.web_search_config.context_manager
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -5%)
+
+############ Column(scrape_engine) ############
+name: scrape_engine
+path: system_b_metadata.web_search_config.scrape_engine
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -5%)
+
+############ Column(search_engine) ############
+name: search_engine
+path: system_b_metadata.web_search_config.search_engine
+max_definition_level: 3
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -5%)
+
+############ Column(element) ############
+name: element
+path: system_b_metadata.web_search_trace.list.element.list.element.list.element
+max_definition_level: 8
+max_repetition_level: 3
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 47%)
+
+############ Column(primary_intent) ############
+name: primary_intent
+path: primary_intent
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: -0%)
+
+############ Column(secondary_intent) ############
+name: secondary_intent
+path: secondary_intent
+max_definition_level: 1
+max_repetition_level: 0
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 13%)
+
+############ Column(element) ############
+name: element
+path: languages.list.element
+max_definition_level: 3
+max_repetition_level: 1
+physical_type: BYTE_ARRAY
+logical_type: String
+converted_type (legacy): UTF8
+compression: SNAPPY (space_saved: 16%)
+
