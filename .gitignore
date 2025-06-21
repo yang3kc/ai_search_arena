@@ -1,5 +1,6 @@
 # Manually added
 data/raw_data/search-arena-chat-24k.parquet
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
