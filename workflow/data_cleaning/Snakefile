@@ -1,0 +1,99 @@
+"""
+Snakemake workflow for cleaning and processing search arena data.
+This workflow follows the analysis plan to extract and normalize the arena data
+into relational tables for analysis.
+"""
+
+# Configuration
+configfile: "config/config.yaml"
+
+# Define paths
+RAW_DATA = config["raw_data_path"]
+INTERMEDIATE_DIR = config["intermediate_dir"]
+OUTPUT_DIR = config["output_dir"]
+
+# Target rule - what we want to produce
+rule all:
+    input:
+        # Initial exploration
+        f"{INTERMEDIATE_DIR}/exploration_report.txt",
+        # Core tables
+        f"{INTERMEDIATE_DIR}/threads.parquet",
+        f"{INTERMEDIATE_DIR}/questions.parquet",
+        f"{INTERMEDIATE_DIR}/responses.parquet",
+        f"{INTERMEDIATE_DIR}/citations.parquet",
+        # Final analysis table
+        f"{OUTPUT_DIR}/search_arena_analysis.parquet"
+
+# Phase 1: Data exploration and validation
+rule explore_data:
+    input:
+        RAW_DATA
+    output:
+        f"{INTERMEDIATE_DIR}/exploration_report.txt"
+    script:
+        "scripts/01_explore_structure.py"
+
+# Phase 2: Extract thread-level data
+rule extract_threads:
+    input:
+        data=RAW_DATA,
+        exploration=f"{INTERMEDIATE_DIR}/exploration_report.txt"
+    output:
+        f"{INTERMEDIATE_DIR}/threads.parquet"
+    script:
+        "scripts/02_extract_threads.py"
+
+# Phase 3: Extract questions from conversation turns
+rule extract_questions:
+    input:
+        data=RAW_DATA,
+        threads=f"{INTERMEDIATE_DIR}/threads.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/questions.parquet"
+    script:
+        "scripts/03_extract_questions.py"
+
+# Phase 4: Extract responses from both models
+rule extract_responses:
+    input:
+        data=RAW_DATA,
+        questions=f"{INTERMEDIATE_DIR}/questions.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/responses.parquet"
+    script:
+        "scripts/04_extract_responses.py"
+
+# Phase 5: Extract citations from web search traces
+rule extract_citations:
+    input:
+        data=RAW_DATA,
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/citations.parquet"
+    script:
+        "scripts/05_extract_citations.py"
+
+# Phase 6: Create analysis-ready table
+rule create_analysis_table:
+    input:
+        threads=f"{INTERMEDIATE_DIR}/threads.parquet",
+        questions=f"{INTERMEDIATE_DIR}/questions.parquet",
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet"
+    output:
+        f"{OUTPUT_DIR}/search_arena_analysis.parquet"
+    script:
+        "scripts/06_create_analysis_table.py"
+
+# Validation rules
+rule validate_extraction:
+    input:
+        threads=f"{INTERMEDIATE_DIR}/threads.parquet",
+        questions=f"{INTERMEDIATE_DIR}/questions.parquet",
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/validation_report.txt"
+    script:
+        "scripts/07_validate_extraction.py"
