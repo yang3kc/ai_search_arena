@@ -1,15 +1,33 @@
 # Search Arena Data Cleaning Analysis Plan
 
 ## Overview
-This document outlines the data cleaning strategy for the search-arena-chat-24k.parquet dataset. The file contains 24,069 rows with 53 columns representing complex nested conversation data between AI search systems.
+This document outlines the data cleaning strategy for the search-arena-chat-24k.parquet dataset. The file contains 24,069 rows with 53 columns representing AI search arena comparisons.
+
+### Arena Data Structure
+Each row represents a **conversation thread** where:
+1. A **thread** contains one or more **conversation turns** (indicated by `turn` field)
+2. Each **turn** has:
+   - A **user question/prompt**
+   - **Two AI model responses** (model_a and model_b) to that question
+3. The **entire thread** is evaluated and compared (winner determined by judge)
+4. Each model's response includes web search results and citations
+
+**Hierarchy**: Thread (1) → Turns (1+) → Questions (1 per turn) → Responses (2 per question)
+
+This creates a **hierarchical relationship** that we need to normalize into a relational structure for analysis.
 
 ## Data Structure Analysis
 
 ### Dataset Characteristics
-- **Total rows**: 24,069 conversations
+- **Total conversation threads**: 24,069 
+- **Total conversation turns**: Variable (depends on `turn` field distribution)
+- **Total questions**: Sum of all turns across all threads
+- **Total responses**: 2 × total questions (model_a + model_b for each question)
 - **Total columns**: 53 (heavily nested)
 - **File format**: Parquet with complex nested structures
 - **Compression**: SNAPPY with varying compression ratios (16-62% savings)
+
+**Note**: Need to analyze `turn` field distribution to understand multi-turn conversation frequency.
 
 ### Key Data Hierarchies
 
@@ -64,45 +82,142 @@ This document outlines the data cleaning strategy for the search-arena-chat-24k.
 3. **Message encoding**: High compression in content fields suggests potential encoding issues
 4. **Metadata inconsistency**: Different systems may have different metadata completeness
 
+## Relational Data Schema Design
+
+### Core Tables Structure
+We'll normalize the arena data into a SQL-style relational structure:
+
+#### 1. Threads Table (`threads.parquet`)
+**Purpose**: Store conversation thread metadata and overall evaluation
+```sql
+CREATE TABLE threads (
+    thread_id VARCHAR PRIMARY KEY,      -- Unique identifier for each thread
+    original_row_id INT,                -- Original parquet row number
+    timestamp TIMESTAMP,                -- Thread start timestamp
+    total_turns INT,                    -- Number of turns in this thread
+    winner VARCHAR,                     -- Overall thread winner ('model_a', 'model_b', NULL)
+    judge VARCHAR,                      -- Evaluation method/system
+    primary_intent VARCHAR,             -- Categorized intent for thread
+    secondary_intent VARCHAR,           -- Secondary intent for thread
+    languages TEXT[],                   -- Detected languages
+    client_country VARCHAR              -- User's country (if available)
+);
+```
+
+#### 2. Questions Table (`questions.parquet`)
+**Purpose**: Store individual user questions within each turn
+```sql
+CREATE TABLE questions (
+    question_id VARCHAR PRIMARY KEY,    -- Unique identifier for each question
+    thread_id VARCHAR REFERENCES threads(thread_id),
+    turn_number INT,                    -- Turn number within thread (1, 2, 3...)
+    user_query TEXT,                    -- User's question/prompt for this turn
+    question_role VARCHAR               -- Usually 'user'
+);
+```
+
+#### 3. Responses Table (`responses.parquet`)
+**Purpose**: Store individual model responses (2 per question per turn)
+```sql
+CREATE TABLE responses (
+    response_id VARCHAR PRIMARY KEY,     -- Unique identifier for each response
+    question_id VARCHAR REFERENCES questions(question_id),
+    thread_id VARCHAR REFERENCES threads(thread_id),
+    turn_number INT,                    -- Turn number within thread
+    model_name VARCHAR,                 -- Model identifier (from system metadata)
+    model_side CHAR(1),                -- 'a' or 'b' to track original assignment
+    response_text TEXT,                -- Complete response content
+    response_role VARCHAR,             -- 'assistant' typically
+    citation_format VARCHAR,           -- Citation format used
+    llm_temperature FLOAT,             -- Model temperature setting
+    llm_top_p FLOAT,                  -- Model top_p setting
+    llm_max_tokens INT,               -- Token limit setting
+    search_context_size VARCHAR,       -- Web search context size
+    user_location_country VARCHAR,     -- Search location setting
+    search_engine VARCHAR,             -- Search engine used
+    scrape_engine VARCHAR,             -- Content scraping engine
+    context_manager VARCHAR            -- Context management system
+);
+```
+
+#### 3. Citations Table (`citations.parquet`)
+**Purpose**: Store individual citations extracted from web search traces
+```sql
+CREATE TABLE citations (
+    citation_id VARCHAR PRIMARY KEY,     -- Unique citation identifier
+    response_id VARCHAR REFERENCES responses(response_id),
+    citation_number INT,                -- Reference number [1], [2], etc.
+    url TEXT,                          -- Full URL
+    domain VARCHAR,                    -- Extracted domain
+    url_valid BOOLEAN,                 -- Whether URL is well-formed
+    citation_order INT                 -- Order within response
+);
+```
+
+#### 4. Turn_Comparisons Table (`turn_comparisons.parquet`)
+**Purpose**: Store per-turn comparison data (optional, if turn-level evaluation exists)
+```sql
+CREATE TABLE turn_comparisons (
+    turn_comparison_id VARCHAR PRIMARY KEY, -- Unique turn comparison identifier
+    thread_id VARCHAR REFERENCES threads(thread_id),
+    turn_number INT,                    -- Turn number within thread
+    question_id VARCHAR REFERENCES questions(question_id),
+    response_a_id VARCHAR REFERENCES responses(response_id),
+    response_b_id VARCHAR REFERENCES responses(response_id),
+    turn_winner VARCHAR,               -- Turn-level winner (if available)
+    turn_evaluation_data TEXT          -- Any turn-specific evaluation metadata
+);
+```
+
+### Relationships and Keys
+- **Threads** (1) → **Questions** (1+): Each thread contains one or more questions (turns)
+- **Questions** (1) → **Responses** (2): Each question generates exactly two responses
+- **Responses** (1) → **Citations** (many): Each response can have multiple citations
+- **Threads** (1) → **Turn_Comparisons** (0+): Each thread may have turn-level comparisons
+- **Questions** (1) → **Turn_Comparisons** (0-1): Each question may have a turn comparison
+
+**Key Insight**: The original `winner` field applies to the entire **thread**, not individual turns.
+
 ## Proposed Data Extraction Strategy
 
-### Phase 1: Core Data Extraction
-1. **Flatten conversation metadata**
-   - Extract model identifiers, winner, judge, turn, timestamp
-   - Create conversation-level unique identifiers
+### Phase 1: Thread and Question Extraction
+1. **Create thread identifiers**
+   - Generate thread_id from original row index or conversation ID
+   - Extract thread-level metadata (timestamp, winner, judge, intent, languages)
+   - Determine total turns per thread from messages structure
 
-2. **Message extraction**
-   - Unnest messages_a and messages_b arrays
-   - Create message-level records with conversation context
-   - Handle role-content pairs
+2. **Extract questions per turn**
+   - Parse messages_a/messages_b arrays to identify user messages
+   - Create question_id for each user message/turn
+   - Link questions to threads via thread_id
+   - Track turn_number within each thread
 
-### Phase 2: Citation Data Processing
-1. **Web search trace extraction**
-   - Parse triple-nested web_search_trace structure
+### Phase 2: Responses Extraction  
+2. **Process model responses per turn**
+   - Create response_id for each model (a/b) per question per turn
+   - Extract response content from assistant messages in each turn
+   - Flatten system metadata for each model response
+   - Link responses to questions and threads via foreign keys
+   - Track turn_number for proper sequencing
+
+### Phase 3: Citations Extraction
+1. **Web search trace processing**
+   - Parse triple-nested web_search_trace structure for each response
    - Extract citation URLs and reference numbers
+   - Create citation_id and link to response_id
    - Handle citation format variations
 
-2. **URL processing**
+2. **URL processing and validation**
    - Extract domains from URLs
+   - Validate URL format and accessibility
    - Normalize URL formats
    - Handle malformed URLs gracefully
 
-### Phase 3: Metadata Normalization
-1. **System configuration flattening**
-   - Extract LLM parameters (temperature, top_p, max_tokens)
-   - Normalize search configurations
-   - Handle missing/null configurations
-
-2. **Geographic and language processing**
-   - Extract user location data
-   - Process language detection results
-   - Standardize country codes
-
-### Phase 4: Intent and Classification
-1. **Intent processing**
-   - Clean primary/secondary intent fields
-   - Create intent taxonomies
-   - Handle missing classifications
+### Phase 4: Comparisons Processing
+1. **Evaluation data extraction**
+   - Link responses back to comparison results
+   - Extract winner, judge, and evaluation metadata
+   - Create comparison records linking question to both responses
 
 ## Implementation Plan
 
@@ -127,18 +242,56 @@ workflow/data_cleaning/
     └── clean.smk                   # Cleaning rules
 ```
 
-### Expected Outputs
-1. **Core conversation table**: `data/intermediate/cleaned_arena_data/conversations.parquet`
-2. **Message table**: `data/intermediate/cleaned_arena_data/messages.parquet`
-3. **Citation table**: `data/intermediate/cleaned_arena_data/citations.parquet`
-4. **Metadata table**: `data/intermediate/cleaned_arena_data/metadata.parquet`
-5. **Analysis-ready table**: `data/output/cleaned_arena_data/search_arena_clean.parquet`
+### Expected Outputs (Normalized Tables)
+1. **Threads table**: `data/intermediate/cleaned_arena_data/threads.parquet`
+   - 24,069 rows (one per conversation thread)
+   - Contains thread metadata, overall winner, and evaluation data
+
+2. **Questions table**: `data/intermediate/cleaned_arena_data/questions.parquet`
+   - Variable rows (sum of all turns across all threads)
+   - Contains user queries for each turn within threads
+
+3. **Responses table**: `data/intermediate/cleaned_arena_data/responses.parquet`
+   - 2× questions count (two per question: model_a and model_b responses)
+   - Contains model responses and configuration metadata per turn
+
+4. **Citations table**: `data/intermediate/cleaned_arena_data/citations.parquet`
+   - Variable rows (~5-10 citations per response estimate)
+   - Contains individual URLs, domains, and reference numbers
+
+5. **Turn_Comparisons table**: `data/intermediate/cleaned_arena_data/turn_comparisons.parquet`
+   - Variable rows (if turn-level evaluation data exists)
+   - Contains per-turn comparison metadata
+
+6. **Analysis-ready joined table**: `data/output/cleaned_arena_data/search_arena_analysis.parquet`
+   - Denormalized table for quick analysis
+   - Pre-joined with domain credibility and political leaning data
 
 ### Data Validation Strategy
-1. **Row count validation**: Ensure no data loss during transformations
-2. **Citation completeness**: Validate URL extraction accuracy
-3. **Metadata consistency**: Check for missing critical fields
-4. **Domain extraction**: Verify domain parsing accuracy against known domains
+1. **Referential integrity**: Ensure all foreign key relationships are valid
+   - Every response links to exactly one question
+   - Every citation links to exactly one response
+   - Every comparison links to exactly one question and two responses
+
+2. **Row count validation**: 
+   - Threads: 24,069 rows (1:1 with original data)
+   - Questions: Variable (= sum of all turn counts)
+   - Responses: 2× questions count (2:1 with questions)
+   - Turn_Comparisons: Variable (may equal questions count)
+
+   **Critical validation**: Sum of turns across all threads should equal total questions
+
+3. **Data completeness validation**:
+   - Validate URL extraction accuracy from web_search_trace
+   - Check for missing critical fields (user_query, model_name, etc.)
+   - Verify domain parsing accuracy against known domains
+
+4. **Business logic validation**:
+   - Each thread should have ≥1 questions (turns)
+   - Each question should have exactly 2 responses (model_a and model_b)
+   - Turn numbers should be sequential within each thread (1, 2, 3...)
+   - Thread winner field should reference actual model names
+   - Citation numbers should be sequential within each response
 
 ## Next Steps for Implementation
 1. Review and modify this plan based on specific analysis requirements
