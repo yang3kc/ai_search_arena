@@ -1,5 +1,6 @@
 # Manually added
 data/raw_data/search-arena-chat-24k.parquet
+data/intermediate/
 .DS_Store
 .snakemake/
 
