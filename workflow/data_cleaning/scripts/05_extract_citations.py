@@ -9,6 +9,7 @@ import pandas as pd
 import logging
 import re
 from urllib.parse import urlparse
+import tldextract
 
 # Set up logging
 logging.basicConfig(
@@ -17,8 +18,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def extract_domain(url):
-    """Extract domain from URL with error handling."""
+def extract_domain_full(url):
+    """Extract full domain from URL with error handling (keeps subdomains)."""
     try:
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
@@ -26,6 +27,20 @@ def extract_domain(url):
         if domain.startswith('www.'):
             domain = domain[4:]
         return domain
+    except Exception:
+        return None
+
+
+def extract_domain(url):
+    """Extract base domain from URL using tldextract (without subdomains)."""
+    try:
+        extracted = tldextract.extract(url)
+        # Combine domain and suffix (e.g., 'example' + 'co.uk' = 'example.co.uk')
+        if extracted.domain and extracted.suffix:
+            return f"{extracted.domain}.{extracted.suffix}".lower()
+        elif extracted.domain:
+            return extracted.domain.lower()
+        return None
     except Exception:
         return None
 
@@ -138,7 +153,7 @@ def extract_citations():
         logger.warning("No citations extracted!")
         # Create empty DataFrame with correct schema
         citations_df = pd.DataFrame(columns=[
-            "citation_id", "response_id", "citation_number", "url", "domain", "url_valid", "citation_order"
+            "citation_id", "response_id", "citation_number", "url", "domain_full", "domain", "url_valid", "citation_order"
         ])
     else:
         # Check for required fields
@@ -180,9 +195,16 @@ def extract_citations():
         for num, count in citation_num_dist.head(10).items():
             logger.info(f"  [{num}]: {count} citations ({count/len(citations_df)*100:.1f}%)")
 
-        # Top domains
+        # Top domains (full with subdomains)
+        domain_full_counts = citations_df["domain_full"].value_counts()
+        logger.info(f"Top cited domains (full with subdomains) (top 10):")
+        for domain, count in domain_full_counts.head(10).items():
+            if domain:  # Skip None domains
+                logger.info(f"  {domain}: {count} citations ({count/len(citations_df)*100:.1f}%)")
+        
+        # Top domains (base without subdomains)
         domain_counts = citations_df["domain"].value_counts()
-        logger.info(f"Top cited domains (top 10):")
+        logger.info(f"Top cited domains (base without subdomains) (top 10):")
         for domain, count in domain_counts.head(10).items():
             if domain:  # Skip None domains
                 logger.info(f"  {domain}: {count} citations ({count/len(citations_df)*100:.1f}%)")
@@ -256,6 +278,7 @@ def process_web_search_trace(web_search_trace, responses, config, total_citation
                     if not url_valid:
                         invalid_urls += 1
                     
+                    domain_full = extract_domain_full(citation_url)
                     domain = extract_domain(citation_url)
                     
                     # Create citation record
@@ -265,6 +288,7 @@ def process_web_search_trace(web_search_trace, responses, config, total_citation
                         "response_id": response_id,
                         "citation_number": citation_number,
                         "url": citation_url,
+                        "domain_full": domain_full,
                         "domain": domain,
                         "url_valid": url_valid,
                         "citation_order": citation_order,
