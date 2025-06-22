@@ -11,7 +11,7 @@ configfile: "config/config.yaml"
 RAW_DATA = config["raw_data_path"]
 INTERMEDIATE_DIR = config["intermediate_dir"]
 OUTPUT_DIR = config["output_dir"]
-LEADERBOARD_DIR = f"{OUTPUT_DIR}/leaderboard"
+LEADERBOARD_DIR = f"{INTERMEDIATE_DIR}/leaderboard"
 
 # Target rule - what we want to produce
 rule all:
