@@ -49,25 +49,58 @@ def extract_questions():
         thread_id = f"{config['thread_id_prefix']}{idx:08d}"
         total_turns = row.get("turn", 1)
 
-        # Extract messages from both model A and B (they should be identical for user messages)
-        messages_a = row.get("messages_a", [])
-        messages_b = row.get("messages_b", [])
+        # Extract messages from system metadata instead of direct message arrays
+        system_a_metadata = row.get("system_a_metadata", {})
+        system_b_metadata = row.get("system_b_metadata", {})
 
-        # Use messages_a as primary source (should contain same user messages as messages_b)
+        # Get formatted_messages from system_a_metadata (primary source)
+        if not isinstance(system_a_metadata, dict) or "formatted_messages" not in system_a_metadata:
+            logger.warning(f"No formatted_messages in system_a_metadata for row {idx}, skipping")
+            continue
+
+        messages_a = system_a_metadata.get("formatted_messages", [])
+        messages_b = system_b_metadata.get("formatted_messages", []) if isinstance(system_b_metadata, dict) else []
+
         if not hasattr(messages_a, "__len__") or len(messages_a) == 0:
-            logger.warning(f"Empty messages_a for row {idx}, skipping")
+            logger.warning(f"Empty formatted_messages in system_a_metadata for row {idx}, skipping")
             continue
 
         # Process messages to extract user questions
         # In the messages array, user and assistant messages alternate
         # For N turns, we expect N user messages and N assistant messages (total 2*N)
-        user_messages = []
+        user_messages_a = []
         for message in messages_a:
             if isinstance(message, dict) and message.get("role") == "user":
-                user_messages.append(message)
+                user_messages_a.append(message)
 
-        # Create question records for each user message
-        for turn_idx, user_message in enumerate(user_messages):
+        # Consistency check: verify that user messages are the same in both system_a and system_b metadata
+        if len(messages_b) > 0:
+            user_messages_b = []
+            for message in messages_b:
+                if isinstance(message, dict) and message.get("role") == "user":
+                    user_messages_b.append(message)
+
+            # Check if user messages match between system_a and system_b
+            if len(user_messages_a) != len(user_messages_b):
+                logger.warning(
+                    f"Row {idx}: User message count mismatch between system_a ({len(user_messages_a)}) "
+                    f"and system_b ({len(user_messages_b)})"
+                )
+            else:
+                # Check if user message content matches
+                for turn_idx, (msg_a, msg_b) in enumerate(zip(user_messages_a, user_messages_b)):
+                    content_a = msg_a.get("content", "")
+                    content_b = msg_b.get("content", "")
+                    if content_a != content_b:
+                        logger.warning(
+                            f"Row {idx}, Turn {turn_idx + 1}: User message content mismatch between system_a and system_b"
+                        )
+                        if (idx + 1) % 1000 == 0:  # Log examples occasionally
+                            logger.info(f"  system_a: '{content_a[:100]}...'")
+                            logger.info(f"  system_b: '{content_b[:100]}...'")
+
+        # Create question records for each user message (using system_a as primary source)
+        for turn_idx, user_message in enumerate(user_messages_a):
             # Generate question_id
             question_id = f"{config['question_id_prefix']}{total_questions:08d}"
 
@@ -86,7 +119,7 @@ def extract_questions():
         # Note: The turn field might not always match the actual number of user messages
         # This could be due to incomplete conversations, system messages, or other factors
         expected_questions = total_turns
-        actual_questions = len(user_messages)
+        actual_questions = len(user_messages_a)
 
         if actual_questions != expected_questions:
             mismatch_count += 1
@@ -94,7 +127,7 @@ def extract_questions():
                 # Only log a few examples to avoid spam
                 logger.info(
                     f"Example mismatch - Row {idx}: Expected {expected_questions} questions, "
-                    f"found {actual_questions} user messages (messages length: {len(messages_a)})"
+                    f"found {actual_questions} user messages (formatted_messages length: {len(messages_a)})"
                 )
 
         # Log progress every 1000 rows
