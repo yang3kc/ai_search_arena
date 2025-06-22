@@ -11,6 +11,7 @@ import os
 sys.path.append(os.path.dirname(__file__))
 
 from leaderboard_core import compute_bt, run_leaderboard
+from feature_engineering import DOMAIN_CATEGORIES
 
 
 def test_leaderboard():
@@ -59,7 +60,7 @@ def test_leaderboard():
         anchor_model=anchor_model,
         anchor_rating=anchor_rating,
         style_elements=style_elements,
-        num_bootstrap_samples=1000,
+        num_bootstrap_samples=10,
     )
 
     print("Style-controlled leaderboard:")
@@ -75,6 +76,56 @@ def test_leaderboard():
         )
 
     print("\nTest completed successfully!")
+
+    print("Testing with num of citations...")
+    style_elements = ["num_citations_a", "num_citations_b"]
+    leaderboard_style, bt_bootstrap_style, style_coef_bootstrap = run_leaderboard(
+        df,
+        anchor_model=anchor_model,
+        anchor_rating=anchor_rating,
+        style_elements=style_elements,
+        num_bootstrap_samples=10,
+    )
+    print("Citation number controlled leaderboard:")
+    print(leaderboard_style)
+    print("\nBootstrap confidence intervals:")
+    print(bt_bootstrap_style.quantile([0.025, 0.975]).T)
+    print("\nStyle coefficients:")
+    if style_coef_bootstrap is not None:
+        lower = np.percentile(style_coef_bootstrap, 2.5, axis=0)
+        upper = np.percentile(style_coef_bootstrap, 97.5, axis=0)
+        estimate = np.mean(style_coef_bootstrap, axis=0)
+        print(
+            f"Lower bound: {lower[0]:.3f}, Upper bound: {upper[0]:.3f}, Estimate: {estimate[0]:.3f}"
+        )
+
+    print("test with citation types...")
+    style_elements = [
+        f"cites_{domain}_a" for domain in DOMAIN_CATEGORIES if domain != "other"
+    ]
+    style_elements += [
+        f"cites_{domain}_b" for domain in DOMAIN_CATEGORIES if domain != "other"
+    ]
+    leaderboard_style, bt_bootstrap_style, style_coef_bootstrap = run_leaderboard(
+        df,
+        anchor_model=anchor_model,
+        anchor_rating=anchor_rating,
+        style_elements=style_elements,
+        num_bootstrap_samples=1000,
+    )
+    print("Citation type controlled leaderboard:")
+    print(leaderboard_style)
+    print("\nBootstrap confidence intervals:")
+    print(bt_bootstrap_style.quantile([0.025, 0.975]).T)
+    print("\nStyle coefficients:")
+    if style_coef_bootstrap is not None:
+        for index, domain_category in enumerate(DOMAIN_CATEGORIES):
+            lower = np.percentile(style_coef_bootstrap[:, index], 2.5, axis=0)
+            upper = np.percentile(style_coef_bootstrap[:, index], 97.5, axis=0)
+            estimate = np.mean(style_coef_bootstrap[:, index], axis=0)
+            print(
+                f"{domain_category}: Lower bound: {lower:.3f}, Upper bound: {upper:.3f}, Estimate: {estimate:.3f}"
+            )
 
 
 if __name__ == "__main__":
