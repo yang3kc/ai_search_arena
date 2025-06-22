@@ -130,15 +130,138 @@ def explore_arena_data():
         sample_languages = df["languages"].dropna().iloc[:5]
         logger.info(f"Sample language entries: {list(sample_languages)}")
 
-    # Add key findings to report
+    # Add comprehensive findings to report
+    report_lines.append(f"\n=== BASIC DATA OVERVIEW ===\n")
     report_lines.append(f"Shape: {df.shape}\n")
-    report_lines.append(f"Turn distribution:\n{turn_counts}\n")
+    report_lines.append(f"Columns: {list(df.columns)}\n\n")
+
+    # Column analysis
+    report_lines.append("=== COLUMN ANALYSIS ===\n")
+    for col in df.columns:
+        dtype = str(df[col].dtype)
+        null_count = df[col].isnull().sum()
+        null_pct = (null_count / len(df)) * 100
+
+        report_lines.append(f"{col}:\n")
+        report_lines.append(f"  - Type: {dtype}\n")
+        report_lines.append(f"  - Null values: {null_count} ({null_pct:.1f}%)\n")
+
+        # Handle unique count calculation carefully for array/dict columns
+        try:
+            if col in [
+                "messages_a",
+                "messages_b",
+                "system_a_metadata",
+                "system_b_metadata",
+                "languages",
+            ]:
+                # For complex nested columns, just show sample
+                sample_values = df[col].dropna().iloc[:2].tolist()
+                report_lines.append(f"  - Type: Complex nested structure\n")
+                report_lines.append(f"  - Sample values: {sample_values}\n")
+            else:
+                unique_count = df[col].nunique()
+                report_lines.append(f"  - Unique values: {unique_count}\n")
+
+                # Add sample values for simple columns
+                if dtype != "object" or unique_count <= 20:
+                    sample_values = df[col].value_counts().head(5)
+                    report_lines.append(f"  - Top values: {dict(sample_values)}\n")
+                else:
+                    # For object types with many unique values, show samples
+                    sample_values = df[col].dropna().iloc[:3].tolist()
+                    report_lines.append(f"  - Sample values: {sample_values}\n")
+        except Exception as e:
+            report_lines.append(f"  - Analysis error: {str(e)}\n")
+            sample_values = df[col].dropna().iloc[:2].tolist()
+            report_lines.append(f"  - Sample values: {sample_values}\n")
+
+        report_lines.append("\n")
+
+    report_lines.append("=== TURN DISTRIBUTION ANALYSIS ===\n")
+    report_lines.append(f"Turn distribution:\n{turn_counts}\n\n")
     report_lines.append(
         f"Multi-turn threads: {len(multi_turn_threads)} ({len(multi_turn_threads) / len(df) * 100:.1f}%)\n"
     )
+    if len(multi_turn_threads) > 0:
+        report_lines.append(f"Max turns in thread: {df['turn'].max()}\n")
+        report_lines.append(
+            f"Average turns per multi-turn thread: {multi_turn_threads['turn'].mean():.2f}\n\n"
+        )
+
+    report_lines.append("=== WINNER AND EVALUATION ANALYSIS ===\n")
+    report_lines.append(f"Winner distribution:\n{winner_counts}\n\n")
     report_lines.append(
         f"Winner completeness: {df['winner'].notna().sum()}/{len(df)} ({df['winner'].notna().mean() * 100:.1f}%)\n"
     )
+
+    # Judge analysis
+    report_lines.append(f"Total unique judges: {df['judge'].nunique()}\n")
+    report_lines.append(f"Top 5 judges: {dict(judge_counts.head(5))}\n\n")
+
+    # Model analysis
+    report_lines.append("=== MODEL ANALYSIS ===\n")
+    report_lines.append(f"Unique Model A count: {df['model_a'].nunique()}\n")
+    report_lines.append(f"Unique Model B count: {df['model_b'].nunique()}\n")
+    report_lines.append(f"Top 5 Model A: {dict(model_a_counts.head(5))}\n")
+    report_lines.append(f"Top 5 Model B: {dict(model_b_counts.head(5))}\n\n")
+
+    # Intent analysis
+    report_lines.append("=== INTENT ANALYSIS ===\n")
+    if "primary_intent" in df.columns:
+        report_lines.append(
+            f"Primary intent distribution:\n{dict(primary_intent_counts)}\n"
+        )
+    if "secondary_intent" in df.columns:
+        secondary_intent_counts = df["secondary_intent"].value_counts()
+        report_lines.append(
+            f"Secondary intent distribution:\n{dict(secondary_intent_counts)}\n\n"
+        )
+
+    # Message structure analysis
+    report_lines.append("=== MESSAGE STRUCTURE ANALYSIS ===\n")
+    report_lines.append(f"Messages_a sample type: {type(sample_messages_a)}\n")
+    report_lines.append(
+        f"Messages_a sample length: {len(sample_messages_a) if hasattr(sample_messages_a, '__len__') else 'N/A'}\n"
+    )
+    if hasattr(sample_messages_a, "__len__") and len(sample_messages_a) > 0:
+        report_lines.append(f"First message_a structure: {sample_messages_a[0]}\n")
+
+    # System metadata analysis
+    report_lines.append("\n=== SYSTEM METADATA ANALYSIS ===\n")
+    if isinstance(sample_metadata_a, dict):
+        metadata_keys = list(sample_metadata_a.keys())
+        report_lines.append(f"System_a_metadata keys: {metadata_keys}\n")
+
+        # Check for conversation IDs
+        conv_ids_a = df["system_a_metadata"].apply(
+            lambda x: x.get("conv_id") if isinstance(x, dict) else None
+        )
+        unique_conv_ids = conv_ids_a.nunique()
+        report_lines.append(f"Unique conversation IDs: {unique_conv_ids}\n")
+
+        if unique_conv_ids == len(df):
+            report_lines.append("✓ Each row has unique conversation ID\n")
+        else:
+            report_lines.append("⚠ Some rows share conversation IDs\n")
+
+    # Languages analysis
+    report_lines.append("\n=== LANGUAGES ANALYSIS ===\n")
+    if "languages" in df.columns:
+        sample_languages = df["languages"].dropna().iloc[:5]
+        report_lines.append(f"Sample language entries: {list(sample_languages)}\n")
+
+        # Flatten language arrays to get language distribution
+        all_languages = []
+        for lang_array in df["languages"].dropna():
+            if hasattr(lang_array, "__iter__"):
+                all_languages.extend(lang_array)
+
+        if all_languages:
+            lang_counts = pd.Series(all_languages).value_counts()
+            report_lines.append(
+                f"Language distribution: {dict(lang_counts.head(10))}\n"
+            )
 
     # Write report to output file
     with open(output_file, "w") as f:
