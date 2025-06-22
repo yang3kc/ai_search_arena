@@ -154,27 +154,10 @@ CREATE TABLE citations (
 );
 ```
 
-#### 4. Turn_Comparisons Table (`turn_comparisons.parquet`)
-**Purpose**: Store per-turn comparison data (optional, if turn-level evaluation exists)
-```sql
-CREATE TABLE turn_comparisons (
-    turn_comparison_id VARCHAR PRIMARY KEY, -- Unique turn comparison identifier
-    thread_id VARCHAR REFERENCES threads(thread_id),
-    turn_number INT,                    -- Turn number within thread
-    question_id VARCHAR REFERENCES questions(question_id),
-    response_a_id VARCHAR REFERENCES responses(response_id),
-    response_b_id VARCHAR REFERENCES responses(response_id),
-    turn_winner VARCHAR,               -- Turn-level winner (if available)
-    turn_evaluation_data TEXT          -- Any turn-specific evaluation metadata
-);
-```
-
 ### Relationships and Keys
 - **Threads** (1) → **Questions** (1+): Each thread contains one or more questions (turns)
 - **Questions** (1) → **Responses** (2): Each question generates exactly two responses
 - **Responses** (1) → **Citations** (many): Each response can have multiple citations
-- **Threads** (1) → **Turn_Comparisons** (0+): Each thread may have turn-level comparisons
-- **Questions** (1) → **Turn_Comparisons** (0-1): Each question may have a turn comparison
 
 **Key Insight**: The original `winner` field applies to the entire **thread**, not individual turns.
 
@@ -234,8 +217,7 @@ workflow/data_cleaning/
 │   ├── 03_extract_messages.py      # Message unnesting
 │   ├── 04_extract_citations.py     # Citation processing
 │   ├── 05_extract_metadata.py      # Metadata flattening
-│   ├── 06_process_intents.py       # Intent classification
-│   └── 07_create_analysis_tables.py # Final analysis-ready tables
+│   └── 06_validate_extraction.py  # Data validation and quality checks
 └── rules/
     ├── explore.smk                 # Exploration rules
     ├── extract.smk                 # Extraction rules
@@ -256,28 +238,38 @@ workflow/data_cleaning/
    - Contains model responses and configuration metadata per turn
 
 4. **Citations table**: `data/intermediate/cleaned_arena_data/citations.parquet`
-   - Variable rows (~5-10 citations per response estimate)
-   - Contains individual URLs, domains, and reference numbers
+   - 366,087 rows (~7.6 citations per response based on extraction)
+   - Contains individual URLs, domains (full and base), and reference numbers
+   - Primary focus for citation bias and credibility analysis
+   - Ready for joining with external domain credibility and political leaning datasets
 
-5. **Turn_Comparisons table**: `data/intermediate/cleaned_arena_data/turn_comparisons.parquet`
-   - Variable rows (if turn-level evaluation data exists)
-   - Contains per-turn comparison metadata
+## Citation-Focused Analysis Approach
 
-6. **Analysis-ready joined table**: `data/output/cleaned_arena_data/search_arena_analysis.parquet`
-   - Denormalized table for quick analysis
-   - Pre-joined with domain credibility and political leaning data
+The primary analysis focus will be on the **citations table** as it contains the richest data for understanding AI model citation behavior and bias patterns. The normalized relational structure allows for flexible analysis where other tables can be joined as needed:
+
+### Key Analysis Capabilities
+1. **Citation Bias Analysis**: Join citations with domain political leaning data
+2. **Credibility Assessment**: Join citations with domain credibility ratings  
+3. **Model Comparison**: Join with responses and threads to compare citation patterns by model
+4. **Topic Analysis**: Join with questions to understand citation patterns by query type
+5. **Temporal Patterns**: Join with threads for time-based citation behavior analysis
+
+### Analysis Strategy Benefits
+- **Flexibility**: Each analysis can join only the relevant tables needed
+- **Performance**: Avoids large pre-joined tables that may not be fully utilized
+- **Maintainability**: Schema changes in one table don't affect others
+- **Scalability**: Can add new analysis dimensions without restructuring core data
 
 ### Data Validation Strategy
 1. **Referential integrity**: Ensure all foreign key relationships are valid
    - Every response links to exactly one question
    - Every citation links to exactly one response
-   - Every comparison links to exactly one question and two responses
 
 2. **Row count validation**: 
    - Threads: 24,069 rows (1:1 with original data)
-   - Questions: Variable (= sum of all turn counts)
-   - Responses: 2× questions count (2:1 with questions)
-   - Turn_Comparisons: Variable (may equal questions count)
+   - Questions: 32,884 rows (sum of all turn counts)
+   - Responses: 65,768 rows (2× questions count)
+   - Citations: 366,087 rows (~7.6 per response)
 
    **Critical validation**: Sum of turns across all threads should equal total questions
 

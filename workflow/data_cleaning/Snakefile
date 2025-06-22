@@ -1,7 +1,7 @@
 """
 Snakemake workflow for cleaning and processing search arena data.
-This workflow follows the analysis plan to extract and normalize the arena data
-into relational tables for analysis.
+This workflow extracts and normalizes the arena data into relational tables
+with primary focus on citations analysis for bias and credibility research.
 """
 
 # Configuration
@@ -17,13 +17,13 @@ rule all:
     input:
         # Initial exploration
         f"{INTERMEDIATE_DIR}/exploration_report.txt",
-        # Core tables
+        # Core tables for citation analysis
         f"{INTERMEDIATE_DIR}/threads.parquet",
         f"{INTERMEDIATE_DIR}/questions.parquet",
         f"{INTERMEDIATE_DIR}/responses.parquet",
         f"{INTERMEDIATE_DIR}/citations.parquet",
-        # Final analysis table
-        f"{OUTPUT_DIR}/search_arena_analysis.parquet"
+        # Validation report
+        f"{INTERMEDIATE_DIR}/validation_report.txt"
 
 # Phase 1: Data exploration and validation
 rule explore_data:
@@ -74,19 +74,7 @@ rule extract_citations:
     script:
         "scripts/05_extract_citations.py"
 
-# Phase 6: Create analysis-ready table
-rule create_analysis_table:
-    input:
-        threads=f"{INTERMEDIATE_DIR}/threads.parquet",
-        questions=f"{INTERMEDIATE_DIR}/questions.parquet",
-        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
-        citations=f"{INTERMEDIATE_DIR}/citations.parquet"
-    output:
-        f"{OUTPUT_DIR}/search_arena_analysis.parquet"
-    script:
-        "scripts/06_create_analysis_table.py"
-
-# Validation rules
+# Phase 6: Data validation and quality checks
 rule validate_extraction:
     input:
         threads=f"{INTERMEDIATE_DIR}/threads.parquet",
@@ -96,4 +84,4 @@ rule validate_extraction:
     output:
         f"{INTERMEDIATE_DIR}/validation_report.txt"
     script:
-        "scripts/07_validate_extraction.py"
+        "scripts/06_validate_extraction.py"
