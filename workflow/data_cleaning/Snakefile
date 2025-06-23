@@ -12,7 +12,6 @@ RAW_DATA = config["raw_data_path"]
 RAW_DATA_DIR = config["raw_data_dir"]
 INTERMEDIATE_DIR = config["intermediate_dir"]
 OUTPUT_DIR = config["output_dir"]
-LEADERBOARD_DIR = f"{INTERMEDIATE_DIR}/leaderboard"
 
 # Target rule - what we want to produce
 rule all:
@@ -27,9 +26,7 @@ rule all:
         # Validation report
         f"{INTERMEDIATE_DIR}/validation_report.txt",
         # Enriched citations with political leaning and domain quality
-        f"{INTERMEDIATE_DIR}/citations_enriched.parquet",
-        # Leaderboard outputs
-        f"{LEADERBOARD_DIR}/leaderboard_summary.json"
+        f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
 
 # Phase 1: Data exploration and validation
 rule explore_data:
@@ -103,22 +100,3 @@ rule enrich_citations:
     script:
         "scripts/enrich_citations.py"
 
-# Phase 8: Generate leaderboard from cleaned data
-rule generate_leaderboard:
-    input:
-        threads=f"{INTERMEDIATE_DIR}/threads.parquet",
-        questions=f"{INTERMEDIATE_DIR}/questions.parquet",
-        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
-        citations=f"{INTERMEDIATE_DIR}/citations.parquet",
-        validation=f"{INTERMEDIATE_DIR}/validation_report.txt"
-    output:
-        summary=f"{LEADERBOARD_DIR}/leaderboard_summary.json",
-        basic=f"{LEADERBOARD_DIR}/leaderboard_basic.csv",
-        style=f"{LEADERBOARD_DIR}/leaderboard_citation_style.csv",
-        length=f"{LEADERBOARD_DIR}/leaderboard_response_length.csv",
-        citations=f"{LEADERBOARD_DIR}/leaderboard_citation_count.csv",
-        battle_data=f"{LEADERBOARD_DIR}/battle_data.parquet"
-    params:
-        config=config.get("leaderboard", {})
-    shell:
-        "python scripts/generate_leaderboard.py {INTERMEDIATE_DIR} {LEADERBOARD_DIR}"
