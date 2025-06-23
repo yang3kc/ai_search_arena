@@ -137,14 +137,23 @@ def generate_summary_stats(enriched_citations):
 
     # Political leaning coverage
     pol_coverage = enriched_citations["leaning_score_users"].notna().sum()
+    pol_domains_covered = enriched_citations[enriched_citations["leaning_score_users"].notna()]["domain"].nunique()
+    total_unique_domains = enriched_citations["domain"].nunique()
     print(
-        f"Political leaning coverage: {pol_coverage:,} ({pol_coverage / total_citations * 100:.1f}%)"
+        f"Political leaning coverage: {pol_coverage:,} citations ({pol_coverage / total_citations * 100:.1f}%)"
+    )
+    print(
+        f"Political leaning domain coverage: {pol_domains_covered:,} / {total_unique_domains:,} unique domains ({pol_domains_covered / total_unique_domains * 100:.1f}%)"
     )
 
     # Domain quality coverage
     qual_coverage = enriched_citations["domain_quality"].notna().sum()
+    qual_domains_covered = enriched_citations[enriched_citations["domain_quality"].notna()]["domain"].nunique()
     print(
-        f"Domain quality coverage: {qual_coverage:,} ({qual_coverage / total_citations * 100:.1f}%)"
+        f"Domain quality coverage: {qual_coverage:,} citations ({qual_coverage / total_citations * 100:.1f}%)"
+    )
+    print(
+        f"Domain quality domain coverage: {qual_domains_covered:,} / {total_unique_domains:,} unique domains ({qual_domains_covered / total_unique_domains * 100:.1f}%)"
     )
 
     # Combined coverage
@@ -152,8 +161,15 @@ def generate_summary_stats(enriched_citations):
         (enriched_citations["leaning_score_users"].notna())
         & (enriched_citations["domain_quality"].notna())
     ).sum()
+    combined_domains_covered = enriched_citations[
+        (enriched_citations["leaning_score_users"].notna()) & 
+        (enriched_citations["domain_quality"].notna())
+    ]["domain"].nunique()
     print(
-        f"Combined coverage: {combined_coverage:,} ({combined_coverage / total_citations * 100:.1f}%)"
+        f"Combined coverage: {combined_coverage:,} citations ({combined_coverage / total_citations * 100:.1f}%)"
+    )
+    print(
+        f"Combined domain coverage: {combined_domains_covered:,} / {total_unique_domains:,} unique domains ({combined_domains_covered / total_unique_domains * 100:.1f}%)"
     )
 
     # Top domains by citation count
