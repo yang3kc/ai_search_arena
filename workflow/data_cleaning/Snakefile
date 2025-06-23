@@ -107,7 +107,9 @@ rule enrich_domains:
     input:
         domains=f"{INTERMEDIATE_DIR}/domains.parquet",
         political_leaning=f"{RAW_DATA_DIR}/DomainDemo_political_leaning.csv.gz",
-        domain_ratings=f"{RAW_DATA_DIR}/lin_domain_ratings.csv.gz"
+        domain_ratings=f"{RAW_DATA_DIR}/lin_domain_ratings.csv.gz",
+        manual_classification=f"{RAW_DATA_DIR}/domain_classification_manual.csv",
+        news_domains=f"{RAW_DATA_DIR}/list_of_news_domains.csv"
     output:
         f"{INTERMEDIATE_DIR}/domains_enriched.parquet"
     script:
