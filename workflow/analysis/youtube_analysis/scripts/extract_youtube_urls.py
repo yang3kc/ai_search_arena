@@ -58,10 +58,12 @@ def is_youtube_video_url(url):
 
     # YouTube video patterns
     youtube_patterns = [
-        r"youtube\.com/watch\?v=",
-        r"youtu\.be/",
-        r"youtube\.com/embed/",
-        r"m\.youtube\.com/watch\?v=",
+        r"youtube\.com/watch\?.*[&?]v=",  # watch URL with v parameter (can have other params before)
+        r"youtube\.com/watch\?v=",       # watch URL with v as first parameter
+        r"youtu\.be/",                   # short URL format
+        r"youtube\.com/embed/",          # embed URL format
+        r"m\.youtube\.com/watch\?.*[&?]v=",  # mobile with v parameter (can have other params before)
+        r"m\.youtube\.com/watch\?v=",    # mobile with v as first parameter
     ]
 
     return any(re.search(pattern, url, re.IGNORECASE) for pattern in youtube_patterns)
