@@ -1,7 +1,6 @@
 # YouTube Analysis Pipeline Configuration
 
 # Data paths
-output_dir: "data"
 intermediate_dir: "../../../data/intermediate/youtube_analysis"
 citations_data_path: "../../../data/intermediate/cleaned_arena_data/citations.parquet"
 
