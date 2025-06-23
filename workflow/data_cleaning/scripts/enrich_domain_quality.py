@@ -9,95 +9,69 @@ This script adds domain quality metrics to citations data:
 
 import pandas as pd
 import gzip
-from pathlib import Path
 
 
 def load_domain_quality_data(filepath):
     """Load and process domain quality ratings."""
     print(f"Loading domain ratings from {filepath}")
-    
+
     with gzip.open(filepath, "rt") as f:
         df = pd.read_csv(f)
-    
+
     print(f"Loaded {len(df)} domains with quality ratings")
     print(f"Columns: {list(df.columns)}")
-    
+
     # Clean domain names
     df["domain"] = df["domain"].str.strip()
-    
+
     # Keep only pc1 and rename it to domain_quality_score
     df = df[["domain", "pc1"]].copy()
     df = df.rename(columns={"pc1": "domain_quality_score"})
-    
+
     # Create categorical domain quality variable using 0.7 threshold
     df["domain_quality"] = "unknown"
     df.loc[df["domain_quality_score"] >= 0.7, "domain_quality"] = "high_quality"
     df.loc[df["domain_quality_score"] < 0.7, "domain_quality"] = "low_quality"
     df.loc[df["domain_quality_score"].isna(), "domain_quality"] = "unknown"
-    
+
     print(f"Domain quality distribution:")
     quality_stats = df["domain_quality_score"].describe()
     print(f"  Score Mean: {quality_stats['mean']:.3f}")
     print(f"  Score Std:  {quality_stats['std']:.3f}")
     print(f"  Score Min:  {quality_stats['min']:.3f}")
     print(f"  Score Max:  {quality_stats['max']:.3f}")
-    
+
     print(f"Domain quality categories:")
     quality_counts = df["domain_quality"].value_counts()
     for quality, count in quality_counts.items():
         print(f"  {quality}: {count} ({count / len(df) * 100:.1f}%)")
-    
+
     return df
 
 
-def enrich_with_domain_quality(citations_df, domain_quality_data):
-    """Merge citations with domain quality data."""
-    print("Enriching citations with domain quality data...")
-    
+def enrich_with_domain_quality(domains_df, domain_quality_data):
+    """Merge domains with domain quality data."""
+    print("Enriching domains with domain quality data...")
+
     # Merge with domain ratings on base domain
-    enriched = citations_df.merge(
-        domain_quality_data, 
-        on="domain", 
-        how="left", 
-        suffixes=("", "_qual")
+    enriched = domains_df.merge(
+        domain_quality_data, on="domain", how="left", suffixes=("", "_qual")
     )
-    
+    enriched["domain_quality"].fillna("unknown", inplace=True)
+
     # Count matches
     qual_matches = enriched["domain_quality_score"].notna().sum()
     total_citations = len(enriched)
-    qual_domains_covered = enriched[enriched["domain_quality_score"].notna()]["domain"].nunique()
+    qual_domains_covered = enriched[enriched["domain_quality_score"].notna()][
+        "domain"
+    ].nunique()
     total_unique_domains = enriched["domain"].nunique()
-    
-    print(f"Domain quality matches: {qual_matches:,} / {total_citations:,} ({qual_matches / total_citations * 100:.1f}%)")
-    print(f"Domain quality domain coverage: {qual_domains_covered:,} / {total_unique_domains:,} unique domains ({qual_domains_covered / total_unique_domains * 100:.1f}%)")
-    
+
+    print(
+        f"Domain quality matches: {qual_matches:,} / {total_citations:,} ({qual_matches / total_citations * 100:.1f}%)"
+    )
+    print(
+        f"Domain quality domain coverage: {qual_domains_covered:,} / {total_unique_domains:,} unique domains ({qual_domains_covered / total_unique_domains * 100:.1f}%)"
+    )
+
     return enriched
-
-
-def main():
-    """Main function for Snakemake execution."""
-    # Get paths from Snakemake
-    citations_path = snakemake.input.citations
-    domain_quality_path = snakemake.input.domain_ratings
-    output_path = snakemake.output[0]
-    
-    # Load data
-    print("Loading citations data...")
-    citations = pd.read_parquet(citations_path)
-    print(f"Loaded {len(citations)} citations")
-    
-    domain_quality_data = load_domain_quality_data(domain_quality_path)
-    
-    # Enrich citations
-    enriched_citations = enrich_with_domain_quality(citations, domain_quality_data)
-    
-    # Save enriched dataset
-    print(f"\nSaving enriched citations to {output_path}")
-    enriched_citations.to_parquet(output_path, index=False)
-    
-    print(f"✅ Domain quality enrichment completed!")
-    print(f"Output: {len(enriched_citations):,} rows, {len(enriched_citations.columns)} columns")
-
-
-if __name__ == "__main__":
-    main()
