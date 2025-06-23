@@ -31,3 +31,7 @@ The `leaning_score_users` contains the political leaning of the domain.
 `lin_domain_ratings.csv.gz` contains the credibility ratings of the domains.
 The `domain` contains the domain name.
 The `pc1` contains the domain credibility score.
+
+## List of news sources
+
+`list_of_news_domains.txt` contains the list of news domains.
