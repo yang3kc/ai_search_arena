@@ -122,13 +122,15 @@ def save_raw_responses(responses, output_dir, batch_num):
 
 
 def fetch_all_video_metadata(youtube_citations):
-    """Fetch metadata for all videos with comprehensive error handling."""
-    print(f"Fetching metadata for {len(youtube_citations):,} videos...")
+    """Fetch metadata for all unique videos with comprehensive error handling."""
+    print(f"Processing {len(youtube_citations):,} YouTube citations...")
     
     youtube = setup_youtube_api()
     video_ids = youtube_citations['video_id'].unique().tolist()
     
     print(f"Unique video IDs to fetch: {len(video_ids):,}")
+    print(f"Total citations: {len(youtube_citations):,}")
+    print(f"Average citations per video: {len(youtube_citations)/len(video_ids):.1f}")
     
     all_video_metadata = []
     failed_video_ids = []
