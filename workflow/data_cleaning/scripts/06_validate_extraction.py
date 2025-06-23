@@ -299,32 +299,43 @@ def validate_extraction():
                   f"Enriched: {enriched_count}, Original: {original_count}")
         
         # Check for political leaning data
-        if 'leaning_score_users' in enriched_citations_df.columns:
-            pol_coverage = enriched_citations_df['leaning_score_users'].notna().sum()
+        if 'political_leaning_score' in enriched_citations_df.columns:
+            pol_coverage = enriched_citations_df['political_leaning_score'].notna().sum()
             pol_pct = pol_coverage / enriched_count * 100
             log_result("Political leaning data coverage", pol_pct >= 30.0,
                       f"Political leaning available: {pol_coverage}/{enriched_count} ({pol_pct:.1f}%)",
                       warning=pol_pct >= 20.0)
             
-            # Check binary leaning variable
-            if 'is_left_leaning' in enriched_citations_df.columns:
-                left_count = enriched_citations_df['is_left_leaning'].sum()
-                left_pct = left_count / pol_coverage * 100 if pol_coverage > 0 else 0
-                log_result("Binary leaning variable created", 'is_left_leaning' in enriched_citations_df.columns,
-                          f"Left leaning citations: {left_count:,} ({left_pct:.1f}% of citations with leaning data)")
+            # Check categorical leaning variable
+            if 'political_leaning' in enriched_citations_df.columns:
+                leaning_counts = enriched_citations_df['political_leaning'].value_counts()
+                left_count = leaning_counts.get('left_leaning', 0)
+                right_count = leaning_counts.get('right_leaning', 0)
+                unknown_count = leaning_counts.get('unknown', 0)
+                log_result("Categorical leaning variable created", 'political_leaning' in enriched_citations_df.columns,
+                          f"Left: {left_count:,}, Right: {right_count:,}, Unknown: {unknown_count:,}")
         
         # Check for domain quality data
-        if 'domain_quality' in enriched_citations_df.columns:
-            qual_coverage = enriched_citations_df['domain_quality'].notna().sum()
+        if 'domain_quality_score' in enriched_citations_df.columns:
+            qual_coverage = enriched_citations_df['domain_quality_score'].notna().sum()
             qual_pct = qual_coverage / enriched_count * 100
             log_result("Domain quality data coverage", qual_pct >= 20.0,
                       f"Domain quality available: {qual_coverage}/{enriched_count} ({qual_pct:.1f}%)",
                       warning=qual_pct >= 15.0)
+            
+            # Check categorical quality variable
+            if 'domain_quality' in enriched_citations_df.columns:
+                quality_counts = enriched_citations_df['domain_quality'].value_counts()
+                high_count = quality_counts.get('high_quality', 0)
+                low_count = quality_counts.get('low_quality', 0)
+                unknown_count = quality_counts.get('unknown', 0)
+                log_result("Categorical quality variable created", 'domain_quality' in enriched_citations_df.columns,
+                          f"High: {high_count:,}, Low: {low_count:,}, Unknown: {unknown_count:,}")
         
         # Check for combined coverage
-        if 'leaning_score_users' in enriched_citations_df.columns and 'domain_quality' in enriched_citations_df.columns:
-            combined_coverage = ((enriched_citations_df['leaning_score_users'].notna()) & 
-                               (enriched_citations_df['domain_quality'].notna())).sum()
+        if 'political_leaning_score' in enriched_citations_df.columns and 'domain_quality_score' in enriched_citations_df.columns:
+            combined_coverage = ((enriched_citations_df['political_leaning_score'].notna()) & 
+                               (enriched_citations_df['domain_quality_score'].notna())).sum()
             combined_pct = combined_coverage / enriched_count * 100
             log_result("Combined metrics coverage", combined_pct >= 15.0,
                       f"Both metrics available: {combined_coverage}/{enriched_count} ({combined_pct:.1f}%)",
@@ -335,12 +346,12 @@ def validate_extraction():
             f"Enriched citations: {enriched_count:,} rows, {len(enriched_citations_df.columns)} columns"
         ]
         
-        if 'leaning_score_users' in enriched_citations_df.columns:
-            pol_stats = enriched_citations_df['leaning_score_users'].describe()
+        if 'political_leaning_score' in enriched_citations_df.columns:
+            pol_stats = enriched_citations_df['political_leaning_score'].describe()
             enrichment_stats.append(f"Political leaning range: {pol_stats['min']:.3f} to {pol_stats['max']:.3f}")
         
-        if 'domain_quality' in enriched_citations_df.columns:
-            qual_stats = enriched_citations_df['domain_quality'].describe()
+        if 'domain_quality_score' in enriched_citations_df.columns:
+            qual_stats = enriched_citations_df['domain_quality_score'].describe()
             enrichment_stats.append(f"Domain quality range: {qual_stats['min']:.3f} to {qual_stats['max']:.3f}")
         
         for stat in enrichment_stats:

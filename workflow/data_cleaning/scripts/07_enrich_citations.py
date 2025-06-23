@@ -30,19 +30,20 @@ def load_political_leaning(filepath):
     # Clean domain names (remove any whitespace)
     df["domain"] = df["domain"].str.strip()
 
-    # Keep only leaning_score_users and create binary variable
+    # Keep only leaning_score_users and rename it
     df = df[["domain", "leaning_score_users"]].copy()
+    df = df.rename(columns={"leaning_score_users": "political_leaning_score"})
 
-    # Create binary leaning variable: negative = left leaning (True), positive/zero = right/center leaning (False)
-    df["is_left_leaning"] = df["leaning_score_users"] < 0
+    # Create categorical political leaning variable
+    df["political_leaning"] = "unknown"
+    df.loc[df["political_leaning_score"] < 0, "political_leaning"] = "left_leaning"
+    df.loc[df["political_leaning_score"] >= 0, "political_leaning"] = "right_leaning"
+    df.loc[df["political_leaning_score"].isna(), "political_leaning"] = "unknown"
 
     print(f"Political leaning distribution:")
-    print(
-        f"  Left leaning domains: {df['is_left_leaning'].sum()} ({df['is_left_leaning'].mean() * 100:.1f}%)"
-    )
-    print(
-        f"  Right/center leaning domains: {(~df['is_left_leaning']).sum()} ({(~df['is_left_leaning']).mean() * 100:.1f}%)"
-    )
+    leaning_counts = df["political_leaning"].value_counts()
+    for leaning, count in leaning_counts.items():
+        print(f"  {leaning}: {count} ({count / len(df) * 100:.1f}%)")
 
     return df
 
@@ -60,16 +61,27 @@ def load_domain_ratings(filepath):
     # Clean domain names
     df["domain"] = df["domain"].str.strip()
 
-    # Keep only pc1 and rename it to domain_quality
+    # Keep only pc1 and rename it to domain_quality_score
     df = df[["domain", "pc1"]].copy()
-    df = df.rename(columns={"pc1": "domain_quality"})
+    df = df.rename(columns={"pc1": "domain_quality_score"})
+
+    # Create categorical domain quality variable using 0.7 threshold
+    df["domain_quality"] = "unknown"
+    df.loc[df["domain_quality_score"] >= 0.7, "domain_quality"] = "high_quality"
+    df.loc[df["domain_quality_score"] < 0.7, "domain_quality"] = "low_quality"
+    df.loc[df["domain_quality_score"].isna(), "domain_quality"] = "unknown"
 
     print(f"Domain quality distribution:")
-    quality_stats = df["domain_quality"].describe()
-    print(f"  Mean: {quality_stats['mean']:.3f}")
-    print(f"  Std:  {quality_stats['std']:.3f}")
-    print(f"  Min:  {quality_stats['min']:.3f}")
-    print(f"  Max:  {quality_stats['max']:.3f}")
+    quality_stats = df["domain_quality_score"].describe()
+    print(f"  Score Mean: {quality_stats['mean']:.3f}")
+    print(f"  Score Std:  {quality_stats['std']:.3f}")
+    print(f"  Score Min:  {quality_stats['min']:.3f}")
+    print(f"  Score Max:  {quality_stats['max']:.3f}")
+    
+    print(f"Domain quality categories:")
+    quality_counts = df["domain_quality"].value_counts()
+    for quality, count in quality_counts.items():
+        print(f"  {quality}: {count} ({count / len(df) * 100:.1f}%)")
 
     return df
 
@@ -100,7 +112,7 @@ def enrich_citations(citations, political_leaning, domain_ratings):
     )
 
     # Count matches
-    pol_matches = enriched["leaning_score_users"].notna().sum()
+    pol_matches = enriched["political_leaning_score"].notna().sum()
     print(
         f"Political leaning matches: {pol_matches:,} / {len(enriched):,} ({pol_matches / len(enriched) * 100:.1f}%)"
     )
@@ -112,14 +124,14 @@ def enrich_citations(citations, political_leaning, domain_ratings):
     )
 
     # Count matches
-    qual_matches = enriched["domain_quality"].notna().sum()
+    qual_matches = enriched["domain_quality_score"].notna().sum()
     print(
         f"Domain quality matches: {qual_matches:,} / {len(enriched):,} ({qual_matches / len(enriched) * 100:.1f}%)"
     )
 
     # Combined matches
     both_matches = (
-        (enriched["leaning_score_users"].notna()) & (enriched["domain_quality"].notna())
+        (enriched["political_leaning_score"].notna()) & (enriched["domain_quality_score"].notna())
     ).sum()
     print(
         f"Both metrics available: {both_matches:,} / {len(enriched):,} ({both_matches / len(enriched) * 100:.1f}%)"
@@ -136,8 +148,8 @@ def generate_summary_stats(enriched_citations):
     print(f"Total citations: {total_citations:,}")
 
     # Political leaning coverage
-    pol_coverage = enriched_citations["leaning_score_users"].notna().sum()
-    pol_domains_covered = enriched_citations[enriched_citations["leaning_score_users"].notna()]["domain"].nunique()
+    pol_coverage = enriched_citations["political_leaning_score"].notna().sum()
+    pol_domains_covered = enriched_citations[enriched_citations["political_leaning_score"].notna()]["domain"].nunique()
     total_unique_domains = enriched_citations["domain"].nunique()
     print(
         f"Political leaning coverage: {pol_coverage:,} citations ({pol_coverage / total_citations * 100:.1f}%)"
@@ -147,8 +159,8 @@ def generate_summary_stats(enriched_citations):
     )
 
     # Domain quality coverage
-    qual_coverage = enriched_citations["domain_quality"].notna().sum()
-    qual_domains_covered = enriched_citations[enriched_citations["domain_quality"].notna()]["domain"].nunique()
+    qual_coverage = enriched_citations["domain_quality_score"].notna().sum()
+    qual_domains_covered = enriched_citations[enriched_citations["domain_quality_score"].notna()]["domain"].nunique()
     print(
         f"Domain quality coverage: {qual_coverage:,} citations ({qual_coverage / total_citations * 100:.1f}%)"
     )
@@ -158,12 +170,12 @@ def generate_summary_stats(enriched_citations):
 
     # Combined coverage
     combined_coverage = (
-        (enriched_citations["leaning_score_users"].notna())
-        & (enriched_citations["domain_quality"].notna())
+        (enriched_citations["political_leaning_score"].notna())
+        & (enriched_citations["domain_quality_score"].notna())
     ).sum()
     combined_domains_covered = enriched_citations[
-        (enriched_citations["leaning_score_users"].notna()) & 
-        (enriched_citations["domain_quality"].notna())
+        (enriched_citations["political_leaning_score"].notna()) & 
+        (enriched_citations["domain_quality_score"].notna())
     ]["domain"].nunique()
     print(
         f"Combined coverage: {combined_coverage:,} citations ({combined_coverage / total_citations * 100:.1f}%)"
@@ -180,28 +192,35 @@ def generate_summary_stats(enriched_citations):
 
     # Political leaning distribution
     if pol_coverage > 0:
-        print(f"\nPolitical leaning distribution (users score):")
-        pol_stats = enriched_citations["leaning_score_users"].describe()
-        print(f"  Mean: {pol_stats['mean']:.3f}")
-        print(f"  Std:  {pol_stats['std']:.3f}")
-        print(f"  Min:  {pol_stats['min']:.3f}")
-        print(f"  Max:  {pol_stats['max']:.3f}")
+        print(f"\nPolitical leaning distribution:")
+        pol_stats = enriched_citations["political_leaning_score"].describe()
+        print(f"  Score Mean: {pol_stats['mean']:.3f}")
+        print(f"  Score Std:  {pol_stats['std']:.3f}")
+        print(f"  Score Min:  {pol_stats['min']:.3f}")
+        print(f"  Score Max:  {pol_stats['max']:.3f}")
 
-        # Binary leaning distribution
-        left_leaning_count = enriched_citations["is_left_leaning"].sum()
-        left_leaning_pct = left_leaning_count / pol_coverage * 100
-        print(
-            f"  Left leaning citations: {left_leaning_count:,} ({left_leaning_pct:.1f}% of citations with leaning data)"
-        )
+        # Categorical leaning distribution
+        print(f"  Political leaning categories:")
+        leaning_counts = enriched_citations["political_leaning"].value_counts()
+        for leaning, count in leaning_counts.items():
+            pct = count / total_citations * 100
+            print(f"    {leaning}: {count:,} ({pct:.1f}% of all citations)")
 
     # Domain quality distribution
     if qual_coverage > 0:
         print(f"\nDomain quality distribution:")
-        qual_stats = enriched_citations["domain_quality"].describe()
-        print(f"  Mean: {qual_stats['mean']:.3f}")
-        print(f"  Std:  {qual_stats['std']:.3f}")
-        print(f"  Min:  {qual_stats['min']:.3f}")
-        print(f"  Max:  {qual_stats['max']:.3f}")
+        qual_stats = enriched_citations["domain_quality_score"].describe()
+        print(f"  Score Mean: {qual_stats['mean']:.3f}")
+        print(f"  Score Std:  {qual_stats['std']:.3f}")
+        print(f"  Score Min:  {qual_stats['min']:.3f}")
+        print(f"  Score Max:  {qual_stats['max']:.3f}")
+
+        # Categorical quality distribution
+        print(f"  Domain quality categories:")
+        quality_counts = enriched_citations["domain_quality"].value_counts()
+        for quality, count in quality_counts.items():
+            pct = count / total_citations * 100
+            print(f"    {quality}: {count:,} ({pct:.1f}% of all citations)")
 
 
 def main():
