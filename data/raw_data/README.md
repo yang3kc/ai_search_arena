@@ -32,6 +32,23 @@ The `leaning_score_users` contains the political leaning of the domain.
 The `domain` contains the domain name.
 The `pc1` contains the domain credibility score.
 
-## List of news sources
+## Domain classification data
 
-`list_of_news_domains.txt` contains the list of news domains.
+### Manual classification
+
+`domain_classification_manual.csv` contains the manual classification of some most popular domains from the citation data.
+It contains two columns: `domain` and `classification`.
+
+The classifications include:
+
+- `social_media`: social media platforms (e.g. facebook, twitter, instagram, etc.)
+- `wiki`: all types of encyclopedia (e.g. wikipedia, wikidata, etc.)
+- `news`: news outlets
+- `tech`: tech and coding platforms (e.g. github, stackoverflow, etc.)
+- `community_blog`: community blogs (e.g. medium, substack, etc.)
+- `gov_edu`: government and education institutions (those that end with `.gov` or `.edu`)
+- `other`: other domains that don't fit into the other categories
+
+### List of news sources
+
+`list_of_news_domains.txt` contains a list of news domains.
