@@ -1,8 +1,9 @@
 # YouTube Analysis Pipeline Configuration
 
 # Data paths
-citations_data_path: "../../../data/intermediate/cleaned_arena_data/citations.parquet"
 output_dir: "data"
+intermediate_dir: "../../../data/intermediate/youtube_analysis"
+citations_data_path: "../../../data/intermediate/cleaned_arena_data/citations.parquet"
 
 # YouTube API configuration
 youtube_api_key_env_var: "YOUTUBE_API_KEY"  # Environment variable name
@@ -12,12 +13,12 @@ rate_limit_delay: 1.0  # Seconds to wait between API requests
 # API quotas and limits (for reference)
 # YouTube Data API v3 default quota: 10,000 units/day
 # Cost per request:
-#   - videos.list: 1 unit per video
-#   - channels.list: 1 unit per channel
+#   - videos.list: 1 unit per request, each request can contain up to 50 videos
+#   - channels.list: 1 unit per request, each request can contain up to 50 channels
 # Estimated usage:
-#   - ~19,749 videos = ~19,749 units
-#   - ~5,000-10,000 channels = ~5,000-10,000 units
-#   - Total: ~25,000-30,000 units (may need increased quota)
+#   - ~19,749 videos = ~394.98 units (50 videos per request)
+#   - ~5,000-10,000 channels = ~100-200 units (50 channels per request)
+#   - Total: ~600 units
 
 # Data processing settings
 max_description_length: 500  # Truncate descriptions to save space
