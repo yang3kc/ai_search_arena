@@ -2,6 +2,7 @@
 
 # Data paths
 raw_data_path: "../../data/raw_data/search-arena-chat-24k.parquet"
+raw_data_dir: "../../data/raw_data"
 intermediate_dir: "../../data/intermediate/cleaned_arena_data"
 output_dir: "../../data/output/cleaned_arena_data"
 

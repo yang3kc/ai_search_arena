@@ -35,6 +35,15 @@ def validate_extraction():
         responses_df = pd.read_parquet(responses_file)
         citations_df = pd.read_parquet(citations_file)
         
+        # Try to load enriched citations if available
+        enriched_citations_file = citations_file.replace('citations.parquet', 'citations_enriched.parquet')
+        try:
+            enriched_citations_df = pd.read_parquet(enriched_citations_file)
+            logger.info(f"Loaded enriched citations: {len(enriched_citations_df)} rows")
+        except FileNotFoundError:
+            enriched_citations_df = None
+            logger.info("Enriched citations not found - skipping enrichment validation")
+        
         logger.info(f"Loaded threads: {len(threads_df)} rows")
         logger.info(f"Loaded questions: {len(questions_df)} rows")
         logger.info(f"Loaded responses: {len(responses_df)} rows")
@@ -275,7 +284,71 @@ def validate_extraction():
         report_lines.append(f"{stat}\n")
 
     # ============================================================================
-    # 8. VALIDATION SUMMARY
+    # 8. ENRICHED CITATIONS VALIDATION (if available)
+    # ============================================================================
+    if enriched_citations_df is not None:
+        logger.info("\n=== ENRICHED CITATIONS VALIDATION ===")
+        report_lines.append(f"\n=== ENRICHED CITATIONS VALIDATION ===\n")
+        
+        # Check row count consistency
+        enriched_count = len(enriched_citations_df)
+        original_count = len(citations_df)
+        
+        log_result("Enriched citations row count matches original", 
+                  enriched_count == original_count,
+                  f"Enriched: {enriched_count}, Original: {original_count}")
+        
+        # Check for political leaning data
+        if 'leaning_score_users' in enriched_citations_df.columns:
+            pol_coverage = enriched_citations_df['leaning_score_users'].notna().sum()
+            pol_pct = pol_coverage / enriched_count * 100
+            log_result("Political leaning data coverage", pol_pct >= 30.0,
+                      f"Political leaning available: {pol_coverage}/{enriched_count} ({pol_pct:.1f}%)",
+                      warning=pol_pct >= 20.0)
+            
+            # Check binary leaning variable
+            if 'is_left_leaning' in enriched_citations_df.columns:
+                left_count = enriched_citations_df['is_left_leaning'].sum()
+                left_pct = left_count / pol_coverage * 100 if pol_coverage > 0 else 0
+                log_result("Binary leaning variable created", 'is_left_leaning' in enriched_citations_df.columns,
+                          f"Left leaning citations: {left_count:,} ({left_pct:.1f}% of citations with leaning data)")
+        
+        # Check for domain quality data
+        if 'domain_quality' in enriched_citations_df.columns:
+            qual_coverage = enriched_citations_df['domain_quality'].notna().sum()
+            qual_pct = qual_coverage / enriched_count * 100
+            log_result("Domain quality data coverage", qual_pct >= 20.0,
+                      f"Domain quality available: {qual_coverage}/{enriched_count} ({qual_pct:.1f}%)",
+                      warning=qual_pct >= 15.0)
+        
+        # Check for combined coverage
+        if 'leaning_score_users' in enriched_citations_df.columns and 'domain_quality' in enriched_citations_df.columns:
+            combined_coverage = ((enriched_citations_df['leaning_score_users'].notna()) & 
+                               (enriched_citations_df['domain_quality'].notna())).sum()
+            combined_pct = combined_coverage / enriched_count * 100
+            log_result("Combined metrics coverage", combined_pct >= 15.0,
+                      f"Both metrics available: {combined_coverage}/{enriched_count} ({combined_pct:.1f}%)",
+                      warning=combined_pct >= 10.0)
+        
+        # Enrichment summary stats
+        enrichment_stats = [
+            f"Enriched citations: {enriched_count:,} rows, {len(enriched_citations_df.columns)} columns"
+        ]
+        
+        if 'leaning_score_users' in enriched_citations_df.columns:
+            pol_stats = enriched_citations_df['leaning_score_users'].describe()
+            enrichment_stats.append(f"Political leaning range: {pol_stats['min']:.3f} to {pol_stats['max']:.3f}")
+        
+        if 'domain_quality' in enriched_citations_df.columns:
+            qual_stats = enriched_citations_df['domain_quality'].describe()
+            enrichment_stats.append(f"Domain quality range: {qual_stats['min']:.3f} to {qual_stats['max']:.3f}")
+        
+        for stat in enrichment_stats:
+            logger.info(stat)
+            report_lines.append(f"{stat}\n")
+
+    # ============================================================================
+    # 9. VALIDATION SUMMARY
     # ============================================================================
     logger.info("\n=== VALIDATION SUMMARY ===")
     report_lines.append(f"\n=== VALIDATION SUMMARY ===\n")

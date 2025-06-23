@@ -19,7 +19,7 @@ This creates a **hierarchical relationship** that we need to normalize into a re
 ## Data Structure Analysis
 
 ### Dataset Characteristics
-- **Total conversation threads**: 24,069 
+- **Total conversation threads**: 24,069
 - **Total conversation turns**: Variable (depends on `turn` field distribution)
 - **Total questions**: Sum of all turns across all threads
 - **Total responses**: 2 × total questions (model_a + model_b for each question)
@@ -175,7 +175,7 @@ CREATE TABLE citations (
    - Link questions to threads via thread_id
    - Track turn_number within each thread
 
-### Phase 2: Responses Extraction  
+### Phase 2: Responses Extraction
 2. **Process model responses per turn**
    - Create response_id for each model (a/b) per question per turn
    - Extract response content from assistant messages in each turn
@@ -249,7 +249,7 @@ The primary analysis focus will be on the **citations table** as it contains the
 
 ### Key Analysis Capabilities
 1. **Citation Bias Analysis**: Join citations with domain political leaning data
-2. **Credibility Assessment**: Join citations with domain credibility ratings  
+2. **Credibility Assessment**: Join citations with domain credibility ratings
 3. **Model Comparison**: Join with responses and threads to compare citation patterns by model
 4. **Topic Analysis**: Join with questions to understand citation patterns by query type
 5. **Temporal Patterns**: Join with threads for time-based citation behavior analysis
@@ -265,7 +265,7 @@ The primary analysis focus will be on the **citations table** as it contains the
    - Every response links to exactly one question
    - Every citation links to exactly one response
 
-2. **Row count validation**: 
+2. **Row count validation**:
    - Threads: 24,069 rows (1:1 with original data)
    - Questions: 32,884 rows (sum of all turn counts)
    - Responses: 65,768 rows (2× questions count)

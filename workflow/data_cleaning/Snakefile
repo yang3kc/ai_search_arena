@@ -9,6 +9,7 @@ configfile: "config/config.yaml"
 
 # Define paths
 RAW_DATA = config["raw_data_path"]
+RAW_DATA_DIR = config["raw_data_dir"]
 INTERMEDIATE_DIR = config["intermediate_dir"]
 OUTPUT_DIR = config["output_dir"]
 LEADERBOARD_DIR = f"{INTERMEDIATE_DIR}/leaderboard"
@@ -25,6 +26,8 @@ rule all:
         f"{INTERMEDIATE_DIR}/citations.parquet",
         # Validation report
         f"{INTERMEDIATE_DIR}/validation_report.txt",
+        # Enriched citations with political leaning and domain quality
+        f"{INTERMEDIATE_DIR}/citations_enriched.parquet",
         # Leaderboard outputs
         f"{LEADERBOARD_DIR}/leaderboard_summary.json"
 
@@ -89,7 +92,18 @@ rule validate_extraction:
     script:
         "scripts/06_validate_extraction.py"
 
-# Phase 7: Generate leaderboard from cleaned data
+# Phase 7: Enrich citations with political leaning and domain quality metrics
+rule enrich_citations:
+    input:
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet",
+        political_leaning=f"{RAW_DATA_DIR}/DomainDemo_political_leaning.csv.gz",
+        domain_ratings=f"{RAW_DATA_DIR}/lin_domain_ratings.csv.gz"
+    output:
+        f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
+    script:
+        "scripts/07_enrich_citations.py"
+
+# Phase 8: Generate leaderboard from cleaned data
 rule generate_leaderboard:
     input:
         threads=f"{INTERMEDIATE_DIR}/threads.parquet",
