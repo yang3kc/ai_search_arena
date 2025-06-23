@@ -25,7 +25,11 @@ rule all:
         f"{INTERMEDIATE_DIR}/citations.parquet",
         # Validation report
         f"{INTERMEDIATE_DIR}/validation_report.txt",
-        # Enriched citations with political leaning and domain quality
+        # Unique domains for efficient enrichment
+        f"{INTERMEDIATE_DIR}/domains.parquet",
+        # Enriched domains with all signals
+        f"{INTERMEDIATE_DIR}/domains_enriched.parquet",
+        # Final enriched citations
         f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
 
 # Phase 1: Data exploration and validation
@@ -89,14 +93,33 @@ rule validate_extraction:
     script:
         "scripts/validate_extraction.py"
 
-# Phase 7: Enrich citations with political leaning and domain quality metrics
-rule enrich_citations:
+# Phase 7: Extract unique domains from citations
+rule extract_domains:
     input:
-        citations=f"{INTERMEDIATE_DIR}/citations.parquet",
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/domains.parquet"
+    script:
+        "scripts/extract_domains.py"
+
+# Phase 8: Enrich domains with all signals
+rule enrich_domains:
+    input:
+        domains=f"{INTERMEDIATE_DIR}/domains.parquet",
         political_leaning=f"{RAW_DATA_DIR}/DomainDemo_political_leaning.csv.gz",
         domain_ratings=f"{RAW_DATA_DIR}/lin_domain_ratings.csv.gz"
     output:
+        f"{INTERMEDIATE_DIR}/domains_enriched.parquet"
+    script:
+        "scripts/enrich_domains_combined.py"
+
+# Phase 9: Merge enriched domains back to citations
+rule enrich_citations:
+    input:
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet",
+        enriched_domains=f"{INTERMEDIATE_DIR}/domains_enriched.parquet"
+    output:
         f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
     script:
-        "scripts/enrich_citations.py"
+        "scripts/merge_enriched_citations.py"
 
