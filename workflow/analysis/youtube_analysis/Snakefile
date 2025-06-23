@@ -15,13 +15,15 @@ rule all:
     input:
         # Phase 1: YouTube URL extraction
         f"{INTERMEDIATE_DIR}/youtube_citations.parquet",
-        # Phase 2: Video metadata collection
+        # Phase 2: Unique video extraction
+        f"{INTERMEDIATE_DIR}/unique_videos.parquet",
+        # Phase 3: Video metadata collection
         f"{INTERMEDIATE_DIR}/video_metadata.parquet",
-        # Phase 3: Channel data extraction
+        # Phase 4: Channel data extraction
         f"{INTERMEDIATE_DIR}/unique_channels.parquet",
-        # Phase 4: Channel metadata collection
+        # Phase 5: Channel metadata collection
         f"{INTERMEDIATE_DIR}/channel_metadata.parquet",
-        # Phase 5: Final integrated dataset
+        # Phase 6: Final integrated dataset
         f"{INTERMEDIATE_DIR}/youtube_analysis_dataset.parquet"
 
 # Phase 1: Extract YouTube URLs and video IDs
@@ -33,10 +35,19 @@ rule extract_youtube_urls:
     script:
         "scripts/extract_youtube_urls.py"
 
-# Phase 2: Fetch video metadata from YouTube API
-rule fetch_video_metadata:
+# Phase 2: Extract unique video IDs
+rule extract_unique_videos:
     input:
         youtube_citations=f"{INTERMEDIATE_DIR}/youtube_citations.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/unique_videos.parquet"
+    script:
+        "scripts/extract_unique_videos.py"
+
+# Phase 3: Fetch video metadata from YouTube API
+rule fetch_video_metadata:
+    input:
+        unique_videos=f"{INTERMEDIATE_DIR}/unique_videos.parquet"
     output:
         video_metadata=f"{INTERMEDIATE_DIR}/video_metadata.parquet",
         api_responses_dir=directory(f"{INTERMEDIATE_DIR}/video_api_responses")
@@ -47,7 +58,7 @@ rule fetch_video_metadata:
     script:
         "scripts/fetch_video_metadata.py"
 
-# Phase 3: Extract unique channel IDs
+# Phase 4: Extract unique channel IDs
 rule extract_channel_data:
     input:
         video_metadata=f"{INTERMEDIATE_DIR}/video_metadata.parquet"
@@ -56,7 +67,7 @@ rule extract_channel_data:
     script:
         "scripts/extract_channel_data.py"
 
-# Phase 4: Fetch channel metadata from YouTube API
+# Phase 5: Fetch channel metadata from YouTube API
 rule fetch_channel_metadata:
     input:
         unique_channels=f"{INTERMEDIATE_DIR}/unique_channels.parquet"
@@ -70,7 +81,7 @@ rule fetch_channel_metadata:
     script:
         "scripts/fetch_channel_metadata.py"
 
-# Phase 5: Integrate all data into final analysis dataset
+# Phase 6: Integrate all data into final analysis dataset
 rule integrate_youtube_data:
     input:
         youtube_citations=f"{INTERMEDIATE_DIR}/youtube_citations.parquet",
@@ -80,3 +91,28 @@ rule integrate_youtube_data:
         f"{INTERMEDIATE_DIR}/youtube_analysis_dataset.parquet"
     script:
         "scripts/integrate_youtube_data.py"
+
+# Individual phase targets for testing
+rule phase1:
+    input:
+        f"{INTERMEDIATE_DIR}/youtube_citations.parquet"
+
+rule phase2:
+    input:
+        f"{INTERMEDIATE_DIR}/unique_videos.parquet"
+
+rule phase3:
+    input:
+        f"{INTERMEDIATE_DIR}/video_metadata.parquet"
+
+rule phase4:
+    input:
+        f"{INTERMEDIATE_DIR}/unique_channels.parquet"
+
+rule phase5:
+    input:
+        f"{INTERMEDIATE_DIR}/channel_metadata.parquet"
+
+rule phase6:
+    input:
+        f"{INTERMEDIATE_DIR}/youtube_analysis_dataset.parquet"
