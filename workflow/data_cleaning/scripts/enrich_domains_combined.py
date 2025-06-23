@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import individual signal enrichment modules
 import enrich_political_leaning
 import enrich_domain_quality
+import enrich_domain_classification
 
 
 def generate_domains_summary_stats(enriched_domains):
@@ -82,6 +83,28 @@ def generate_domains_summary_stats(enriched_domains):
                     f"    {category}: {cat_citations:,} citations ({cat_pct:.1f}%) from {cat_domains:,} domains"
                 )
 
+    # Domain classification coverage
+    if "domain_classification" in enriched_domains.columns:
+        print(f"\nDomain classification coverage:")
+        print(
+            f"  All domains classified: {total_domains:,} / {total_domains:,} (100.0%)"
+        )
+        print(
+            f"  All citations classified: {total_citations:,} / {total_citations:,} (100.0%)"
+        )
+
+        print(f"  Domain classification categories (by citation count):")
+        class_counts = enriched_domains["domain_classification"].value_counts()
+        for category in class_counts.index:
+            cat_citations = enriched_domains[
+                enriched_domains["domain_classification"] == category
+            ]["citation_count"].sum()
+            cat_pct = cat_citations / total_citations * 100
+            cat_domains = (enriched_domains["domain_classification"] == category).sum()
+            print(
+                f"    {category}: {cat_citations:,} citations ({cat_pct:.1f}%) from {cat_domains:,} domains"
+            )
+
     # Combined coverage
     if (
         "political_leaning_score" in enriched_domains.columns
@@ -124,6 +147,8 @@ def generate_domains_summary_stats(enriched_domains):
             and row["domain_quality"] != "unknown"
         ):
             signals.append(f"qual:{row['domain_quality']}")
+        if "domain_classification" in row and pd.notna(row["domain_classification"]):
+            signals.append(f"class:{row['domain_classification']}")
 
         if signals:
             domain_info += f" [{', '.join(signals)}]"
@@ -137,6 +162,8 @@ def main():
     domains_path = snakemake.input.domains
     political_leaning_path = snakemake.input.political_leaning
     domain_ratings_path = snakemake.input.domain_ratings
+    manual_classification_path = snakemake.input.manual_classification
+    news_domains_path = snakemake.input.news_domains
     output_path = snakemake.output[0]
 
     # Load unique domains data
@@ -173,6 +200,23 @@ def main():
         enriched, domain_quality_data
     )
 
+    # === Signal 3: Domain Classification ===
+    print("\n" + "=" * 50)
+    print("ENRICHING WITH DOMAIN CLASSIFICATION SIGNAL")
+    print("=" * 50)
+
+    manual_classification_data = (
+        enrich_domain_classification.load_manual_classification_data(
+            manual_classification_path
+        )
+    )
+    news_domains_set = enrich_domain_classification.load_news_domains_data(
+        news_domains_path
+    )
+    enriched = enrich_domain_classification.enrich_with_domain_classification(
+        enriched, manual_classification_data, news_domains_set
+    )
+
     # === Future signals can be added here ===
 
     # Generate comprehensive summary statistics
@@ -184,7 +228,7 @@ def main():
 
     print(f"\n✅ Domain enrichment completed successfully!")
     print(f"Final dataset: {len(enriched):,} domains, {len(enriched.columns)} columns")
-    print(f"Signals added: political_leaning, domain_quality")
+    print(f"Signals added: political_leaning, domain_quality, domain_classification")
 
 
 if __name__ == "__main__":
