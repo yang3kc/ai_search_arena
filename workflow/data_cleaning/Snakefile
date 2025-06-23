@@ -38,7 +38,7 @@ rule explore_data:
     output:
         f"{INTERMEDIATE_DIR}/exploration_report.txt"
     script:
-        "scripts/01_explore_structure.py"
+        "scripts/explore_structure.py"
 
 # Phase 2: Extract thread-level data
 rule extract_threads:
@@ -48,7 +48,7 @@ rule extract_threads:
     output:
         f"{INTERMEDIATE_DIR}/threads.parquet"
     script:
-        "scripts/02_extract_threads.py"
+        "scripts/extract_threads.py"
 
 # Phase 3: Extract questions from conversation turns
 rule extract_questions:
@@ -58,7 +58,7 @@ rule extract_questions:
     output:
         f"{INTERMEDIATE_DIR}/questions.parquet"
     script:
-        "scripts/03_extract_questions.py"
+        "scripts/extract_questions.py"
 
 # Phase 4: Extract responses from both models
 rule extract_responses:
@@ -68,7 +68,7 @@ rule extract_responses:
     output:
         f"{INTERMEDIATE_DIR}/responses.parquet"
     script:
-        "scripts/04_extract_responses.py"
+        "scripts/extract_responses.py"
 
 # Phase 5: Extract citations from web search traces
 rule extract_citations:
@@ -78,7 +78,7 @@ rule extract_citations:
     output:
         f"{INTERMEDIATE_DIR}/citations.parquet"
     script:
-        "scripts/05_extract_citations.py"
+        "scripts/extract_citations.py"
 
 # Phase 6: Data validation and quality checks
 rule validate_extraction:
@@ -90,7 +90,7 @@ rule validate_extraction:
     output:
         f"{INTERMEDIATE_DIR}/validation_report.txt"
     script:
-        "scripts/06_validate_extraction.py"
+        "scripts/validate_extraction.py"
 
 # Phase 7: Enrich citations with political leaning and domain quality metrics
 rule enrich_citations:
@@ -101,7 +101,7 @@ rule enrich_citations:
     output:
         f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
     script:
-        "scripts/07_enrich_citations.py"
+        "scripts/enrich_citations.py"
 
 # Phase 8: Generate leaderboard from cleaned data
 rule generate_leaderboard:
@@ -121,4 +121,4 @@ rule generate_leaderboard:
     params:
         config=config.get("leaderboard", {})
     shell:
-        "python scripts/07_generate_leaderboard.py {INTERMEDIATE_DIR} {LEADERBOARD_DIR}"
+        "python scripts/generate_leaderboard.py {INTERMEDIATE_DIR} {LEADERBOARD_DIR}"
