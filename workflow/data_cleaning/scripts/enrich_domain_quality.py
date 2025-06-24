@@ -4,7 +4,7 @@ Enrich citations with domain quality scores.
 
 This script adds domain quality metrics to citations data:
 - domain_quality_score (continuous): from lin_domain_ratings.csv.gz (pc1 column)
-- domain_quality (categorical): high_quality/low_quality/unknown (threshold: 0.7)
+- domain_quality (categorical): high_quality/low_quality/unknown (threshold: 0.5)
 """
 
 import pandas as pd
@@ -28,10 +28,10 @@ def load_domain_quality_data(filepath):
     df = df[["domain", "pc1"]].copy()
     df = df.rename(columns={"pc1": "domain_quality_score"})
 
-    # Create categorical domain quality variable using 0.7 threshold
+    # Create categorical domain quality variable using 0.5 threshold
     df["domain_quality"] = "unknown"
-    df.loc[df["domain_quality_score"] >= 0.7, "domain_quality"] = "high_quality"
-    df.loc[df["domain_quality_score"] < 0.7, "domain_quality"] = "low_quality"
+    df.loc[df["domain_quality_score"] >= 0.5, "domain_quality"] = "high_quality"
+    df.loc[df["domain_quality_score"] < 0.5, "domain_quality"] = "low_quality"
     df.loc[df["domain_quality_score"].isna(), "domain_quality"] = "unknown"
 
     print(f"Domain quality distribution:")
