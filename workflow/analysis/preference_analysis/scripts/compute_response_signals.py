@@ -103,7 +103,7 @@ def compute_quality_metrics(citations_df):
         total_cites = len(group)
 
         # Define quality categories once
-        quality_categories = ["high_quality", "low_quality", "unknown"]
+        quality_categories = ["high_quality", "low_quality", "unknown_quality"]
 
         if total_cites > 0:
             # Quality distribution
@@ -134,7 +134,7 @@ def compute_bias_metrics(citations_df):
         total_cites = len(group)
 
         # Define political leaning categories once
-        leaning_categories = ["left_leaning", "right_leaning", "unknown"]
+        leaning_categories = ["left_leaning", "right_leaning", "unknown_leaning"]
 
         if total_cites > 0:
             # Political leaning distribution
@@ -166,7 +166,7 @@ def compute_news_quality_metrics(citations_df):
         total_news_cites = len(news_citations)
 
         # Define quality categories once
-        quality_categories = ["high_quality", "low_quality", "unknown"]
+        quality_categories = ["high_quality", "low_quality", "unknown_quality"]
 
         if total_news_cites > 0:
             # Quality distribution among news citations only
@@ -198,7 +198,7 @@ def compute_news_bias_metrics(citations_df):
         total_news_cites = len(news_citations)
 
         # Define political leaning categories once
-        leaning_categories = ["left_leaning", "right_leaning", "unknown"]
+        leaning_categories = ["left_leaning", "right_leaning", "unknown_leaning"]
 
         if total_news_cites > 0:
             # Political leaning distribution among news citations only

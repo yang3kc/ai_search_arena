@@ -701,12 +701,16 @@ def main():
                 "proportion_news",
                 "proportion_low_quality",
                 "proportion_high_quality",
+                "proportion_unknown_quality",
                 "proportion_left_leaning",
                 "proportion_right_leaning",
+                "proportion_unknown_leaning",
                 "news_proportion_low_quality",
                 "news_proportion_high_quality",
+                "news_proportion_unknown_quality",
                 "news_proportion_left_leaning",
                 "news_proportion_right_leaning",
+                "news_proportion_unknown_leaning",
             ]
         },
     }
