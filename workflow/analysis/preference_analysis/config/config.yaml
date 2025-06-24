@@ -1,0 +1,35 @@
+# News Citation Preference Analysis Configuration
+
+# Data paths
+cleaned_data_dir: "../../../data/intermediate/cleaned_arena_data"
+citation_analysis_dir: "../../../data/intermediate/citation_analysis"
+analysis_dir: "../../../data/intermediate/preference_analysis"
+
+# Bradley-Terry model parameters
+statistical_analysis:
+  anchor_model: "gpt-4o-search-preview"
+  anchor_rating: 1000.0
+  bootstrap_samples: 1000
+  random_seed: 42
+  confidence_level: 0.95
+
+# Analysis thresholds
+filtering:
+  min_citations_per_response: 1
+  min_battles_per_analysis: 50
+  exclude_ties: true
+  valid_winners: ["model_a", "model_b"]
+
+# Response signal features to compute
+response_signals:
+  primary_features:
+    - "response_length"           # Character count of response
+    - "num_citations"            # Total citation count
+    - "proportion_low_quality"   # Fraction of low-quality news sources
+    - "proportion_right_leaning" # Fraction of right-leaning sources
+
+# Output settings
+output:
+  preserve_intermediate_files: true
+  generate_html_report: true
+  create_visualizations: true

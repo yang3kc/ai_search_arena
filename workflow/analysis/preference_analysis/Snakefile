@@ -1,0 +1,138 @@
+# Snakemake workflow for News Citation Preference Analysis
+#
+# This workflow analyzes how different patterns of news citations affect
+# user preferences in AI search responses using a Bradley-Terry model approach.
+
+import os
+from pathlib import Path
+
+# Configuration
+configfile: "config/config.yaml"
+
+# Define paths from config
+INPUT_DIR = Path(config["cleaned_data_dir"])
+OUTPUT_DIR = Path(config["analysis_dir"])
+SCRIPTS_DIR = Path(workflow.basedir) / "scripts"
+
+# Ensure output directory exists
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Final outputs
+rule all:
+    input:
+        OUTPUT_DIR / "preference_analysis_report.html",
+        OUTPUT_DIR / "visualizations" / "effect_sizes.png",
+        OUTPUT_DIR / "preference_results.json"
+
+# Phase 1: Data Preparation
+rule prepare_data:
+    input:
+        citations = INPUT_DIR / "citations.parquet",
+        responses = INPUT_DIR / "responses.parquet",
+        threads = INPUT_DIR / "threads.parquet"
+    output:
+        threads = OUTPUT_DIR / "news_competitions.parquet",
+        responses = OUTPUT_DIR / "news_responses.parquet",
+        citations = OUTPUT_DIR / "news_citations.parquet"
+    log:
+        OUTPUT_DIR / "logs" / "prepare_data.log"
+    script:
+        "scripts/prepare_news_competitions.py"
+
+# Phase 2: Response Signal Computation
+rule compute_signals:
+    input:
+        threads = OUTPUT_DIR / "news_competitions.parquet",
+        responses = OUTPUT_DIR / "news_responses.parquet",
+        citations = OUTPUT_DIR / "news_citations.parquet"
+    output:
+        OUTPUT_DIR / "response_signals.parquet"
+    log:
+        OUTPUT_DIR / "logs" / "compute_signals.log"
+    params:
+        # External data paths (optional)
+        bias_data = config["external_data"]["political_bias_data"],
+        quality_data = config["external_data"]["source_quality_data"]
+    script:
+        "scripts/compute_response_signals.py"
+
+# Phase 3: Battle Data Creation
+rule create_battles:
+    input:
+        threads = OUTPUT_DIR / "news_competitions.parquet",
+        signals = OUTPUT_DIR / "response_signals.parquet"
+    output:
+        OUTPUT_DIR / "battle_data.parquet"
+    log:
+        OUTPUT_DIR / "logs" / "create_battles.log"
+    script:
+        "scripts/create_battle_data.py"
+
+# Phase 4: Statistical Analysis
+rule analyze_preferences:
+    input:
+        OUTPUT_DIR / "battle_data.parquet"
+    output:
+        results = OUTPUT_DIR / "preference_results.json",
+        coefficients = OUTPUT_DIR / "preference_coefficients.csv"
+    log:
+        OUTPUT_DIR / "logs" / "analyze_preferences.log"
+    params:
+        bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"],
+        random_seed = config["statistical_analysis"]["random_seed"]
+    script:
+        "scripts/analyze_preferences.py"
+
+# Phase 5: Reporting and Visualization
+rule generate_report:
+    input:
+        results = OUTPUT_DIR / "preference_results.json",
+        battle_data = OUTPUT_DIR / "battle_data.parquet",
+        coefficients = OUTPUT_DIR / "preference_coefficients.csv"
+    output:
+        report = OUTPUT_DIR / "preference_analysis_report.html",
+        effect_sizes = OUTPUT_DIR / "visualizations" / "effect_sizes.png",
+        confidence_intervals = OUTPUT_DIR / "visualizations" / "confidence_intervals.png",
+        significance = OUTPUT_DIR / "visualizations" / "statistical_significance.png"
+    log:
+        OUTPUT_DIR / "logs" / "generate_report.log"
+    script:
+        "scripts/generate_report.py"
+
+# Convenience rules for running partial workflows
+rule prepare_only:
+    input:
+        OUTPUT_DIR / "news_competitions.parquet"
+
+rule compute_signals_only:
+    input:
+        OUTPUT_DIR / "response_signals.parquet"
+
+rule create_battles_only:
+    input:
+        OUTPUT_DIR / "battle_data.parquet"
+
+rule analyze_only:
+    input:
+        OUTPUT_DIR / "preference_results.json"
+
+rule report_only:
+    input:
+        OUTPUT_DIR / "preference_analysis_report.html"
+
+# Clean intermediate files
+rule clean:
+    shell:
+        """
+        rm -rf {OUTPUT_DIR}/news_*.parquet
+        rm -rf {OUTPUT_DIR}/response_signals.parquet
+        rm -rf {OUTPUT_DIR}/battle_data.parquet
+        rm -rf {OUTPUT_DIR}/logs/
+        """
+
+# Clean all outputs
+rule clean_all:
+    shell:
+        """
+        rm -rf {OUTPUT_DIR}/*
+        """
