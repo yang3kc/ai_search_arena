@@ -40,15 +40,15 @@ rule prepare_data:
         "scripts/prepare_news_competitions.py"
 
 # Phase 2: Response Signal Computation
-rule compute_signals:
+rule compute_response_signals:
     input:
         threads = OUTPUT_DIR / "news_competitions.parquet",
         responses = OUTPUT_DIR / "news_competitions_responses.parquet",
         citations = OUTPUT_DIR / "news_competitions_citations.parquet"
     output:
-        OUTPUT_DIR / "response_signals.parquet"
+        OUTPUT_DIR / "news_competitions_response_signals.parquet"
     log:
-        OUTPUT_DIR / "logs" / "compute_signals.log"
+        OUTPUT_DIR / "logs" / "compute_response_signals.log"
     script:
         "scripts/compute_response_signals.py"
 
