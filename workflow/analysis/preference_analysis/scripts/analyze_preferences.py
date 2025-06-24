@@ -691,7 +691,7 @@ def main():
         "statistical_analysis": {
             "anchor_model": "gpt-4o-search-preview",
             "anchor_rating": 1000.0,
-            "bootstrap_samples": 50,  # for testing, change later
+            "bootstrap_samples": bootstrap_samples,
             "random_seed": random_seed,
         },
         "response_signals": {
