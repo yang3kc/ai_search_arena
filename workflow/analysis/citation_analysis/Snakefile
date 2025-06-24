@@ -23,7 +23,10 @@ rule all:
         f"{ANALYSIS_DIR}/news_extraction_summary.json",
         # Phase 4: Political bias analysis
         f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
-        f"{ANALYSIS_DIR}/political_bias_report.html"
+        f"{ANALYSIS_DIR}/political_bias_report.html",
+        # Phase 5: Source quality analysis
+        f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
+        f"{ANALYSIS_DIR}/source_quality_analysis_report.html"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -67,22 +70,12 @@ rule analyze_political_bias:
     script:
         "scripts/analyze_political_bias.py"
 
-# Individual phase targets for testing
-rule phase1:
+# Phase 5: Source Quality Analysis
+rule analyze_source_quality:
     input:
-        f"{ANALYSIS_DIR}/integrated_citations.parquet"
-
-rule phase2:
-    input:
-        f"{ANALYSIS_DIR}/domain_classification_analysis.parquet",
-        f"{ANALYSIS_DIR}/domain_classification_report.html"
-
-rule phase3:
-    input:
-        f"{ANALYSIS_DIR}/news_citations.parquet",
-        f"{ANALYSIS_DIR}/news_extraction_summary.json"
-
-rule phase4:
-    input:
-        f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
-        f"{ANALYSIS_DIR}/political_bias_report.html"
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        quality_integrated_citations=f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
+        quality_report=f"{ANALYSIS_DIR}/source_quality_analysis_report.html"
+    script:
+        "scripts/analyze_source_quality.py"
