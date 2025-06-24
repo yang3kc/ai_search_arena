@@ -92,38 +92,20 @@ def compute_quality_metrics(citations_df):
         # Total citations for this response
         total_cites = len(group)
 
+        # Define quality categories once
+        quality_categories = ["high_quality", "low_quality", "unknown"]
+
         if total_cites > 0:
             # Quality distribution
             quality_counts = group["domain_quality"].value_counts()
-            metrics["proportion_high_quality"] = (
-                quality_counts.get("high_quality", 0) / total_cites
-            )
-            metrics["proportion_low_quality"] = (
-                quality_counts.get("low_quality", 0) / total_cites
-            )
-            metrics["proportion_unknown_quality"] = (
-                quality_counts.get("unknown", 0) / total_cites
-            )
-
-            # Average quality score (for numeric scores)
-            if "domain_quality_score" in group.columns:
-                quality_scores = group["domain_quality_score"].dropna()
-                if len(quality_scores) > 0:
-                    metrics["avg_quality_score"] = quality_scores.mean()
-                    metrics["min_quality_score"] = quality_scores.min()
-                    metrics["max_quality_score"] = quality_scores.max()
-                else:
-                    metrics["avg_quality_score"] = np.nan
-                    metrics["min_quality_score"] = np.nan
-                    metrics["max_quality_score"] = np.nan
+            
+            # Compute proportions for each quality category
+            for category in quality_categories:
+                metrics[f"proportion_{category}"] = quality_counts.get(category, 0) / total_cites
         else:
-            # No citations case
-            metrics["proportion_high_quality"] = 0
-            metrics["proportion_low_quality"] = 0
-            metrics["proportion_unknown_quality"] = 0
-            metrics["avg_quality_score"] = np.nan
-            metrics["min_quality_score"] = np.nan
-            metrics["max_quality_score"] = np.nan
+            # No citations case - set all proportions to 0
+            for category in quality_categories:
+                metrics[f"proportion_{category}"] = 0
 
         quality_metrics.append(metrics)
 
@@ -141,41 +123,20 @@ def compute_bias_metrics(citations_df):
         # Total citations for this response
         total_cites = len(group)
 
+        # Define political leaning categories once
+        leaning_categories = ["left_leaning", "right_leaning", "unknown"]
+
         if total_cites > 0:
             # Political leaning distribution
             leaning_counts = group["political_leaning"].value_counts()
-            metrics["proportion_left_leaning"] = (
-                leaning_counts.get("left_leaning", 0) / total_cites
-            )
-            metrics["proportion_right_leaning"] = (
-                leaning_counts.get("right_leaning", 0) / total_cites
-            )
-            metrics["proportion_unknown_leaning"] = (
-                leaning_counts.get("unknown", 0) / total_cites
-            )
-
-            # Average bias score (for numeric scores)
-            if "political_leaning_score" in group.columns:
-                bias_scores = group["political_leaning_score"].dropna()
-                if len(bias_scores) > 0:
-                    metrics["avg_bias_score"] = bias_scores.mean()
-                    metrics["min_bias_score"] = bias_scores.min()
-                    metrics["max_bias_score"] = bias_scores.max()
-                    metrics["bias_score_std"] = bias_scores.std()
-                else:
-                    metrics["avg_bias_score"] = np.nan
-                    metrics["min_bias_score"] = np.nan
-                    metrics["max_bias_score"] = np.nan
-                    metrics["bias_score_std"] = np.nan
+            
+            # Compute proportions for each leaning category
+            for category in leaning_categories:
+                metrics[f"proportion_{category}"] = leaning_counts.get(category, 0) / total_cites
         else:
-            # No citations case
-            metrics["proportion_left_leaning"] = 0
-            metrics["proportion_right_leaning"] = 0
-            metrics["proportion_unknown_leaning"] = 0
-            metrics["avg_bias_score"] = np.nan
-            metrics["min_bias_score"] = np.nan
-            metrics["max_bias_score"] = np.nan
-            metrics["bias_score_std"] = np.nan
+            # No citations case - set all proportions to 0
+            for category in leaning_categories:
+                metrics[f"proportion_{category}"] = 0
 
         bias_metrics.append(metrics)
 
@@ -293,7 +254,7 @@ def validate_signals(signals_df):
     numeric_signals = [
         col
         for col in signals_df.columns
-        if col.startswith(("response_", "num_", "proportion_", "avg_"))
+        if col.startswith(("response_", "num_", "proportion_"))
     ]
     if numeric_signals:
         summary = signals_df[numeric_signals].describe()
@@ -354,7 +315,7 @@ def main():
         signal_cols = [
             col
             for col in enriched_signals.columns
-            if col.startswith(("response_", "num_", "proportion_", "avg_"))
+            if col.startswith(("response_", "num_", "proportion_"))
         ]
         print(f"Computed {len(signal_cols)} signal features")
 
