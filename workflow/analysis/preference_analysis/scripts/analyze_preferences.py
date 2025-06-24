@@ -349,30 +349,43 @@ def _preprocess_for_style(battle_df, features):
     outcomes[battle_df["winner"] == "model_a"] = 1.0
     outcomes[battle_df["winner"] == "model_b"] = 0.0
 
-    # Extract feature differences and handle NaN values
+    # Extract feature differences and apply ratio normalization like leaderboard
     feature_matrix = []
-    valid_rows = []
 
     for idx, row in battle_df.iterrows():
         feature_row = []
-        valid = True
 
         for feature in features:
+            # Get model_a and model_b values for ratio normalization
+            a_col = f"{feature}_a"
+            b_col = f"{feature}_b"
             diff_col = f"{feature}_diff"
-            if diff_col in battle_df.columns:
-                val = row[diff_col]
-                if pd.isna(val):
-                    val = 0.0  # Replace NaN with 0
+
+            if a_col in battle_df.columns and b_col in battle_df.columns:
+                val_a = row[a_col] if not pd.isna(row[a_col]) else 0.0
+                val_b = row[b_col] if not pd.isna(row[b_col]) else 0.0
+
+                # Compute difference and sum for ratio normalization (like leaderboard)
+                diff = val_a - val_b
+                total = (
+                    val_a + val_b + 1.0
+                )  # Add 1 to avoid division by zero (add_one=True)
+
+                # Apply ratio normalization: difference / sum
+                normalized_diff = diff / total if total > 0 else 0.0
+                feature_row.append(normalized_diff)
+            elif diff_col in battle_df.columns:
+                # Fallback to pre-computed difference if _a/_b columns not available
+                val = row[diff_col] if not pd.isna(row[diff_col]) else 0.0
                 feature_row.append(val)
             else:
                 feature_row.append(0.0)
 
         feature_matrix.append(feature_row)
-        valid_rows.append(valid)
 
     feature_matrix = np.array(feature_matrix)
 
-    # Normalize features (subtract mean, divide by std)
+    # Apply z-score normalization (subtract mean, divide by std) like leaderboard
     feature_mean = np.mean(feature_matrix, axis=0)
     feature_std = np.std(feature_matrix, axis=0)
 
@@ -685,7 +698,7 @@ def main():
         },
         "response_signals": {
             "primary_features": [
-                "response_length",
+                "response_word_count",
                 "num_citations",
                 "proportion_low_quality",
                 "proportion_right_leaning",
