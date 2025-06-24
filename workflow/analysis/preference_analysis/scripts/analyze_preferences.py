@@ -98,10 +98,10 @@ def compute_bradley_terry_ratings(battle_df, anchor_model, anchor_rating=1000.0)
     # Scale and anchor the ratings
     scale = 400.0
     init_rating = 1000.0
-    
+
     # Apply Elo scaling
     scaled_ratings = (ratings * scale) + init_rating
-    
+
     # Apply anchor offset
     if anchor_model in models:
         baseline_idx = models.index(anchor_model)
@@ -129,59 +129,64 @@ def compute_bradley_terry_ratings(battle_df, anchor_model, anchor_rating=1000.0)
 def _preprocess_for_bt(df):
     """Preprocess battle data for Bradley-Terry fitting (adapted from leaderboard code)."""
     n_rows = len(df)
-    
+
     # Create model indices
     model_indices, models = pd.factorize(pd.concat([df["model_a"], df["model_b"]]))
     matchups = np.column_stack([model_indices[:n_rows], model_indices[n_rows:]])
-    
+
     # Create schedule with matchup and outcome info
     schedule = np.full((n_rows, 3), fill_value=1, dtype=np.int32)
     schedule[:, [0, 1]] = matchups
-    
+
     # Map outcomes to integers: model_a win -> 2, tie -> 1, model_b win -> 0
     schedule[df["winner"] == "model_a", 2] = 2
     schedule[df["winner"] == "model_b", 2] = 0
     # Ties remain as 1 (prefilled)
-    
+
     # Count occurrences of each unique (model_a, model_b, outcome) triplet
     matchups_outcomes, weights = np.unique(schedule, return_counts=True, axis=0)
-    
+
     # Extract matchups and convert outcomes to probabilities
     final_matchups = matchups_outcomes[:, [0, 1]]
-    outcomes = matchups_outcomes[:, 2].astype(np.float64) / 2.0  # 2->1.0, 1->0.5, 0->0.0
+    outcomes = (
+        matchups_outcomes[:, 2].astype(np.float64) / 2.0
+    )  # 2->1.0, 1->0.5, 0->0.0
     weights = weights.astype(np.float64)
-    
+
     return final_matchups, outcomes, models.to_list(), weights
 
 
 def _fit_bt(matchups, outcomes, weights, n_models, alpha, tol=1e-6):
     """Fit Bradley-Terry model using scipy optimize (adapted from leaderboard code)."""
     initial_ratings = np.zeros(n_models, dtype=np.float64)
-    
+
     def bt_loss_and_grad(ratings):
         matchup_ratings = ratings[matchups]
         logits = alpha * (matchup_ratings[:, 0] - matchup_ratings[:, 1])
-        
+
         # Clip logits for numerical stability
         logits = np.clip(logits, -20, 20)
         probs = 1 / (1 + np.exp(-logits))
-        
+
         # Compute loss
-        loss = -((np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)) * weights).sum()
-        
+        loss = -(
+            (np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes))
+            * weights
+        ).sum()
+
         # Compute gradients
         matchups_grads = -alpha * (outcomes - probs) * weights
         model_grad = np.zeros_like(ratings)
-        
+
         # Aggregate gradients at model level
         np.add.at(
             model_grad,
             matchups[:, [0, 1]],
             matchups_grads[:, None] * np.array([1.0, -1.0], dtype=np.float64),
         )
-        
+
         return loss, model_grad
-    
+
     result = opt.minimize(
         fun=bt_loss_and_grad,
         x0=initial_ratings,
@@ -189,7 +194,7 @@ def _fit_bt(matchups, outcomes, weights, n_models, alpha, tol=1e-6):
         method="L-BFGS-B",
         options={"disp": False, "maxiter": 100, "gtol": tol},
     )
-    
+
     return result.x
 
 
@@ -200,14 +205,17 @@ def _compute_log_likelihood(matchups, outcomes, weights, ratings, alpha=np.log(1
     logits = np.clip(logits, -20, 20)
     probs = 1 / (1 + np.exp(-logits))
     probs = np.clip(probs, 1e-10, 1 - 1e-10)
-    
-    ll = ((np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)) * weights).sum()
+
+    ll = (
+        (np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)) * weights
+    ).sum()
     return ll
 
 
 def compute_style_coefficients(battle_df, features, num_bootstrap=1000, random_seed=42):
     """
-    Compute style coefficients for citation features using Bradley-Terry with controls.
+    Compute style coefficients for citation features using contextual Bradley-Terry model.
+    Based on the leaderboard implementation's compute_bootstrap_style_control.
 
     Args:
         battle_df: Battle data with feature differences
@@ -236,112 +244,38 @@ def compute_style_coefficients(battle_df, features, num_bootstrap=1000, random_s
 
     print(f"  Analyzing features: {available_features}")
 
-    # Get models for Bradley-Terry component
-    models = sorted(set(battle_df["model_a"]) | set(battle_df["model_b"]))
-    model_to_idx = {model: i for i, model in enumerate(models)}
+    # Preprocess data for contextual Bradley-Terry
+    matchups, feature_matrix, outcomes, models = _preprocess_for_style(
+        battle_df, available_features
+    )
     n_models = len(models)
-    n_features = len(available_features)
+    n_features = feature_matrix.shape[1]
 
-    # Prepare data matrices
-    battles = []
-    outcomes = []
-    feature_diffs = []
-
-    for _, row in battle_df.iterrows():
-        model_a_idx = model_to_idx[row["model_a"]]
-        model_b_idx = model_to_idx[row["model_b"]]
-
-        # Get feature differences and check for NaN values
-        feature_diff = []
-        valid_row = True
-
-        for feature in available_features:
-            diff_val = row[f"{feature}_diff"]
-            if pd.isna(diff_val):
-                # Replace NaN with 0 or skip this battle
-                diff_val = 0.0
-            feature_diff.append(diff_val)
-
-        # Only include battles with valid feature data
-        if valid_row and not any(pd.isna(f) for f in feature_diff):
-            battles.append((model_a_idx, model_b_idx))
-            outcomes.append(1 if row["winner"] == "model_a" else 0)
-            feature_diffs.append(feature_diff)
-
-    battles = np.array(battles)
-    outcomes = np.array(outcomes)
-    feature_diffs = np.array(feature_diffs)
-
-    if len(battles) == 0:
-        print(f"  ERROR: No valid battles found after filtering NaN values")
+    if len(matchups) == 0:
+        print(f"  ERROR: No valid battles found after preprocessing")
         return None
 
     print(
-        f"  Using {len(battles):,} battles for analysis (filtered from {len(battle_df):,})"
+        f"  Using {len(matchups):,} battles for analysis (preprocessed from {len(battle_df):,})"
     )
 
-    # Fit main model
-    def fit_model(battle_indices):
-        """Fit Bradley-Terry model with style controls for given battle subset."""
-        sub_battles = battles[battle_indices]
-        sub_outcomes = outcomes[battle_indices]
-        sub_features = feature_diffs[battle_indices]
+    # Fit main contextual Bradley-Terry model
+    alpha = np.log(10.0)  # Standard BT scaling
+    reg = 0.5  # Default regularization from leaderboard
 
-        def neg_log_likelihood(params):
-            # Split parameters: model ratings + feature coefficients
-            ratings = params[:n_models]
-            coefficients = params[n_models:]
+    main_params = _fit_contextual_bt(
+        matchups, feature_matrix, outcomes, models, alpha=alpha, reg=reg
+    )
 
-            # Compute win probabilities
-            rating_diffs = ratings[sub_battles[:, 0]] - ratings[sub_battles[:, 1]]
-            feature_effects = np.sum(sub_features * coefficients, axis=1)
-            logits = rating_diffs + feature_effects
-
-            # Clip logits to prevent overflow
-            logits = np.clip(logits, -20, 20)
-
-            probs = 1 / (1 + np.exp(-logits))
-            probs = np.clip(probs, 1e-10, 1 - 1e-10)
-
-            ll = np.sum(
-                sub_outcomes * np.log(probs) + (1 - sub_outcomes) * np.log(1 - probs)
-            )
-
-            # Check for NaN or infinite values
-            if not np.isfinite(ll):
-                return 1e10  # Return large positive value if invalid
-
-            return -ll
-
-        # Initial parameters (models=0, features=0)
-        initial_params = np.zeros(n_models + n_features)
-
-        try:
-            # Try bounded optimization first
-            bounds = [(-5, 5)] * n_models + [(-2, 2)] * n_features  # Reasonable bounds
-            result = opt.minimize(
-                neg_log_likelihood, initial_params, method="L-BFGS-B", bounds=bounds
-            )
-
-            if result.success and np.isfinite(result.fun):
-                return result.x[n_models:], -result.fun
-
-            # If bounded fails, try unbounded
-            result = opt.minimize(neg_log_likelihood, initial_params, method="BFGS")
-            if result.success and np.isfinite(result.fun):
-                return result.x[n_models:], -result.fun
-
-            return None, None
-        except Exception as e:
-            print(f"    Optimization failed: {e}")
-            return None, None
-
-    # Fit main model
-    main_coeffs, main_ll = fit_model(np.arange(len(battles)))
-
-    if main_coeffs is None:
+    if main_params is None:
         print("  ERROR: Main model fitting failed")
         return None
+
+    # Extract coefficients (skip model ratings)
+    main_coeffs = main_params[n_models:]
+    main_ll = _compute_contextual_log_likelihood(
+        matchups, feature_matrix, outcomes, main_params, alpha
+    )
 
     print(f"  Main model fitted: log-likelihood = {main_ll:.2f}")
 
@@ -355,14 +289,21 @@ def compute_style_coefficients(battle_df, features, num_bootstrap=1000, random_s
 
         # Sample battles with replacement
         bootstrap_indices = np.random.choice(
-            len(battles), size=len(battles), replace=True
+            len(matchups), size=len(matchups), replace=True
         )
 
         # Fit model on bootstrap sample
-        boot_coeffs, _ = fit_model(bootstrap_indices)
+        boot_params = _fit_contextual_bt(
+            matchups[bootstrap_indices],
+            feature_matrix[bootstrap_indices],
+            outcomes[bootstrap_indices],
+            models,
+            alpha=alpha,
+            reg=reg,
+        )
 
-        if boot_coeffs is not None:
-            bootstrap_coefficients.append(boot_coeffs)
+        if boot_params is not None:
+            bootstrap_coefficients.append(boot_params[n_models:])
 
     if not bootstrap_coefficients:
         print("  ERROR: All bootstrap samples failed")
@@ -392,6 +333,139 @@ def compute_style_coefficients(battle_df, features, num_bootstrap=1000, random_s
     }
 
     return results
+
+
+def _preprocess_for_style(battle_df, features):
+    """Preprocess battle data for contextual Bradley-Terry (adapted from leaderboard code)."""
+    # Get matchups and outcomes using existing function
+    model_indices, models = pd.factorize(
+        pd.concat([battle_df["model_a"], battle_df["model_b"]])
+    )
+    n_rows = len(battle_df)
+    matchups = np.column_stack([model_indices[:n_rows], model_indices[n_rows:]])
+
+    # Convert outcomes to probabilities
+    outcomes = np.full(len(battle_df), 0.5)  # Default for ties
+    outcomes[battle_df["winner"] == "model_a"] = 1.0
+    outcomes[battle_df["winner"] == "model_b"] = 0.0
+
+    # Extract feature differences and handle NaN values
+    feature_matrix = []
+    valid_rows = []
+
+    for idx, row in battle_df.iterrows():
+        feature_row = []
+        valid = True
+
+        for feature in features:
+            diff_col = f"{feature}_diff"
+            if diff_col in battle_df.columns:
+                val = row[diff_col]
+                if pd.isna(val):
+                    val = 0.0  # Replace NaN with 0
+                feature_row.append(val)
+            else:
+                feature_row.append(0.0)
+
+        feature_matrix.append(feature_row)
+        valid_rows.append(valid)
+
+    feature_matrix = np.array(feature_matrix)
+
+    # Normalize features (subtract mean, divide by std)
+    feature_mean = np.mean(feature_matrix, axis=0)
+    feature_std = np.std(feature_matrix, axis=0)
+
+    # Avoid division by zero
+    feature_std = np.where(feature_std == 0, 1.0, feature_std)
+    feature_matrix = (feature_matrix - feature_mean) / feature_std
+
+    return matchups, feature_matrix, outcomes, models.to_list()
+
+
+def _fit_contextual_bt(
+    matchups, features, outcomes, models, alpha=np.log(10.0), reg=0.5, tol=1e-6
+):
+    """Fit contextual Bradley-Terry model (adapted from leaderboard code)."""
+    n_models = len(models)
+    n_features = features.shape[1]
+    initial_params = np.zeros(n_models + n_features, dtype=np.float64)
+    half_reg = reg / 2.0
+
+    def contextual_bt_loss_and_grad(params):
+        # Split parameters into ratings and feature parameters
+        ratings = params[:n_models]
+        feature_params = params[n_models:]
+
+        # Regularization loss
+        reg_loss = half_reg * np.inner(params, params)
+
+        # Compute logits
+        matchup_ratings = ratings[matchups]
+        bt_logits = alpha * (matchup_ratings[:, 0] - matchup_ratings[:, 1])
+        context_logits = np.dot(features, feature_params)
+
+        # Clip for numerical stability
+        total_logits = np.clip(bt_logits + context_logits, -20, 20)
+        probs = 1 / (1 + np.exp(-total_logits))
+
+        # Compute loss
+        loss = (
+            -(np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)).sum()
+            + reg_loss
+        )
+
+        # Compute gradients
+        error = outcomes - probs
+        grad = reg * params  # Regularization gradient
+
+        # Model rating gradients
+        matchups_grads = -alpha * error
+        np.add.at(
+            grad[:n_models],
+            matchups[:, [0, 1]],
+            matchups_grads[:, None] * np.array([1.0, -1.0], dtype=np.float64),
+        )
+
+        # Feature parameter gradients
+        grad[n_models:] -= np.dot(features.T, error)
+
+        return loss, grad
+
+    try:
+        result = opt.minimize(
+            fun=contextual_bt_loss_and_grad,
+            x0=initial_params,
+            jac=True,
+            method="L-BFGS-B",
+            options={"disp": False, "maxiter": 100, "gtol": tol},
+        )
+
+        if result.success:
+            return result.x
+        else:
+            return None
+
+    except Exception as e:
+        return None
+
+
+def _compute_contextual_log_likelihood(matchups, features, outcomes, params, alpha):
+    """Compute log-likelihood for contextual Bradley-Terry model."""
+    n_models = len(set(matchups.flatten()))
+    ratings = params[:n_models]
+    feature_params = params[n_models:]
+
+    matchup_ratings = ratings[matchups]
+    bt_logits = alpha * (matchup_ratings[:, 0] - matchup_ratings[:, 1])
+    context_logits = np.dot(features, feature_params)
+
+    total_logits = np.clip(bt_logits + context_logits, -20, 20)
+    probs = 1 / (1 + np.exp(-total_logits))
+    probs = np.clip(probs, 1e-10, 1 - 1e-10)
+
+    ll = (outcomes * np.log(probs) + (1.0 - outcomes) * np.log(1.0 - probs)).sum()
+    return ll
 
 
 def analyze_preferences(battle_df, config):
@@ -606,7 +680,7 @@ def main():
         "statistical_analysis": {
             "anchor_model": "gpt-4o-search-preview",
             "anchor_rating": 1000.0,
-            "bootstrap_samples": bootstrap_samples,
+            "bootstrap_samples": 50,  # for testing, change later
             "random_seed": random_seed,
         },
         "response_signals": {
