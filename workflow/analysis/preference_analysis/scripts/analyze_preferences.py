@@ -66,6 +66,7 @@ def filter_battle_data(battle_df, config):
 def compute_bradley_terry_ratings(battle_df, anchor_model, anchor_rating=1000.0):
     """
     Compute Bradley-Terry model ratings using maximum likelihood estimation.
+    Uses the same approach as the leaderboard implementation.
 
     Args:
         battle_df: DataFrame with model_a, model_b, winner columns
@@ -77,102 +78,131 @@ def compute_bradley_terry_ratings(battle_df, anchor_model, anchor_rating=1000.0)
     """
     print("Computing Bradley-Terry ratings...")
 
-    # Get unique models
-    models = sorted(set(battle_df["model_a"]) | set(battle_df["model_b"]))
-    model_to_idx = {model: i for i, model in enumerate(models)}
+    # Preprocess data similar to leaderboard implementation
+    matchups, outcomes, models, weights = _preprocess_for_bt(battle_df)
     n_models = len(models)
 
     print(f"  Models in analysis: {models}")
+    print(f"  Unique matchups: {len(matchups)}")
 
     # Find anchor model index
-    if anchor_model not in model_to_idx:
+    if anchor_model not in models:
         print(f"  WARNING: Anchor model '{anchor_model}' not found, using first model")
-        anchor_idx = 0
         anchor_model = models[0]
-    else:
-        anchor_idx = model_to_idx[anchor_model]
 
-    print(f"  Anchor model: {anchor_model} (index {anchor_idx})")
+    print(f"  Anchor model: {anchor_model}")
 
-    # Prepare battle data
-    battles = []
-    outcomes = []
+    # Fit Bradley-Terry model (unanchored)
+    ratings = _fit_bt(matchups, outcomes, weights, n_models, alpha=np.log(10.0))
 
-    for _, row in battle_df.iterrows():
-        model_a_idx = model_to_idx[row["model_a"]]
-        model_b_idx = model_to_idx[row["model_b"]]
+    # Scale and anchor the ratings
+    scale = 400.0
+    init_rating = 1000.0
+    
+    # Apply Elo scaling
+    scaled_ratings = (ratings * scale) + init_rating
+    
+    # Apply anchor offset
+    if anchor_model in models:
+        baseline_idx = models.index(anchor_model)
+        offset = anchor_rating - scaled_ratings[baseline_idx]
+        scaled_ratings += offset
 
-        battles.append((model_a_idx, model_b_idx))
-        # Winner is 1 if model_a wins, 0 if model_b wins
-        outcomes.append(1 if row["winner"] == "model_a" else 0)
+    # Create results dictionary
+    model_ratings = {models[i]: scaled_ratings[i] for i in range(n_models)}
 
-    battles = np.array(battles)
-    outcomes = np.array(outcomes)
+    # Compute log-likelihood for reporting
+    log_likelihood = _compute_log_likelihood(matchups, outcomes, weights, ratings)
 
-    # Objective function for MLE
-    def neg_log_likelihood(ratings):
-        # Compute win probabilities using Bradley-Terry model
-        rating_diffs = ratings[battles[:, 0]] - ratings[battles[:, 1]]
-        probs = 1 / (1 + np.exp(-rating_diffs))
-        probs = np.clip(probs, 1e-10, 1 - 1e-10)  # Numerical stability
+    print(f"  Optimization successful: log-likelihood = {log_likelihood:.2f}")
 
-        # Compute log-likelihood
-        ll = np.sum(outcomes * np.log(probs) + (1 - outcomes) * np.log(1 - probs))
-        return -ll
+    return {
+        "model_ratings": model_ratings,
+        "log_likelihood": log_likelihood,
+        "n_battles": len(battle_df),
+        "n_models": n_models,
+        "anchor_model": anchor_model,
+        "anchor_rating": anchor_rating,
+    }
 
-    # Initial ratings (all zero except anchor)
-    initial_ratings = np.zeros(n_models)
 
-    # Optimize ratings with anchor constraint
-    def objective_with_anchor(free_ratings):
-        # Reconstruct full ratings with anchor fixed
-        ratings = np.zeros(n_models)
-        free_idx = 0
-        for i in range(n_models):
-            if i == anchor_idx:
-                ratings[i] = anchor_rating
-            else:
-                ratings[i] = free_ratings[free_idx]
-                free_idx += 1
-        return neg_log_likelihood(ratings)
+def _preprocess_for_bt(df):
+    """Preprocess battle data for Bradley-Terry fitting (adapted from leaderboard code)."""
+    n_rows = len(df)
+    
+    # Create model indices
+    model_indices, models = pd.factorize(pd.concat([df["model_a"], df["model_b"]]))
+    matchups = np.column_stack([model_indices[:n_rows], model_indices[n_rows:]])
+    
+    # Create schedule with matchup and outcome info
+    schedule = np.full((n_rows, 3), fill_value=1, dtype=np.int32)
+    schedule[:, [0, 1]] = matchups
+    
+    # Map outcomes to integers: model_a win -> 2, tie -> 1, model_b win -> 0
+    schedule[df["winner"] == "model_a", 2] = 2
+    schedule[df["winner"] == "model_b", 2] = 0
+    # Ties remain as 1 (prefilled)
+    
+    # Count occurrences of each unique (model_a, model_b, outcome) triplet
+    matchups_outcomes, weights = np.unique(schedule, return_counts=True, axis=0)
+    
+    # Extract matchups and convert outcomes to probabilities
+    final_matchups = matchups_outcomes[:, [0, 1]]
+    outcomes = matchups_outcomes[:, 2].astype(np.float64) / 2.0  # 2->1.0, 1->0.5, 0->0.0
+    weights = weights.astype(np.float64)
+    
+    return final_matchups, outcomes, models.to_list(), weights
 
-    # Optimize free parameters (all except anchor)
-    initial_free = np.zeros(n_models - 1)
 
-    try:
-        result = opt.minimize(objective_with_anchor, initial_free, method="BFGS")
+def _fit_bt(matchups, outcomes, weights, n_models, alpha, tol=1e-6):
+    """Fit Bradley-Terry model using scipy optimize (adapted from leaderboard code)."""
+    initial_ratings = np.zeros(n_models, dtype=np.float64)
+    
+    def bt_loss_and_grad(ratings):
+        matchup_ratings = ratings[matchups]
+        logits = alpha * (matchup_ratings[:, 0] - matchup_ratings[:, 1])
+        
+        # Clip logits for numerical stability
+        logits = np.clip(logits, -20, 20)
+        probs = 1 / (1 + np.exp(-logits))
+        
+        # Compute loss
+        loss = -((np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)) * weights).sum()
+        
+        # Compute gradients
+        matchups_grads = -alpha * (outcomes - probs) * weights
+        model_grad = np.zeros_like(ratings)
+        
+        # Aggregate gradients at model level
+        np.add.at(
+            model_grad,
+            matchups[:, [0, 1]],
+            matchups_grads[:, None] * np.array([1.0, -1.0], dtype=np.float64),
+        )
+        
+        return loss, model_grad
+    
+    result = opt.minimize(
+        fun=bt_loss_and_grad,
+        x0=initial_ratings,
+        jac=True,
+        method="L-BFGS-B",
+        options={"disp": False, "maxiter": 100, "gtol": tol},
+    )
+    
+    return result.x
 
-        if not result.success:
-            print("  WARNING: Optimization may not have converged")
 
-        # Reconstruct final ratings
-        final_ratings = np.zeros(n_models)
-        free_idx = 0
-        for i in range(n_models):
-            if i == anchor_idx:
-                final_ratings[i] = anchor_rating
-            else:
-                final_ratings[i] = result.x[free_idx]
-                free_idx += 1
-
-        # Create results dictionary
-        model_ratings = {models[i]: final_ratings[i] for i in range(n_models)}
-        log_likelihood = -result.fun
-
-        print(f"  Optimization successful: log-likelihood = {log_likelihood:.2f}")
-
-        return {
-            "model_ratings": model_ratings,
-            "log_likelihood": log_likelihood,
-            "n_battles": len(battle_df),
-            "n_models": n_models,
-            "anchor_model": anchor_model,
-            "anchor_rating": anchor_rating,
-        }
-
-    except Exception as e:
-        print(f"  ERROR: Bradley-Terry optimization failed: {e}")
-        return None
+def _compute_log_likelihood(matchups, outcomes, weights, ratings, alpha=np.log(10.0)):
+    """Compute log-likelihood for given ratings."""
+    matchup_ratings = ratings[matchups]
+    logits = alpha * (matchup_ratings[:, 0] - matchup_ratings[:, 1])
+    logits = np.clip(logits, -20, 20)
+    probs = 1 / (1 + np.exp(-logits))
+    probs = np.clip(probs, 1e-10, 1 - 1e-10)
+    
+    ll = ((np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)) * weights).sum()
+    return ll
 
 
 def compute_style_coefficients(battle_df, features, num_bootstrap=1000, random_seed=42):
