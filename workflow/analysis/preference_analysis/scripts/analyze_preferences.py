@@ -35,11 +35,18 @@ def filter_battle_data(battle_df, config):
 
     initial_count = len(battle_df)
 
+    # Filter out non-search models
+    excluded_model = "gemini-2.5-pro-exp-03-25-wo-search"
+    battles_with_non_search = (battle_df["model_a"] == excluded_model) | (battle_df["model_b"] == excluded_model)
+    battle_df = battle_df[~battles_with_non_search].copy()
+    print(f"  Excluded non-search model battles: {initial_count - len(battle_df):,} battles removed")
+
     # Filter out ties if configured
     if config["filtering"]["exclude_ties"]:
         valid_winners = config["filtering"]["valid_winners"]
+        current_count = len(battle_df)
         battle_df = battle_df[battle_df["winner"].isin(valid_winners)].copy()
-        print(f"  Excluded ties: {initial_count - len(battle_df):,} battles removed")
+        print(f"  Excluded ties: {current_count - len(battle_df):,} battles removed")
 
     # Check minimum battles threshold
     min_battles = config["filtering"]["min_battles_per_analysis"]
