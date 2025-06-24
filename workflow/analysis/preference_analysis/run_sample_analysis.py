@@ -27,7 +27,7 @@ def main():
     # Define paths
     base_dir = Path(__file__).parent.parent.parent
     data_dir = base_dir / "data" / "intermediate" / "cleaned_arena_data"
-    output_dir = base_dir / "data" / "intermediate" / "citation_analysis"
+    output_dir = base_dir / "data" / "intermediate" / "preference_analysis"
 
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
