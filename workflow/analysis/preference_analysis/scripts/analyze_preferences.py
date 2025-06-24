@@ -698,7 +698,10 @@ def main():
             "primary_features": [
                 "response_word_count",
                 "num_citations",
+                "proportion_news",
                 "proportion_low_quality",
+                "proportion_high_quality",
+                "proportion_left_leaning",
                 "proportion_right_leaning",
             ]
         },
