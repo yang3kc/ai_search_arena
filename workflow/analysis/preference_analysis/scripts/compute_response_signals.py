@@ -193,50 +193,33 @@ def compute_domain_metrics(citations_df):
         # Total citations for this response
         total_cites = len(group)
 
+        # Define domain categories once
+        domain_categories = [
+            "news",
+            "academic",
+            "social_media",
+            "unclassified",
+            "wiki",
+            "gov_edu",
+            "tech",
+            "search_engine",
+            "community_blog",
+            "other",
+        ]
+
         if total_cites > 0:
             # Domain classification distribution
             domain_counts = group["domain_classification"].value_counts()
 
-            # Main categories
-            metrics["proportion_news"] = domain_counts.get("news", 0) / total_cites
-            metrics["proportion_academic"] = (
-                domain_counts.get("academic", 0) / total_cites
-            )
-            metrics["proportion_government"] = (
-                domain_counts.get("government", 0) / total_cites
-            )
-            metrics["proportion_social_media"] = (
-                domain_counts.get("social_media", 0) / total_cites
-            )
-            metrics["proportion_unclassified"] = (
-                domain_counts.get("unclassified", 0) / total_cites
-            )
-            metrics["proportion_wiki"] = domain_counts.get("wiki", 0) / total_cites
-            metrics["proportion_gov_edu"] = (
-                domain_counts.get("gov_edu", 0) / total_cites
-            )
-            metrics["proportion_tech"] = domain_counts.get("tech", 0) / total_cites
-            metrics["proportion_search_engine"] = (
-                domain_counts.get("search_engine", 0) / total_cites
-            )
-            metrics["proportion_community_blog"] = (
-                domain_counts.get("community_blog", 0) / total_cites
-            )
-            metrics["proportion_other"] = domain_counts.get("other", 0) / total_cites
-
+            # Compute proportions for each category
+            for category in domain_categories:
+                metrics[f"proportion_{category}"] = (
+                    domain_counts.get(category, 0) / total_cites
+                )
         else:
-            # No citations case
-            metrics["proportion_news"] = 0
-            metrics["proportion_academic"] = 0
-            metrics["proportion_government"] = 0
-            metrics["proportion_social_media"] = 0
-            metrics["proportion_unclassified"] = 0
-            metrics["proportion_wiki"] = 0
-            metrics["proportion_gov_edu"] = 0
-            metrics["proportion_tech"] = 0
-            metrics["proportion_search_engine"] = 0
-            metrics["proportion_community_blog"] = 0
-            metrics["proportion_other"] = 0
+            # No citations case - set all proportions to 0
+            for category in domain_categories:
+                metrics[f"proportion_{category}"] = 0
 
         domain_metrics.append(metrics)
 
