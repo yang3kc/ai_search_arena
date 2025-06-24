@@ -6,15 +6,15 @@ Create a modular preference analysis pipeline using Snakemake that focuses on co
 ## Snakemake Workflow Structure
 
 ### Pipeline Phases
-1. **Data Preparation**: Filter and prepare news-only competition data
-2. **Signal Computation**: Calculate response-level metrics 
+1. **Data Preparation**: Filter and prepare competition data with news citations
+2. **Signal Computation**: Calculate response-level metrics
 3. **Battle Data Creation**: Aggregate to thread-level comparisons
 4. **Statistical Analysis**: Run Bradley-Terry models with bootstrap
 5. **Reporting**: Generate results and visualizations
 
 ### Intermediate Files Strategy
 Store intermediate outputs for reproducibility and debugging:
-- `news_competitions.parquet` - Filtered news-only threads
+- `news_competitions.parquet` - Filtered threads with news citations
 - `response_signals.parquet` - Response-level aggregated metrics
 - `battle_data.parquet` - Thread-level comparison data
 - `preference_results.json` - Statistical analysis results
@@ -32,9 +32,9 @@ Store intermediate outputs for reproducibility and debugging:
 
 ### 2. Data Preparation Script
 - **File**: `workflow/analysis/preference_analysis/scripts/prepare_news_competitions.py`
-- **Input**: `news_citations.parquet`, `threads.parquet`, `responses.parquet`
-- **Output**: `news_competitions.parquet`
-- **Purpose**: Filter to threads where both models have news citations
+- **Input**: `citations_enriched.parquet`, `threads.parquet`, `responses.parquet`
+- **Output**: `news_competitions.parquet`, `news_competitions_responses.parquet`, `news_competitions_citations.parquet`
+- **Purpose**: Filter to threads where at least one model cites news
 - **Features**:
   - Identify news-citing responses
   - Filter to valid competitions (exactly 2 models per thread)
@@ -43,17 +43,17 @@ Store intermediate outputs for reproducibility and debugging:
 
 ### 3. Response Signal Computation Script
 - **File**: `workflow/analysis/preference_analysis/scripts/compute_response_signals.py`
-- **Input**: `news_competitions.parquet`, `news_citations.parquet`
-- **Output**: `response_signals.parquet`
-- **Purpose**: Calculate response-level metrics for each model response
+- **Input**: `news_competitions.parquet`, `news_competitions_citations.parquet`, `news_competitions_responses.parquet`
+- **Output**: `news_competitions_with_response_signals.parquet`
+- **Purpose**: Calculate competition-level metrics for each model response
 - **Features**:
-  - Response length (character/word count)
-  - Citation count per response
+  - Average response length (character/word count)
+  - Average citation count per response
   - Quality metrics (proportion low-quality, average quality)
   - Bias metrics (proportion right-leaning, average bias)
-  - Export enriched response data
+  - Export enriched competition data
 
-### 4. Battle Data Creation Script  
+### 4. Battle Data Creation Script
 - **File**: `workflow/analysis/preference_analysis/scripts/create_battle_data.py`
 - **Input**: `news_competitions.parquet`, `response_signals.parquet`
 - **Output**: `battle_data.parquet`
@@ -109,7 +109,7 @@ Store intermediate outputs for reproducibility and debugging:
 ```
 data/intermediate/preference_analysis/
 ├── news_competitions.parquet      # Phase 1 output
-├── response_signals.parquet       # Phase 2 output  
+├── response_signals.parquet       # Phase 2 output
 ├── battle_data.parquet           # Phase 3 output
 ├── preference_results.json       # Phase 4 output
 ├── preference_coefficients.csv   # Phase 4 output
@@ -123,7 +123,7 @@ data/intermediate/preference_analysis/
 ## Expected Insights
 - Do users prefer responses with more or fewer news citations?
 - How does news source quality affect user preferences?
-- Do users prefer politically balanced vs. biased news sources?  
+- Do users prefer politically balanced vs. biased news sources?
 - What's the optimal balance between citation quantity and quality?
 - How do different response lengths interact with citation patterns?
 
