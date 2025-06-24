@@ -27,13 +27,13 @@ rule all:
 # Phase 1: Data Preparation
 rule prepare_data:
     input:
-        citations = INPUT_DIR / "citations.parquet",
+        citations = INPUT_DIR / "citations_enriched.parquet",
         responses = INPUT_DIR / "responses.parquet",
         threads = INPUT_DIR / "threads.parquet"
     output:
         threads = OUTPUT_DIR / "news_competitions.parquet",
-        responses = OUTPUT_DIR / "news_responses.parquet",
-        citations = OUTPUT_DIR / "news_citations.parquet"
+        responses = OUTPUT_DIR / "news_competitions_responses.parquet",
+        citations = OUTPUT_DIR / "news_competitions_citations.parquet"
     log:
         OUTPUT_DIR / "logs" / "prepare_data.log"
     script:
@@ -43,16 +43,12 @@ rule prepare_data:
 rule compute_signals:
     input:
         threads = OUTPUT_DIR / "news_competitions.parquet",
-        responses = OUTPUT_DIR / "news_responses.parquet",
-        citations = OUTPUT_DIR / "news_citations.parquet"
+        responses = OUTPUT_DIR / "news_competitions_responses.parquet",
+        citations = OUTPUT_DIR / "news_competitions_citations.parquet"
     output:
         OUTPUT_DIR / "response_signals.parquet"
     log:
         OUTPUT_DIR / "logs" / "compute_signals.log"
-    params:
-        # External data paths (optional)
-        bias_data = config["external_data"]["political_bias_data"],
-        quality_data = config["external_data"]["source_quality_data"]
     script:
         "scripts/compute_response_signals.py"
 

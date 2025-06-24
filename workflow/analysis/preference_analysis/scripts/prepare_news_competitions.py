@@ -13,22 +13,10 @@ import sys
 
 def load_data(citations_path, responses_path, threads_path):
     """Load the cleaned arena data tables from specific paths."""
-    print("Loading cleaned arena data...")
+    print("Loading enriched arena data...")
 
-    # Load data - use enriched citations from citation analysis if available
-    try:
-        # Try to load enriched citations with domain classifications
-        enriched_citations_path = citations_path.parent.parent / "citation_analysis" / "news_citations.parquet"
-        if enriched_citations_path.exists():
-            print(f"Using enriched news citations from: {enriched_citations_path}")
-            citations_df = pd.read_parquet(enriched_citations_path)
-        else:
-            print(f"Using original citations from: {citations_path}")
-            citations_df = pd.read_parquet(citations_path)
-    except:
-        print(f"Using original citations from: {citations_path}")
-        citations_df = pd.read_parquet(citations_path)
-    
+    # Load enriched citations data with all classification signals
+    citations_df = pd.read_parquet(citations_path)
     responses_df = pd.read_parquet(responses_path)
     threads_df = pd.read_parquet(threads_path)
 
@@ -36,24 +24,46 @@ def load_data(citations_path, responses_path, threads_path):
     print(f"Loaded {len(responses_df):,} responses")
     print(f"Loaded {len(threads_df):,} threads")
 
+    # Check available enriched features
+    enriched_cols = [
+        "political_leaning_score",
+        "political_leaning",
+        "domain_quality_score",
+        "domain_quality",
+        "domain_classification",
+    ]
+    available_cols = [col for col in enriched_cols if col in citations_df.columns]
+    print(f"Available enriched features: {available_cols}")
+
     return citations_df, responses_df, threads_df
 
 
 def get_news_citations(citations_df):
     """Get news citations using existing domain classification."""
-    
-    # Check if we have domain_classification column (from citation analysis)
-    if 'domain_classification' in citations_df.columns:
-        print("Using existing domain classification from citation analysis")
-        news_citations = citations_df[citations_df['domain_classification'] == 'news'].copy()
-        print(f"Found {len(news_citations):,} news citations from {news_citations['domain'].nunique():,} domains")
-    else:
-        # Fallback: look for news in domain names (basic approach)
-        print("No domain classification found, using basic news detection")
-        news_keywords = ['news', 'times', 'post', 'herald', 'tribune', 'journal', 'gazette']
-        is_news = citations_df['domain'].str.lower().str.contains('|'.join(news_keywords), na=False)
-        news_citations = citations_df[is_news].copy()
-        print(f"Found {len(news_citations):,} potential news citations from {news_citations['domain'].nunique():,} domains")
+
+    # Use domain classification from enriched citations
+    if "domain_classification" not in citations_df.columns:
+        raise ValueError(
+            "Expected 'domain_classification' column in enriched citations data"
+        )
+
+    print("Using domain classification from enriched citations")
+    news_citations = citations_df[
+        citations_df["domain_classification"] == "news"
+    ].copy()
+
+    print(
+        f"Found {len(news_citations):,} news citations from {news_citations['domain'].nunique():,} domains"
+    )
+
+    # Show breakdown of news citations by political leaning and quality if available
+    if "political_leaning" in news_citations.columns:
+        bias_counts = news_citations["political_leaning"].value_counts()
+        print(f"Political leaning distribution: {dict(bias_counts)}")
+
+    if "domain_quality" in news_citations.columns:
+        quality_counts = news_citations["domain_quality"].value_counts()
+        print(f"Quality distribution: {dict(quality_counts)}")
 
     return news_citations
 
@@ -78,13 +88,12 @@ def filter_news_competitions(citations_df, responses_df, threads_df):
     )
     thread_news_counts.columns = ["thread_id", "responses_with_news", "total_responses"]
 
-    # Filter for threads with exactly 2 responses where both cite news
-    valid_threads = thread_news_counts[
-        (thread_news_counts["total_responses"] == 2)
-        & (thread_news_counts["responses_with_news"] == 2)
-    ]["thread_id"]
+    # Filter for threads with at least one response with news
+    valid_threads = thread_news_counts[(thread_news_counts["responses_with_news"] > 0)][
+        "thread_id"
+    ]
 
-    print(f"Found {len(valid_threads):,} threads where both models cite news")
+    print(f"Found {len(valid_threads):,} threads where at least one model cites news")
 
     # Filter threads data
     filtered_threads = threads_df[threads_df["thread_id"].isin(valid_threads)].copy()
@@ -99,8 +108,8 @@ def filter_news_competitions(citations_df, responses_df, threads_df):
     filtered_responses = responses_df[
         responses_df["thread_id"].isin(filtered_threads["thread_id"])
     ].copy()
-    filtered_citations = news_citations[
-        news_citations["response_id"].isin(filtered_responses["response_id"])
+    filtered_citations = citations_df[
+        citations_df["response_id"].isin(filtered_responses["response_id"])
     ].copy()
 
     print(
@@ -137,18 +146,39 @@ def validate_competition_structure(threads_df, responses_df):
     for pair, count in pair_counts.items():
         print(f"  {pair[0]} vs {pair[1]}: {count:,}")
 
+    print(f"Valid pairs length: {len(valid_pairs)}")
+    print(f"Threads length: {len(threads_df)}")
     return len(valid_pairs) == len(threads_df)
 
 
 def main():
     # Get input/output paths from Snakemake
-    input_citations = snakemake.input.citations
-    input_responses = snakemake.input.responses
-    input_threads = snakemake.input.threads
+    try:
+        # Snakemake provides these variables
+        input_citations = snakemake.input.citations
+        input_responses = snakemake.input.responses
+        input_threads = snakemake.input.threads
 
-    output_threads = snakemake.output.threads
-    output_responses = snakemake.output.responses
-    output_citations = snakemake.output.citations
+        output_threads = snakemake.output.threads
+        output_responses = snakemake.output.responses
+        output_citations = snakemake.output.citations
+
+    except NameError:
+        # Fallback for running outside Snakemake (for testing)
+        print("Running outside Snakemake - using default paths")
+        # Navigate from scripts/ to project root: scripts -> preference_analysis -> analysis -> workflow -> project_root
+        base_dir = Path(__file__).parent.parent.parent.parent.parent
+        input_dir = base_dir / "data/intermediate/cleaned_arena_data"
+        output_dir = base_dir / "data/intermediate/preference_analysis"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        input_citations = input_dir / "citations_enriched.parquet"
+        input_responses = input_dir / "responses.parquet"
+        input_threads = input_dir / "threads.parquet"
+
+        output_threads = output_dir / "news_competitions.parquet"
+        output_responses = output_dir / "news_responses.parquet"
+        output_citations = output_dir / "news_citations.parquet"
 
     try:
         # Load data
