@@ -211,18 +211,18 @@ def compute_domain_metrics(citations_df):
             metrics["proportion_unclassified"] = (
                 domain_counts.get("unclassified", 0) / total_cites
             )
-
-            # News diversity metrics
-            news_citations = group[group["domain_classification"] == "news"]
-            if len(news_citations) > 0:
-                unique_domains = news_citations["domain"].nunique()
-                metrics["news_domain_diversity"] = unique_domains
-                metrics["news_domain_diversity_ratio"] = unique_domains / len(
-                    news_citations
-                )
-            else:
-                metrics["news_domain_diversity"] = 0
-                metrics["news_domain_diversity_ratio"] = 0
+            metrics["proportion_wiki"] = domain_counts.get("wiki", 0) / total_cites
+            metrics["proportion_gov_edu"] = (
+                domain_counts.get("gov_edu", 0) / total_cites
+            )
+            metrics["proportion_tech"] = domain_counts.get("tech", 0) / total_cites
+            metrics["proportion_search_engine"] = (
+                domain_counts.get("search_engine", 0) / total_cites
+            )
+            metrics["proportion_community_blog"] = (
+                domain_counts.get("community_blog", 0) / total_cites
+            )
+            metrics["proportion_other"] = domain_counts.get("other", 0) / total_cites
 
         else:
             # No citations case
@@ -231,8 +231,12 @@ def compute_domain_metrics(citations_df):
             metrics["proportion_government"] = 0
             metrics["proportion_social_media"] = 0
             metrics["proportion_unclassified"] = 0
-            metrics["news_domain_diversity"] = 0
-            metrics["news_domain_diversity_ratio"] = 0
+            metrics["proportion_wiki"] = 0
+            metrics["proportion_gov_edu"] = 0
+            metrics["proportion_tech"] = 0
+            metrics["proportion_search_engine"] = 0
+            metrics["proportion_community_blog"] = 0
+            metrics["proportion_other"] = 0
 
         domain_metrics.append(metrics)
 
