@@ -177,8 +177,8 @@ def main():
         input_threads = input_dir / "threads.parquet"
 
         output_threads = output_dir / "news_competitions.parquet"
-        output_responses = output_dir / "news_responses.parquet"
-        output_citations = output_dir / "news_citations.parquet"
+        output_responses = output_dir / "news_competitions_responses.parquet"
+        output_citations = output_dir / "news_competitions_citations.parquet"
 
     try:
         # Load data
