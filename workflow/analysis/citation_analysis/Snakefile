@@ -17,7 +17,10 @@ rule all:
         f"{ANALYSIS_DIR}/integrated_citations.parquet",
         # Phase 2: Domain classification analysis
         f"{ANALYSIS_DIR}/domain_classification_analysis.parquet",
-        f"{ANALYSIS_DIR}/domain_classification_report.html"
+        f"{ANALYSIS_DIR}/domain_classification_report.html",
+        # Phase 3: News citations extraction
+        f"{ANALYSIS_DIR}/news_citations.parquet",
+        f"{ANALYSIS_DIR}/news_extraction_summary.json"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -41,6 +44,16 @@ rule analyze_domain_classification:
     script:
         "scripts/analyze_domain_classification.py"
 
+# Phase 3: News Citations Extraction
+rule extract_news_citations:
+    input:
+        integrated_citations=f"{ANALYSIS_DIR}/integrated_citations.parquet"
+    output:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet",
+        extraction_summary=f"{ANALYSIS_DIR}/news_extraction_summary.json"
+    script:
+        "scripts/extract_news_citations.py"
+
 # Individual phase targets for testing
 rule phase1:
     input:
@@ -50,3 +63,8 @@ rule phase2:
     input:
         f"{ANALYSIS_DIR}/domain_classification_analysis.parquet",
         f"{ANALYSIS_DIR}/domain_classification_report.html"
+
+rule phase3:
+    input:
+        f"{ANALYSIS_DIR}/news_citations.parquet",
+        f"{ANALYSIS_DIR}/news_extraction_summary.json"
