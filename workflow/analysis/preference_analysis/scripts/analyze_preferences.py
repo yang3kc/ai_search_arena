@@ -37,9 +37,13 @@ def filter_battle_data(battle_df, config):
 
     # Filter out non-search models
     excluded_model = "gemini-2.5-pro-exp-03-25-wo-search"
-    battles_with_non_search = (battle_df["model_a"] == excluded_model) | (battle_df["model_b"] == excluded_model)
+    battles_with_non_search = (battle_df["model_a"] == excluded_model) | (
+        battle_df["model_b"] == excluded_model
+    )
     battle_df = battle_df[~battles_with_non_search].copy()
-    print(f"  Excluded non-search model battles: {initial_count - len(battle_df):,} battles removed")
+    print(
+        f"  Excluded non-search model battles: {initial_count - len(battle_df):,} battles removed"
+    )
 
     # Filter out ties if configured
     if config["filtering"]["exclude_ties"]:
