@@ -367,9 +367,7 @@ def _preprocess_for_style(battle_df, features):
 
                 # Compute difference and sum for ratio normalization (like leaderboard)
                 diff = val_a - val_b
-                total = (
-                    val_a + val_b + 1.0
-                )  # Add 1 to avoid division by zero (add_one=True)
+                total = val_a + val_b
 
                 # Apply ratio normalization: difference / sum
                 normalized_diff = diff / total if total > 0 else 0.0
