@@ -703,6 +703,10 @@ def main():
                 "proportion_high_quality",
                 "proportion_left_leaning",
                 "proportion_right_leaning",
+                "news_proportion_low_quality",
+                "news_proportion_high_quality",
+                "news_proportion_left_leaning",
+                "news_proportion_right_leaning",
             ]
         },
     }

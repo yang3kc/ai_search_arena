@@ -65,11 +65,21 @@ def compute_response_signals(responses_df, citations_df):
     domain_stats = compute_domain_metrics(citations_df)
     signals_df = signals_df.merge(domain_stats, on="response_id", how="left")
 
+    # 6. News-specific quality metrics
+    print("  Computing news-specific quality metrics...")
+    news_quality_stats = compute_news_quality_metrics(citations_df)
+    signals_df = signals_df.merge(news_quality_stats, on="response_id", how="left")
+
+    # 7. News-specific bias metrics
+    print("  Computing news-specific bias metrics...")
+    news_bias_stats = compute_news_bias_metrics(citations_df)
+    signals_df = signals_df.merge(news_bias_stats, on="response_id", how="left")
+
     # Fill NaN values for responses without citations
     numeric_cols = [
         col
         for col in signals_df.columns
-        if col.startswith(("proportion_", "avg_", "num_"))
+        if col.startswith(("proportion_", "news_proportion_", "avg_", "num_"))
     ]
     signals_df[numeric_cols] = signals_df[numeric_cols].fillna(0)
 
@@ -141,6 +151,70 @@ def compute_bias_metrics(citations_df):
         bias_metrics.append(metrics)
 
     return pd.DataFrame(bias_metrics)
+
+
+def compute_news_quality_metrics(citations_df):
+    """Compute quality metrics specifically for news citations only."""
+
+    news_quality_metrics = []
+
+    for response_id, group in citations_df.groupby("response_id"):
+        metrics = {"response_id": response_id}
+
+        # Filter to only news citations
+        news_citations = group[group["domain_classification"] == "news"]
+        total_news_cites = len(news_citations)
+
+        # Define quality categories once
+        quality_categories = ["high_quality", "low_quality", "unknown"]
+
+        if total_news_cites > 0:
+            # Quality distribution among news citations only
+            news_quality_counts = news_citations["domain_quality"].value_counts()
+            
+            # Compute proportions for each quality category among news citations
+            for category in quality_categories:
+                metrics[f"news_proportion_{category}"] = news_quality_counts.get(category, 0) / total_news_cites
+        else:
+            # No news citations case - set all proportions to 0
+            for category in quality_categories:
+                metrics[f"news_proportion_{category}"] = 0
+
+        news_quality_metrics.append(metrics)
+
+    return pd.DataFrame(news_quality_metrics)
+
+
+def compute_news_bias_metrics(citations_df):
+    """Compute political bias metrics specifically for news citations only."""
+
+    news_bias_metrics = []
+
+    for response_id, group in citations_df.groupby("response_id"):
+        metrics = {"response_id": response_id}
+
+        # Filter to only news citations
+        news_citations = group[group["domain_classification"] == "news"]
+        total_news_cites = len(news_citations)
+
+        # Define political leaning categories once
+        leaning_categories = ["left_leaning", "right_leaning", "unknown"]
+
+        if total_news_cites > 0:
+            # Political leaning distribution among news citations only
+            news_leaning_counts = news_citations["political_leaning"].value_counts()
+            
+            # Compute proportions for each leaning category among news citations
+            for category in leaning_categories:
+                metrics[f"news_proportion_{category}"] = news_leaning_counts.get(category, 0) / total_news_cites
+        else:
+            # No news citations case - set all proportions to 0
+            for category in leaning_categories:
+                metrics[f"news_proportion_{category}"] = 0
+
+        news_bias_metrics.append(metrics)
+
+    return pd.DataFrame(news_bias_metrics)
 
 
 def compute_domain_metrics(citations_df):
@@ -254,7 +328,7 @@ def validate_signals(signals_df):
     numeric_signals = [
         col
         for col in signals_df.columns
-        if col.startswith(("response_", "num_", "proportion_"))
+        if col.startswith(("response_", "num_", "proportion_", "news_proportion_"))
     ]
     if numeric_signals:
         summary = signals_df[numeric_signals].describe()
@@ -315,7 +389,7 @@ def main():
         signal_cols = [
             col
             for col in enriched_signals.columns
-            if col.startswith(("response_", "num_", "proportion_"))
+            if col.startswith(("response_", "num_", "proportion_", "news_proportion_"))
         ]
         print(f"Computed {len(signal_cols)} signal features")
 
