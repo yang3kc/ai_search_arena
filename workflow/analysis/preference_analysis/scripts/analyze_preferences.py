@@ -13,11 +13,6 @@ from pathlib import Path
 import json
 import sys
 
-try:
-    import yaml
-except ImportError:
-    yaml = None
-
 
 def load_battle_data(battle_data_path):
     """Load the battle data from create_battles phase."""
@@ -551,65 +546,37 @@ def print_summary(results):
 
 
 def main():
-    # Get input/output paths from Snakemake or use defaults
-    try:
-        input_battle_data = snakemake.input[0]
-        output_results = snakemake.output.results
-        output_coefficients = snakemake.output.coefficients
+    # Get input/output paths from Snakemake
+    input_battle_data = snakemake.input[0]
+    output_results = snakemake.output.results
+    output_coefficients = snakemake.output.coefficients
 
-        # Get parameters from Snakemake
-        bootstrap_samples = snakemake.params.bootstrap_samples
-        random_seed = snakemake.params.random_seed
+    # Get parameters from Snakemake
+    bootstrap_samples = snakemake.params.bootstrap_samples
+    random_seed = snakemake.params.random_seed
 
-    except NameError:
-        # Fallback for running outside Snakemake
-        print("Running outside Snakemake - using default paths")
-        base_dir = Path(__file__).parent.parent.parent.parent.parent
-        input_dir = base_dir / "data/intermediate/preference_analysis"
-
-        input_battle_data = input_dir / "battle_data.parquet"
-        output_results = input_dir / "preference_results.json"
-        output_coefficients = input_dir / "preference_coefficients.csv"
-
-        # Default parameters
-        bootstrap_samples = 1000
-        random_seed = 42
-
-    # Load configuration
-    config_path = Path(__file__).parent.parent / "config/config.yaml"
-    if config_path.exists() and yaml is not None:
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-
-        # Override with Snakemake params if available
-        try:
-            config["statistical_analysis"]["bootstrap_samples"] = bootstrap_samples
-            config["statistical_analysis"]["random_seed"] = random_seed
-        except:
-            pass
-    else:
-        # Fallback config
-        config = {
-            "filtering": {
-                "exclude_ties": True,
-                "valid_winners": ["model_a", "model_b"],
-                "min_battles_per_analysis": 50,
-            },
-            "statistical_analysis": {
-                "anchor_model": "gpt-4o-search-preview",
-                "anchor_rating": 1000.0,
-                "bootstrap_samples": bootstrap_samples,
-                "random_seed": random_seed,
-            },
-            "response_signals": {
-                "primary_features": [
-                    "response_length",
-                    "num_citations",
-                    "proportion_low_quality",
-                    "proportion_right_leaning",
-                ]
-            },
-        }
+    # Create config from Snakemake parameters
+    config = {
+        "filtering": {
+            "exclude_ties": True,
+            "valid_winners": ["model_a", "model_b"],
+            "min_battles_per_analysis": 50,
+        },
+        "statistical_analysis": {
+            "anchor_model": "gpt-4o-search-preview",
+            "anchor_rating": 1000.0,
+            "bootstrap_samples": bootstrap_samples,
+            "random_seed": random_seed,
+        },
+        "response_signals": {
+            "primary_features": [
+                "response_length",
+                "num_citations",
+                "proportion_low_quality",
+                "proportion_right_leaning",
+            ]
+        },
+    }
 
     try:
         # Load battle data
