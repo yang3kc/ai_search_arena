@@ -29,10 +29,10 @@ def load_domain_quality_data(filepath):
     df = df.rename(columns={"pc1": "domain_quality_score"})
 
     # Create categorical domain quality variable using 0.5 threshold
-    df["domain_quality"] = "unknown"
+    df["domain_quality"] = "unknown_quality"
     df.loc[df["domain_quality_score"] >= 0.5, "domain_quality"] = "high_quality"
     df.loc[df["domain_quality_score"] < 0.5, "domain_quality"] = "low_quality"
-    df.loc[df["domain_quality_score"].isna(), "domain_quality"] = "unknown"
+    df.loc[df["domain_quality_score"].isna(), "domain_quality"] = "unknown_quality"
 
     print(f"Domain quality distribution:")
     quality_stats = df["domain_quality_score"].describe()
@@ -57,7 +57,7 @@ def enrich_with_domain_quality(domains_df, domain_quality_data):
     enriched = domains_df.merge(
         domain_quality_data, on="domain", how="left", suffixes=("", "_qual")
     )
-    enriched["domain_quality"].fillna("unknown", inplace=True)
+    enriched["domain_quality"].fillna("unknown_quality", inplace=True)
 
     # Count matches
     qual_matches = enriched["domain_quality_score"].notna().sum()

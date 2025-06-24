@@ -311,7 +311,7 @@ def validate_extraction():
                 leaning_counts = enriched_citations_df['political_leaning'].value_counts()
                 left_count = leaning_counts.get('left_leaning', 0)
                 right_count = leaning_counts.get('right_leaning', 0)
-                unknown_count = leaning_counts.get('unknown', 0)
+                unknown_count = leaning_counts.get('unknown_leaning', 0)
                 log_result("Categorical leaning variable created", 'political_leaning' in enriched_citations_df.columns,
                           f"Left: {left_count:,}, Right: {right_count:,}, Unknown: {unknown_count:,}")
         
@@ -328,7 +328,7 @@ def validate_extraction():
                 quality_counts = enriched_citations_df['domain_quality'].value_counts()
                 high_count = quality_counts.get('high_quality', 0)
                 low_count = quality_counts.get('low_quality', 0)
-                unknown_count = quality_counts.get('unknown', 0)
+                unknown_count = quality_counts.get('unknown_quality', 0)
                 log_result("Categorical quality variable created", 'domain_quality' in enriched_citations_df.columns,
                           f"High: {high_count:,}, Low: {low_count:,}, Unknown: {unknown_count:,}")
         

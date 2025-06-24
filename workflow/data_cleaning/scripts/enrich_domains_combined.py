@@ -46,7 +46,7 @@ def generate_domains_summary_stats(enriched_domains):
 
         if "political_leaning" in enriched_domains.columns:
             print(f"  Political leaning categories (by citation count):")
-            for category in ["left_leaning", "right_leaning", "unknown"]:
+            for category in ["left_leaning", "right_leaning", "unknown_leaning"]:
                 cat_citations = enriched_domains[
                     enriched_domains["political_leaning"] == category
                 ]["citation_count"].sum()
@@ -73,7 +73,7 @@ def generate_domains_summary_stats(enriched_domains):
 
         if "domain_quality" in enriched_domains.columns:
             print(f"  Domain quality categories (by citation count):")
-            for category in ["high_quality", "low_quality", "unknown"]:
+            for category in ["high_quality", "low_quality", "unknown_quality"]:
                 cat_citations = enriched_domains[
                     enriched_domains["domain_quality"] == category
                 ]["citation_count"].sum()
@@ -138,13 +138,13 @@ def generate_domains_summary_stats(enriched_domains):
         if (
             "political_leaning" in row
             and pd.notna(row["political_leaning"])
-            and row["political_leaning"] != "unknown"
+            and row["political_leaning"] != "unknown_leaning"
         ):
             signals.append(f"pol:{row['political_leaning']}")
         if (
             "domain_quality" in row
             and pd.notna(row["domain_quality"])
-            and row["domain_quality"] != "unknown"
+            and row["domain_quality"] != "unknown_quality"
         ):
             signals.append(f"qual:{row['domain_quality']}")
         if "domain_classification" in row and pd.notna(row["domain_classification"]):

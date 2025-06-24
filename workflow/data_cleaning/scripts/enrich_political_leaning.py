@@ -29,10 +29,10 @@ def load_political_leaning_data(filepath):
     df = df.rename(columns={"leaning_score_users": "political_leaning_score"})
 
     # Create categorical political leaning variable
-    df["political_leaning"] = "unknown"
+    df["political_leaning"] = "unknown_leaning"
     df.loc[df["political_leaning_score"] < 0, "political_leaning"] = "left_leaning"
     df.loc[df["political_leaning_score"] >= 0, "political_leaning"] = "right_leaning"
-    df.loc[df["political_leaning_score"].isna(), "political_leaning"] = "unknown"
+    df.loc[df["political_leaning_score"].isna(), "political_leaning"] = "unknown_leaning"
 
     print(f"Political leaning distribution:")
     leaning_counts = df["political_leaning"].value_counts()
@@ -50,7 +50,7 @@ def enrich_with_political_leaning(domains_df, political_leaning_data):
     enriched = domains_df.merge(
         political_leaning_data, on="domain", how="left", suffixes=("", "_pol")
     )
-    enriched["political_leaning"].fillna("unknown", inplace=True)
+    enriched["political_leaning"].fillna("unknown_leaning", inplace=True)
 
     # Count matches
     pol_matches = enriched["political_leaning_score"].notna().sum()
