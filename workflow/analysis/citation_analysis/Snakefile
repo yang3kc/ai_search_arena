@@ -20,7 +20,10 @@ rule all:
         f"{ANALYSIS_DIR}/domain_classification_report.html",
         # Phase 3: News citations extraction
         f"{ANALYSIS_DIR}/news_citations.parquet",
-        f"{ANALYSIS_DIR}/news_extraction_summary.json"
+        f"{ANALYSIS_DIR}/news_extraction_summary.json",
+        # Phase 4: Political bias analysis
+        f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
+        f"{ANALYSIS_DIR}/political_bias_report.html"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -54,6 +57,16 @@ rule extract_news_citations:
     script:
         "scripts/extract_news_citations.py"
 
+# Phase 4: Political Bias Analysis
+rule analyze_political_bias:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        bias_analysis_results=f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
+        bias_report=f"{ANALYSIS_DIR}/political_bias_report.html"
+    script:
+        "scripts/analyze_political_bias.py"
+
 # Individual phase targets for testing
 rule phase1:
     input:
@@ -68,3 +81,8 @@ rule phase3:
     input:
         f"{ANALYSIS_DIR}/news_citations.parquet",
         f"{ANALYSIS_DIR}/news_extraction_summary.json"
+
+rule phase4:
+    input:
+        f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
+        f"{ANALYSIS_DIR}/political_bias_report.html"
