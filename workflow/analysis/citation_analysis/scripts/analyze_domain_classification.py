@@ -219,27 +219,37 @@ def create_visualizations(analysis_results, output_dir):
     # Set up the plotting style
     plt.style.use("default")
     sns.set_palette("Set2")
-    
+
     output_files = []
 
     # 1. Overall domain distribution (bar chart)
     if "domain_counts" in analysis_results:
         fig, ax = plt.subplots(figsize=(12, 8))
-        domain_counts = analysis_results["domain_counts"].head(10)
-        
-        bars = ax.bar(range(len(domain_counts)), domain_counts.values, color='skyblue')
-        ax.set_title("Overall Domain Distribution", fontsize=16, pad=20)
-        ax.set_xticks(range(len(domain_counts)))
-        ax.set_xticklabels(domain_counts.index, rotation=45, ha='right')
+        domain_counts = analysis_results["domain_counts"]
+        classified_counts = domain_counts
+
+        bars = ax.bar(
+            range(len(classified_counts)), classified_counts.values, color="skyblue"
+        )
+        ax.set_title(
+            "Overall Domain Distribution (Classified Domains Only)", fontsize=16, pad=20
+        )
+        ax.set_xticks(range(len(classified_counts)))
+        ax.set_xticklabels(classified_counts.index, rotation=45, ha="right")
         ax.set_ylabel("Citation Count", fontsize=12)
-        ax.grid(axis='y', alpha=0.3)
-        
+        ax.grid(axis="y", alpha=0.3)
+
         # Add value labels on bars
         for bar in bars:
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{int(height):,}', ha='center', va='bottom')
-        
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                f"{int(height):,}",
+                ha="center",
+                va="bottom",
+            )
+
         plt.tight_layout()
         output_path = Path(output_dir) / "01_overall_domain_distribution.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -251,18 +261,22 @@ def create_visualizations(analysis_results, output_dir):
     if "model_domain_percentages" in analysis_results:
         fig, ax = plt.subplots(figsize=(16, 10))
         model_domain_pcts = analysis_results["model_domain_percentages"]
-        # Show all models and top 6 domain types
-        top_domains = model_domain_pcts.sum(axis=0).nlargest(6).index
-        
-        plot_data = model_domain_pcts[top_domains]
+        # Show all domain types except unclassified
+        classified_domains = model_domain_pcts.columns[
+            model_domain_pcts.columns != "unclassified"
+        ]
+
+        plot_data = model_domain_pcts[classified_domains]
         plot_data.plot(kind="bar", ax=ax, width=0.8)
-        ax.set_title("Model Domain Preferences (All Models)", fontsize=16, pad=20)
+        ax.set_title(
+            "Model Domain Preferences (Classified Domains Only)", fontsize=16, pad=20
+        )
         ax.legend(bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=10)
         ax.tick_params(axis="x", rotation=45, labelsize=10)
         ax.tick_params(axis="y", labelsize=10)
         ax.set_ylabel("% of Citations", fontsize=12)
-        ax.grid(axis='y', alpha=0.3)
-        
+        ax.grid(axis="y", alpha=0.3)
+
         plt.tight_layout()
         output_path = Path(output_dir) / "02_model_domain_preferences.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -274,22 +288,29 @@ def create_visualizations(analysis_results, output_dir):
     if "intent_domain_percentages" in analysis_results:
         fig, ax = plt.subplots(figsize=(12, 8))
         intent_domain_pcts = analysis_results["intent_domain_percentages"]
-        top_domains = intent_domain_pcts.sum(axis=0).nlargest(8).index
+        # Exclude unclassified from the visualization
+        classified_domains = intent_domain_pcts.columns[
+            intent_domain_pcts.columns != "unclassified"
+        ]
 
         sns.heatmap(
-            intent_domain_pcts[top_domains],
+            intent_domain_pcts[classified_domains],
             annot=True,
             fmt=".1f",
             cmap="YlOrRd",
             ax=ax,
-            cbar_kws={'label': '% of Citations'}
+            cbar_kws={"label": "% of Citations"},
         )
-        ax.set_title("Intent-Domain Citation Patterns", fontsize=16, pad=20)
+        ax.set_title(
+            "Intent-Domain Citation Patterns (Classified Domains Only)",
+            fontsize=16,
+            pad=20,
+        )
         ax.tick_params(axis="x", rotation=45, labelsize=10)
         ax.tick_params(axis="y", rotation=0, labelsize=10)
         ax.set_xlabel("Domain Classification", fontsize=12)
         ax.set_ylabel("Query Intent", fontsize=12)
-        
+
         plt.tight_layout()
         output_path = Path(output_dir) / "03_intent_domain_patterns.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -308,8 +329,8 @@ def create_visualizations(analysis_results, output_dir):
             ax.tick_params(axis="x", rotation=45, labelsize=10)
             ax.set_ylabel("% of Citations", fontsize=12)
             ax.legend(title="Model Side", fontsize=10)
-            ax.grid(axis='y', alpha=0.3)
-            
+            ax.grid(axis="y", alpha=0.3)
+
             plt.tight_layout()
             output_path = Path(output_dir) / "04_model_a_vs_b_comparison.png"
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -324,22 +345,29 @@ def create_visualizations(analysis_results, output_dir):
 
         colors = ["green" if x > 0 else "red" for x in comparison_df["Difference"]]
         bars = ax.bar(
-            range(len(comparison_df)), comparison_df["Difference"], color=colors, alpha=0.7
+            range(len(comparison_df)),
+            comparison_df["Difference"],
+            color=colors,
+            alpha=0.7,
         )
         ax.set_title("Winner vs Loser Domain Preferences", fontsize=16, pad=20)
         ax.set_xticks(range(len(comparison_df)))
-        ax.set_xticklabels(comparison_df.index, rotation=45, ha='right')
+        ax.set_xticklabels(comparison_df.index, rotation=45, ha="right")
         ax.set_ylabel("Difference (Winners - Losers) %", fontsize=12)
         ax.axhline(y=0, color="black", linestyle="-", alpha=0.5)
-        ax.grid(axis='y', alpha=0.3)
-        
+        ax.grid(axis="y", alpha=0.3)
+
         # Add value labels on bars
         for bar in bars:
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{height:+.1f}', ha='center', 
-                   va='bottom' if height > 0 else 'top')
-        
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                f"{height:+.1f}",
+                ha="center",
+                va="bottom" if height > 0 else "top",
+            )
+
         plt.tight_layout()
         output_path = Path(output_dir) / "05_winner_vs_loser_patterns.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
