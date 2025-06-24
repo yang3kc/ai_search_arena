@@ -146,6 +146,94 @@ def analyze_model_bias_patterns(data):
     }
 
 
+def analyze_model_family_bias_patterns(data):
+    """Analyze political bias patterns by AI model family with detailed statistical analysis."""
+    print("\n=== MODEL FAMILY POLITICAL BIAS PATTERNS ===")
+    
+    # Filter for citations with bias scores
+    bias_data = data[data['political_leaning_score'].notna()].copy()
+    
+    if 'model_family' not in bias_data.columns:
+        print("Model family information not available")
+        return {}
+    
+    # Model family bias statistics
+    family_bias_stats = bias_data.groupby('model_family')['political_leaning_score'].agg([
+        'mean', 'median', 'std', 'count', 'min', 'max'
+    ]).round(3)
+    
+    print(f"Detailed political bias statistics by model family:")
+    print(f"{'Family':<15} {'Mean':<8} {'Median':<8} {'Std':<8} {'Count':<8} {'Min':<8} {'Max':<8}")
+    print("-" * 71)
+    for family, stats in family_bias_stats.iterrows():
+        print(f"{family:<15} {stats['mean']:<8.3f} {stats['median']:<8.3f} {stats['std']:<8.3f} {stats['count']:<8.0f} {stats['min']:<8.3f} {stats['max']:<8.3f}")
+    
+    # Political leaning distribution by family
+    family_leaning_crosstab = pd.crosstab(bias_data['model_family'], bias_data['political_leaning'])
+    family_leaning_pcts = family_leaning_crosstab.div(family_leaning_crosstab.sum(axis=1), axis=0) * 100
+    
+    print(f"\nPolitical leaning distribution by model family (%):")
+    print(family_leaning_pcts.round(1))
+    
+    # Quantile analysis by family
+    print(f"\nQuantile analysis by model family:")
+    quantiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+    family_quantiles = bias_data.groupby('model_family')['political_leaning_score'].quantile(quantiles).unstack()
+    
+    print(f"{'Family':<15} {'10%':<8} {'25%':<8} {'50%':<8} {'75%':<8} {'90%':<8}")
+    print("-" * 55)
+    for family in family_quantiles.index:
+        print(f"{family:<15} {family_quantiles.loc[family, 0.1]:<8.3f} {family_quantiles.loc[family, 0.25]:<8.3f} {family_quantiles.loc[family, 0.5]:<8.3f} {family_quantiles.loc[family, 0.75]:<8.3f} {family_quantiles.loc[family, 0.9]:<8.3f}")
+    
+    # Statistical significance tests between families
+    families = bias_data['model_family'].unique()
+    if len(families) >= 2:
+        print(f"\nStatistical tests between model families:")
+        print("Family pairs with significantly different bias patterns (p < 0.05):")
+        
+        family_significant_pairs = []
+        for i, family1 in enumerate(families):
+            for family2 in families[i+1:]:
+                scores1 = bias_data[bias_data['model_family'] == family1]['political_leaning_score']
+                scores2 = bias_data[bias_data['model_family'] == family2]['political_leaning_score']
+                
+                if len(scores1) > 100 and len(scores2) > 100:  # Higher threshold for families
+                    _, p_value = mannwhitneyu(scores1, scores2, alternative='two-sided')
+                    mean_diff = scores1.mean() - scores2.mean()
+                    effect_size = abs(mean_diff) / ((scores1.std() + scores2.std()) / 2)  # Cohen's d approximation
+                    family_significant_pairs.append((family1, family2, p_value, mean_diff, effect_size))
+        
+        for family1, family2, p_val, mean_diff, effect_size in sorted(family_significant_pairs, key=lambda x: x[2]):
+            direction = "more left" if mean_diff < 0 else "more right"
+            significance = "***" if p_val < 0.001 else "**" if p_val < 0.01 else "*"
+            print(f"  {family1} vs {family2}: p={p_val:.3e} {significance} ({family1} {direction} by {abs(mean_diff):.3f}, effect size: {effect_size:.3f})")
+    
+    # Variance analysis - which family has most consistent bias?
+    print(f"\nBias consistency analysis (lower std = more consistent):")
+    family_consistency = family_bias_stats['std'].sort_values()
+    for family, std_val in family_consistency.items():
+        consistency_level = "Very consistent" if std_val < 0.15 else "Moderately consistent" if std_val < 0.18 else "Variable"
+        print(f"  {family}: {std_val:.3f} ({consistency_level})")
+    
+    # Domain preference patterns within families
+    if 'domain' in bias_data.columns:
+        print(f"\nTop domains by family (showing bias diversity):")
+        for family in families:
+            family_data = bias_data[bias_data['model_family'] == family]
+            top_domains = family_data.groupby('domain')['political_leaning_score'].agg(['mean', 'count']).sort_values('count', ascending=False).head(3)
+            print(f"\n  {family} family top domains:")
+            for domain, stats in top_domains.iterrows():
+                print(f"    {domain}: {stats['mean']:.3f} bias ({stats['count']} citations)")
+    
+    return {
+        'family_bias_stats': family_bias_stats.to_dict(),
+        'family_leaning_percentages': family_leaning_pcts.to_dict(),
+        'family_quantiles': family_quantiles.to_dict(),
+        'family_significant_differences': family_significant_pairs if 'family_significant_pairs' in locals() else [],
+        'family_consistency_ranking': family_consistency.to_dict()
+    }
+
+
 def analyze_intent_bias_patterns(data):
     """Analyze political bias patterns by query intent."""
     print("\n=== INTENT POLITICAL BIAS PATTERNS ===")
@@ -506,6 +594,10 @@ def main():
     # 2. Model bias patterns
     model_results = analyze_model_bias_patterns(data)
     analysis_results.update(model_results)
+    
+    # 2b. Model family bias patterns (detailed analysis)
+    family_results = analyze_model_family_bias_patterns(data)
+    analysis_results.update(family_results)
     
     # 3. Intent bias patterns
     intent_results = analyze_intent_bias_patterns(data)
