@@ -56,7 +56,7 @@ rule compute_response_signals:
 rule create_battles:
     input:
         threads = OUTPUT_DIR / "news_competitions.parquet",
-        signals = OUTPUT_DIR / "response_signals.parquet"
+        signals = OUTPUT_DIR / "news_competitions_response_signals.parquet"
     output:
         OUTPUT_DIR / "battle_data.parquet"
     log:
