@@ -1,0 +1,14 @@
+# Citation Analysis Configuration
+
+# Data paths
+cleaned_data_dir: "../../../data/intermediate/cleaned_arena_data"
+analysis_dir: "../../../data/intermediate/citation_analysis"
+
+# Analysis parameters
+min_citations_per_model: 100  # Minimum citations required for model comparison
+top_domains_to_show: 20       # Number of top domains to display in reports
+
+# Visualization settings
+figure_width: 12
+figure_height: 8
+color_palette: "Set2"

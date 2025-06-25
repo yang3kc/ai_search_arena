@@ -1,0 +1,127 @@
+"""
+Snakemake workflow for cleaning and processing search arena data.
+This workflow extracts and normalizes the arena data into relational tables
+with primary focus on citations analysis for bias and credibility research.
+"""
+
+# Configuration
+configfile: "config/config.yaml"
+
+# Define paths
+RAW_DATA = config["raw_data_path"]
+RAW_DATA_DIR = config["raw_data_dir"]
+INTERMEDIATE_DIR = config["intermediate_dir"]
+OUTPUT_DIR = config["output_dir"]
+
+# Target rule - what we want to produce
+rule all:
+    input:
+        # Initial exploration
+        f"{INTERMEDIATE_DIR}/exploration_report.txt",
+        # Core tables for citation analysis
+        f"{INTERMEDIATE_DIR}/threads.parquet",
+        f"{INTERMEDIATE_DIR}/questions.parquet",
+        f"{INTERMEDIATE_DIR}/responses.parquet",
+        f"{INTERMEDIATE_DIR}/citations.parquet",
+        # Validation report
+        f"{INTERMEDIATE_DIR}/validation_report.txt",
+        # Unique domains for efficient enrichment
+        f"{INTERMEDIATE_DIR}/domains.parquet",
+        # Enriched domains with all signals
+        f"{INTERMEDIATE_DIR}/domains_enriched.parquet",
+        # Final enriched citations
+        f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
+
+# Phase 1: Data exploration and validation
+rule explore_data:
+    input:
+        RAW_DATA
+    output:
+        f"{INTERMEDIATE_DIR}/exploration_report.txt"
+    script:
+        "scripts/explore_structure.py"
+
+# Phase 2: Extract thread-level data
+rule extract_threads:
+    input:
+        data=RAW_DATA,
+        exploration=f"{INTERMEDIATE_DIR}/exploration_report.txt"
+    output:
+        f"{INTERMEDIATE_DIR}/threads.parquet"
+    script:
+        "scripts/extract_threads.py"
+
+# Phase 3: Extract questions from conversation turns
+rule extract_questions:
+    input:
+        data=RAW_DATA,
+        threads=f"{INTERMEDIATE_DIR}/threads.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/questions.parquet"
+    script:
+        "scripts/extract_questions.py"
+
+# Phase 4: Extract responses from both models
+rule extract_responses:
+    input:
+        data=RAW_DATA,
+        questions=f"{INTERMEDIATE_DIR}/questions.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/responses.parquet"
+    script:
+        "scripts/extract_responses.py"
+
+# Phase 5: Extract citations from web search traces
+rule extract_citations:
+    input:
+        data=RAW_DATA,
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/citations.parquet"
+    script:
+        "scripts/extract_citations.py"
+
+# Phase 6: Data validation and quality checks
+rule validate_extraction:
+    input:
+        threads=f"{INTERMEDIATE_DIR}/threads.parquet",
+        questions=f"{INTERMEDIATE_DIR}/questions.parquet",
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/validation_report.txt"
+    script:
+        "scripts/validate_extraction.py"
+
+# Phase 7: Extract unique domains from citations
+rule extract_domains:
+    input:
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/domains.parquet"
+    script:
+        "scripts/extract_domains.py"
+
+# Phase 8: Enrich domains with all signals
+rule enrich_domains:
+    input:
+        domains=f"{INTERMEDIATE_DIR}/domains.parquet",
+        political_leaning=f"{RAW_DATA_DIR}/DomainDemo_political_leaning.csv.gz",
+        domain_ratings=f"{RAW_DATA_DIR}/lin_domain_ratings.csv.gz",
+        manual_classification=f"{RAW_DATA_DIR}/domain_classification_manual.csv",
+        news_domains=f"{RAW_DATA_DIR}/list_of_news_domains.csv"
+    output:
+        f"{INTERMEDIATE_DIR}/domains_enriched.parquet"
+    script:
+        "scripts/enrich_domains_combined.py"
+
+# Phase 9: Merge enriched domains back to citations
+rule enrich_citations:
+    input:
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet",
+        enriched_domains=f"{INTERMEDIATE_DIR}/domains_enriched.parquet"
+    output:
+        f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
+    script:
+        "scripts/merge_enriched_citations.py"
+

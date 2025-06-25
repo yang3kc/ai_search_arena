@@ -1,0 +1,81 @@
+"""
+Snakemake workflow for citation analysis pipeline.
+Analyzes citation patterns across domain classifications, political bias, and quality.
+"""
+
+# Configuration
+configfile: "config/config.yaml"
+
+# Define paths
+CLEANED_DATA_DIR = config["cleaned_data_dir"]
+ANALYSIS_DIR = config["analysis_dir"]
+
+# Target rule - what we want to produce
+rule all:
+    input:
+        # Phase 1: Data integration
+        f"{ANALYSIS_DIR}/integrated_citations.parquet",
+        # Phase 2: Domain classification analysis
+        f"{ANALYSIS_DIR}/domain_classification_analysis.parquet",
+        f"{ANALYSIS_DIR}/domain_classification_report.html",
+        # Phase 3: News citations extraction
+        f"{ANALYSIS_DIR}/news_citations.parquet",
+        f"{ANALYSIS_DIR}/news_extraction_summary.json",
+        # Phase 4: Political bias analysis
+        f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
+        f"{ANALYSIS_DIR}/political_bias_report.html",
+        # Phase 5: Source quality analysis
+        f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
+        f"{ANALYSIS_DIR}/source_quality_analysis_report.html"
+
+# Phase 1: Data Integration Pipeline
+rule integrate_citation_data:
+    input:
+        citations=f"{CLEANED_DATA_DIR}/citations_enriched.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet",
+        questions=f"{CLEANED_DATA_DIR}/questions.parquet"
+    output:
+        f"{ANALYSIS_DIR}/integrated_citations.parquet"
+    script:
+        "scripts/integrate_citation_data.py"
+
+# Phase 2: Domain Classification Analysis
+rule analyze_domain_classification:
+    input:
+        integrated_citations=f"{ANALYSIS_DIR}/integrated_citations.parquet"
+    output:
+        analysis_results=f"{ANALYSIS_DIR}/domain_classification_analysis.parquet",
+        report=f"{ANALYSIS_DIR}/domain_classification_report.html"
+    script:
+        "scripts/analyze_domain_classification.py"
+
+# Phase 3: News Citations Extraction
+rule extract_news_citations:
+    input:
+        integrated_citations=f"{ANALYSIS_DIR}/integrated_citations.parquet"
+    output:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet",
+        extraction_summary=f"{ANALYSIS_DIR}/news_extraction_summary.json"
+    script:
+        "scripts/extract_news_citations.py"
+
+# Phase 4: Political Bias Analysis
+rule analyze_political_bias:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        bias_analysis_results=f"{ANALYSIS_DIR}/political_bias_analysis.parquet",
+        bias_report=f"{ANALYSIS_DIR}/political_bias_report.html"
+    script:
+        "scripts/analyze_political_bias.py"
+
+# Phase 5: Source Quality Analysis
+rule analyze_source_quality:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        quality_integrated_citations=f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
+        quality_report=f"{ANALYSIS_DIR}/source_quality_analysis_report.html"
+    script:
+        "scripts/analyze_source_quality.py"
