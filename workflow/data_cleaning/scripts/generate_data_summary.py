@@ -77,7 +77,7 @@ def analyze_dataset_overview(tables):
 
         # Model analysis
         model_col = (
-            "model_name_llm" if "model_name_llm" in responses.columns else "model"
+            "model_name_raw" if "model_name_raw" in responses.columns else "model"
         )
         if model_col in responses.columns:
             model_counts = responses[model_col].value_counts()
@@ -85,6 +85,11 @@ def analyze_dataset_overview(tables):
                 "unique_models": len(model_counts),
                 "model_distribution": model_counts.to_dict(),
             }
+
+    if tables["questions"] is not None and tables["responses"] is not None:
+        stats["responses_per_question"] = len(tables["responses"]) / len(
+            tables["questions"]
+        )
 
     if tables["citations"] is not None:
         citations = tables["citations"]
@@ -109,11 +114,6 @@ def analyze_domain_coverage(tables):
     if tables["domains"] is not None:
         domains = tables["domains"]
         stats["unique_domains"] = len(domains)
-        stats["unique_base_domains"] = (
-            domains["base_domain"].nunique()
-            if "base_domain" in domains.columns
-            else None
-        )
 
     if tables["domains_enriched"] is not None:
         enriched = tables["domains_enriched"]
@@ -298,6 +298,7 @@ def generate_markdown_report(summary, output_path):
                 f"- **Total Conversations with Judgement**: {overview['total_conversations_with_judgement']:,}",
                 f"- **Total Questions**: {overview.get('total_questions', 'N/A'):,}",
                 f"- **Total Responses**: {overview.get('total_responses', 'N/A'):,}",
+                f"- **Responses per Question**: {overview.get('responses_per_question', 'N/A'):.2f}",
                 f"- **Total Citations**: {overview.get('total_citations', 'N/A'):,}",
                 "",
             ]
@@ -352,9 +353,6 @@ def generate_markdown_report(summary, output_path):
                 f"- **Unique Domains**: {domain_coverage.get('unique_domains', 'N/A'):,}"
                 if domain_coverage.get("unique_domains") is not None
                 else "- **Unique Domains**: N/A",
-                f"- **Unique Base Domains**: {domain_coverage.get('unique_base_domains', 'N/A'):,}"
-                if domain_coverage.get("unique_base_domains") is not None
-                else "- **Unique Base Domains**: N/A",
                 "",
             ]
         )
