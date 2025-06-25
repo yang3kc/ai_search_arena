@@ -30,7 +30,9 @@ rule all:
         # Enriched domains with all signals
         f"{INTERMEDIATE_DIR}/domains_enriched.parquet",
         # Final enriched citations
-        f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
+        f"{INTERMEDIATE_DIR}/citations_enriched.parquet",
+        # Data summary report for paper
+        f"{OUTPUT_DIR}/data_summary_report.md"
 
 # Phase 1: Data exploration and validation
 rule explore_data:
@@ -124,4 +126,21 @@ rule enrich_citations:
         f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
     script:
         "scripts/merge_enriched_citations.py"
+
+# Phase 10: Generate data summary report for paper
+rule generate_summary:
+    input:
+        threads=f"{INTERMEDIATE_DIR}/threads.parquet",
+        questions=f"{INTERMEDIATE_DIR}/questions.parquet",
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
+        citations=f"{INTERMEDIATE_DIR}/citations.parquet",
+        citations_enriched=f"{INTERMEDIATE_DIR}/citations_enriched.parquet",
+        domains=f"{INTERMEDIATE_DIR}/domains.parquet",
+        domains_enriched=f"{INTERMEDIATE_DIR}/domains_enriched.parquet"
+    output:
+        f"{OUTPUT_DIR}/data_summary_report.md"
+    params:
+        intermediate_dir=INTERMEDIATE_DIR
+    script:
+        "scripts/generate_data_summary.py"
 
