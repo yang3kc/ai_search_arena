@@ -9,6 +9,8 @@ The focus is on analyzing information sources cited by AI chatbots to identify p
 
 **Current Status**: ✅ **PRODUCTION-READY** - Complete data extraction pipeline implemented with comprehensive validation.
 
+**Related Paper**: The analysis is being written up in a research paper located in `/Users/yangkc/working/overleaf/ai_search_arena_overleaf/` using LaTeX.
+
 ## Architecture
 
 The project follows a data science workflow with a completed extraction pipeline:
@@ -52,9 +54,26 @@ The project has a **complete, production-ready data extraction pipeline** in `wo
 - **Citation-focused design**: Optimized for bias and credibility research
 
 ### Running the Pipeline
+
+**Data Cleaning Pipeline** (primary extraction):
 ```bash
 cd workflow/data_cleaning
 snakemake --cores 1  # Runs complete extraction + validation
+```
+
+**Analysis Pipelines** (after data cleaning):
+```bash
+# Citation analysis (domain classification, political bias, source quality)
+cd workflow/analysis/citation_analysis
+snakemake --cores 1
+
+# Preference analysis (Bradley-Terry model for citation patterns)
+cd workflow/analysis/preference_analysis
+snakemake --cores 1
+
+# YouTube analysis (for YouTube-specific citations)
+cd workflow/analysis/youtube_analysis
+snakemake --cores 1
 ```
 
 ## Working with the Data
@@ -66,11 +85,24 @@ snakemake --cores 1  # Runs complete extraction + validation
 
 ## Analysis Strategy
 
-The pipeline is designed for **citation-focused analysis**:
-- **Citation bias analysis**: Join citations with domain political leaning data
-- **Credibility assessment**: Join citations with domain credibility ratings
-- **Model comparison**: Join with responses to compare citation patterns by model
-- **Topic analysis**: Join with questions to understand citation patterns by query type
+The project includes three main analysis pipelines:
+
+### 1. Citation Analysis Pipeline
+- **Domain classification**: Categorizes domains into news, academic, government, etc.
+- **Political bias analysis**: Analyzes political leaning of news sources cited
+- **Source quality analysis**: Evaluates credibility and reliability of cited sources
+- **Model comparison**: Compares citation patterns across different AI models
+
+### 2. Preference Analysis Pipeline
+- **News competition analysis**: Focuses on threads where both responses cite news sources
+- **Bradley-Terry modeling**: Statistical analysis of how citation patterns affect user preferences
+- **Response signals**: Computes features like citation count, political balance, source quality
+- **Effect size analysis**: Quantifies how different citation strategies impact user choice
+
+### 3. YouTube Analysis Pipeline
+- **YouTube citation extraction**: Identifies YouTube videos cited in responses
+- **Channel metadata**: Fetches channel information using YouTube API
+- **Video metadata**: Analyzes video-specific citation patterns
 
 ## Additional tools in the environment
 
