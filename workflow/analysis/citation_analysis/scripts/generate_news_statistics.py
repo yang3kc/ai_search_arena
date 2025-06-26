@@ -21,12 +21,185 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_news_citations(data_path):
-    """Load the news citations dataset."""
-    logger.info(f"Loading news citations from {data_path}")
-    data = pd.read_parquet(data_path)
-    logger.info(f"Loaded {len(data):,} news citations with {len(data.columns)} columns")
-    return data
+def load_all_data(input_files):
+    """Load all required datasets."""
+    logger.info("Loading all datasets...")
+    
+    # Load news citations
+    logger.info(f"Loading news citations from {input_files.news_citations}")
+    news_citations = pd.read_parquet(input_files.news_citations)
+    logger.info(f"Loaded {len(news_citations):,} news citations")
+    
+    # Load threads
+    logger.info(f"Loading threads from {input_files.threads}")
+    threads = pd.read_parquet(input_files.threads)
+    logger.info(f"Loaded {len(threads):,} threads")
+    
+    # Load questions
+    logger.info(f"Loading questions from {input_files.questions}")
+    questions = pd.read_parquet(input_files.questions)
+    logger.info(f"Loaded {len(questions):,} questions")
+    
+    # Load responses
+    logger.info(f"Loading responses from {input_files.responses}")
+    responses = pd.read_parquet(input_files.responses)
+    logger.info(f"Loaded {len(responses):,} responses")
+    
+    return {
+        'news_citations': news_citations,
+        'threads': threads,
+        'questions': questions,
+        'responses': responses
+    }
+
+
+def analyze_thread_patterns(threads, news_citations):
+    """Analyze thread-level patterns for news citations."""
+    logger.info("Analyzing thread patterns...")
+    
+    stats = {}
+    
+    # Get threads that have news citations
+    news_thread_ids = set(news_citations['thread_id'].unique())
+    news_threads = threads[threads['thread_id'].isin(news_thread_ids)].copy()
+    
+    stats['thread_overview'] = {
+        'total_threads': len(threads),
+        'threads_with_news': len(news_threads),
+        'news_thread_percentage': float(len(news_threads) / len(threads) * 100)
+    }
+    
+    # Winner analysis for news threads
+    if 'winner' in news_threads.columns:
+        winner_dist = news_threads['winner'].value_counts()
+        stats['winner_analysis'] = {
+            'threads_with_winner': len(news_threads[news_threads['winner'].notna()]),
+            'winner_distribution': winner_dist.to_dict() if len(winner_dist) > 0 else {}
+        }
+    
+    # Intent analysis for news threads
+    if 'primary_intent' in news_threads.columns:
+        intent_dist = news_threads['primary_intent'].value_counts()
+        stats['intent_analysis'] = {
+            'primary_intent_distribution': intent_dist.to_dict()
+        }
+    
+    # Turn analysis
+    if 'total_turns' in news_threads.columns:
+        turn_stats = news_threads['total_turns']
+        stats['conversation_length'] = {
+            'avg_turns': float(turn_stats.mean()),
+            'median_turns': float(turn_stats.median()),
+            'max_turns': int(turn_stats.max()),
+            'min_turns': int(turn_stats.min())
+        }
+    
+    # Temporal analysis of news threads
+    if 'tstamp' in news_threads.columns:
+        news_threads['datetime'] = pd.to_datetime(news_threads['tstamp'])
+        stats['temporal_distribution'] = {
+            'date_range': {
+                'earliest': news_threads['datetime'].min().isoformat(),
+                'latest': news_threads['datetime'].max().isoformat(),
+                'span_days': (news_threads['datetime'].max() - news_threads['datetime'].min()).days
+            }
+        }
+    
+    return stats
+
+
+def analyze_question_patterns(questions, news_citations):
+    """Analyze question-level patterns for news citations."""
+    logger.info("Analyzing question patterns...")
+    
+    stats = {}
+    
+    # Get questions that lead to news citations
+    news_question_ids = set(news_citations['question_id'].unique())
+    news_questions = questions[questions['question_id'].isin(news_question_ids)].copy()
+    
+    stats['question_overview'] = {
+        'total_questions': len(questions),
+        'questions_leading_to_news': len(news_questions),
+        'news_question_percentage': float(len(news_questions) / len(questions) * 100)
+    }
+    
+    # Turn number analysis
+    if 'turn_number' in news_questions.columns:
+        turn_dist = news_questions['turn_number'].value_counts().sort_index()
+        stats['turn_analysis'] = {
+            'questions_by_turn': turn_dist.to_dict(),
+            'avg_turn_for_news': float(news_questions['turn_number'].mean()),
+            'first_turn_news_percentage': float((news_questions['turn_number'] == 1).sum() / len(news_questions) * 100)
+        }
+    
+    # Question text analysis (if available)
+    if 'question_text' in news_questions.columns:
+        question_lengths = news_questions['question_text'].str.len()
+        stats['question_text_analysis'] = {
+            'avg_question_length': float(question_lengths.mean()),
+            'median_question_length': float(question_lengths.median()),
+            'max_question_length': int(question_lengths.max()),
+            'min_question_length': int(question_lengths.min())
+        }
+    
+    return stats
+
+
+def analyze_response_patterns(responses, news_citations):
+    """Analyze response-level patterns for news citations."""
+    logger.info("Analyzing response patterns...")
+    
+    stats = {}
+    
+    # Get responses that include news citations
+    news_response_ids = set(news_citations['response_id'].unique())
+    news_responses = responses[responses['response_id'].isin(news_response_ids)].copy()
+    
+    stats['response_overview'] = {
+        'total_responses': len(responses),
+        'responses_with_news': len(news_responses),
+        'news_response_percentage': float(len(news_responses) / len(responses) * 100)
+    }
+    
+    # Model analysis for news responses
+    model_col = None
+    for col in ['model_name_raw', 'model_name_llm', 'model']:
+        if col in news_responses.columns:
+            model_col = col
+            break
+    
+    if model_col:
+        model_dist = news_responses[model_col].value_counts()
+        stats['model_analysis'] = {
+            'responses_by_model': model_dist.to_dict(),
+            'unique_models_with_news': len(model_dist)
+        }
+    
+    # Model side analysis
+    if 'model_side' in news_responses.columns:
+        side_dist = news_responses['model_side'].value_counts()
+        stats['model_side_analysis'] = {
+            'responses_by_side': side_dist.to_dict()
+        }
+    
+    # Citation format analysis
+    if 'citation_format' in news_citations.columns:
+        format_dist = news_citations['citation_format'].value_counts()
+        stats['citation_format_analysis'] = {
+            'citations_by_format': format_dist.to_dict()
+        }
+    
+    # News citations per response analysis
+    citations_per_response = news_citations.groupby('response_id').size()
+    stats['citations_per_response'] = {
+        'avg_news_citations_per_response': float(citations_per_response.mean()),
+        'median_news_citations_per_response': float(citations_per_response.median()),
+        'max_news_citations_per_response': int(citations_per_response.max()),
+        'min_news_citations_per_response': int(citations_per_response.min())
+    }
+    
+    return stats
 
 
 def analyze_temporal_patterns(data):
@@ -437,14 +610,169 @@ def generate_markdown_report(all_stats, output_path):
     ]
     
     # Executive summary
+    if 'dataset_info' in all_stats:
+        dataset_info = all_stats['dataset_info']
+        report_lines.extend([
+            f"- **Total News Citations**: {dataset_info['total_news_citations']:,}",
+            f"- **Total Threads**: {dataset_info['total_threads']:,}",
+            f"- **Total Questions**: {dataset_info['total_questions']:,}",
+            f"- **Total Responses**: {dataset_info['total_responses']:,}",
+            ""
+        ])
+        
     if 'domain_patterns' in all_stats:
         domain_stats = all_stats['domain_patterns']['domain_overview']
         report_lines.extend([
-            f"- **Total News Citations**: {domain_stats['total_citations']:,}",
             f"- **Unique News Domains**: {domain_stats['unique_domains']:,}",
             f"- **Average Citations per Domain**: {domain_stats['avg_citations_per_domain']:.1f}",
             ""
         ])
+    
+    # Thread analysis
+    if 'thread_patterns' in all_stats:
+        thread = all_stats['thread_patterns']
+        
+        report_lines.extend([
+            "## Thread Analysis",
+            ""
+        ])
+        
+        if 'thread_overview' in thread:
+            overview = thread['thread_overview']
+            report_lines.extend([
+                f"### Thread Overview",
+                f"- **Total Threads**: {overview['total_threads']:,}",
+                f"- **Threads with News Citations**: {overview['threads_with_news']:,} ({overview['news_thread_percentage']:.1f}%)",
+                ""
+            ])
+        
+        if 'winner_analysis' in thread:
+            winner = thread['winner_analysis']
+            report_lines.extend([
+                f"### Winner Analysis (News Threads)",
+                f"- **Threads with Winners**: {winner['threads_with_winner']:,}",
+                ""
+            ])
+            
+            if winner['winner_distribution']:
+                report_lines.append("**Winner Distribution:**")
+                for side, count in sorted(winner['winner_distribution'].items(), key=lambda x: x[1], reverse=True):
+                    report_lines.append(f"  - {side}: {count:,} threads")
+                report_lines.append("")
+        
+        if 'intent_analysis' in thread:
+            intent = thread['intent_analysis']
+            if intent['primary_intent_distribution']:
+                report_lines.extend([
+                    "### Intent Analysis (News Threads)",
+                    "**Primary Intent Distribution:**",
+                ])
+                for intent_type, count in sorted(intent['primary_intent_distribution'].items(), key=lambda x: x[1], reverse=True):
+                    report_lines.append(f"  - {intent_type}: {count:,} threads")
+                report_lines.append("")
+        
+        if 'conversation_length' in thread:
+            length = thread['conversation_length']
+            report_lines.extend([
+                f"### Conversation Length (News Threads)",
+                f"- **Average Turns**: {length['avg_turns']:.1f}",
+                f"- **Median Turns**: {length['median_turns']:.1f}",
+                f"- **Range**: {length['min_turns']} to {length['max_turns']} turns",
+                ""
+            ])
+    
+    # Question analysis
+    if 'question_patterns' in all_stats:
+        question = all_stats['question_patterns']
+        
+        report_lines.extend([
+            "## Question Analysis",
+            ""
+        ])
+        
+        if 'question_overview' in question:
+            overview = question['question_overview']
+            report_lines.extend([
+                f"### Question Overview",
+                f"- **Total Questions**: {overview['total_questions']:,}",
+                f"- **Questions Leading to News**: {overview['questions_leading_to_news']:,} ({overview['news_question_percentage']:.1f}%)",
+                ""
+            ])
+        
+        if 'turn_analysis' in question:
+            turn = question['turn_analysis']
+            report_lines.extend([
+                f"### Turn Analysis",
+                f"- **Average Turn for News**: {turn['avg_turn_for_news']:.1f}",
+                f"- **First Turn News Percentage**: {turn['first_turn_news_percentage']:.1f}%",
+                ""
+            ])
+            
+            if turn['questions_by_turn']:
+                report_lines.append("**Questions by Turn Number:**")
+                for turn_num, count in sorted(turn['questions_by_turn'].items()):
+                    report_lines.append(f"  - Turn {turn_num}: {count:,} questions")
+                report_lines.append("")
+        
+        if 'question_text_analysis' in question:
+            text = question['question_text_analysis']
+            report_lines.extend([
+                f"### Question Text Analysis",
+                f"- **Average Length**: {text['avg_question_length']:.0f} characters",
+                f"- **Median Length**: {text['median_question_length']:.0f} characters",
+                f"- **Range**: {text['min_question_length']} to {text['max_question_length']} characters",
+                ""
+            ])
+    
+    # Response analysis
+    if 'response_patterns' in all_stats:
+        response = all_stats['response_patterns']
+        
+        report_lines.extend([
+            "## Response Analysis",
+            ""
+        ])
+        
+        if 'response_overview' in response:
+            overview = response['response_overview']
+            report_lines.extend([
+                f"### Response Overview",
+                f"- **Total Responses**: {overview['total_responses']:,}",
+                f"- **Responses with News**: {overview['responses_with_news']:,} ({overview['news_response_percentage']:.1f}%)",
+                ""
+            ])
+        
+        if 'citations_per_response' in response:
+            cpr = response['citations_per_response']
+            report_lines.extend([
+                f"### News Citations per Response",
+                f"- **Average**: {cpr['avg_news_citations_per_response']:.1f}",
+                f"- **Median**: {cpr['median_news_citations_per_response']:.1f}",
+                f"- **Range**: {cpr['min_news_citations_per_response']} to {cpr['max_news_citations_per_response']} citations",
+                ""
+            ])
+        
+        if 'model_side_analysis' in response:
+            side = response['model_side_analysis']
+            if side['responses_by_side']:
+                report_lines.extend([
+                    f"### Model Side Distribution",
+                    ""
+                ])
+                for side_name, count in sorted(side['responses_by_side'].items(), key=lambda x: x[1], reverse=True):
+                    report_lines.append(f"- **{side_name}**: {count:,} responses")
+                report_lines.append("")
+        
+        if 'citation_format_analysis' in response:
+            format_analysis = response['citation_format_analysis']
+            if format_analysis['citations_by_format']:
+                report_lines.extend([
+                    f"### Citation Format Distribution",
+                    ""
+                ])
+                for format_type, count in sorted(format_analysis['citations_by_format'].items(), key=lambda x: x[1], reverse=True):
+                    report_lines.append(f"- **{format_type}**: {count:,} citations")
+                report_lines.append("")
     
     # Temporal patterns
     if 'temporal_patterns' in all_stats:
@@ -596,29 +924,36 @@ def generate_markdown_report(all_stats, output_path):
 def main():
     """Main function for news statistics generation."""
     # Get paths from Snakemake
-    input_path = snakemake.input.news_citations
+    input_files = snakemake.input
     report_output_path = snakemake.output[0]
     
     # Create output directory
     output_dir = Path(report_output_path).parent
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Load news citations
-    data = load_news_citations(input_path)
+    # Load all data
+    all_data = load_all_data(input_files)
+    news_citations = all_data['news_citations']
     
     # Generate all analyses
     all_stats = {
         'generation_timestamp': datetime.now().isoformat(),
         'dataset_info': {
-            'total_citations': len(data),
-            'columns': list(data.columns)
+            'total_news_citations': len(news_citations),
+            'total_threads': len(all_data['threads']),
+            'total_questions': len(all_data['questions']),
+            'total_responses': len(all_data['responses']),
+            'news_citations_columns': list(news_citations.columns)
         },
-        'temporal_patterns': analyze_temporal_patterns(data),
-        'domain_patterns': analyze_domain_patterns(data),
-        'model_comparison': analyze_model_comparison(data),
-        'political_bias': analyze_political_bias_patterns(data),
-        'quality_patterns': analyze_quality_patterns(data),
-        'joint_analysis': analyze_joint_bias_quality(data)
+        'thread_patterns': analyze_thread_patterns(all_data['threads'], news_citations),
+        'question_patterns': analyze_question_patterns(all_data['questions'], news_citations),
+        'response_patterns': analyze_response_patterns(all_data['responses'], news_citations),
+        'temporal_patterns': analyze_temporal_patterns(news_citations),
+        'domain_patterns': analyze_domain_patterns(news_citations),
+        'model_comparison': analyze_model_comparison(news_citations),
+        'political_bias': analyze_political_bias_patterns(news_citations),
+        'quality_patterns': analyze_quality_patterns(news_citations),
+        'joint_analysis': analyze_joint_bias_quality(news_citations)
     }
     
     # Generate markdown report only
@@ -627,7 +962,10 @@ def main():
     
     # Print summary
     logger.info("=== NEWS CITATION STATISTICS SUMMARY ===")
-    logger.info(f"Total news citations analyzed: {len(data):,}")
+    logger.info(f"Total news citations analyzed: {len(news_citations):,}")
+    logger.info(f"Total threads: {len(all_data['threads']):,}")
+    logger.info(f"Total questions: {len(all_data['questions']):,}")
+    logger.info(f"Total responses: {len(all_data['responses']):,}")
     if 'domain_patterns' in all_stats:
         logger.info(f"Unique domains: {all_stats['domain_patterns']['domain_overview']['unique_domains']:,}")
     if 'political_bias' in all_stats and 'bias_score_distribution' in all_stats['political_bias']:

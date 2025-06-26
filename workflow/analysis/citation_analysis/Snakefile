@@ -86,7 +86,10 @@ rule analyze_source_quality:
 # Phase 6: News Citation Statistics Report
 rule generate_news_statistics:
     input:
-        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet",
+        questions=f"{CLEANED_DATA_DIR}/questions.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet"
     output:
         f"{OUTPUT_DIR}/news_citation_statistics_report.md"
     script:
