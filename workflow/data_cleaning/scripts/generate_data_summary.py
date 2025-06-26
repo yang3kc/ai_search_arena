@@ -142,6 +142,34 @@ def analyze_domain_coverage(tables):
                 "news_rate": float(news_domains / len(enriched)),
             }
 
+    # Add enriched citation coverage analysis
+    if tables["citations_enriched"] is not None:
+        citations_enriched = tables["citations_enriched"]
+        
+        # Political leaning coverage in actual citations
+        if "political_leaning_score" in citations_enriched.columns:
+            political_coverage_cites = citations_enriched["political_leaning_score"].notna().sum()
+            stats["citation_political_leaning_coverage"] = {
+                "citations_with_scores": int(political_coverage_cites),
+                "coverage_rate": float(political_coverage_cites / len(citations_enriched)),
+            }
+        
+        # Quality ratings coverage in actual citations
+        if "domain_quality_score" in citations_enriched.columns:
+            quality_coverage_cites = citations_enriched["domain_quality_score"].notna().sum()
+            stats["citation_quality_ratings_coverage"] = {
+                "citations_with_ratings": int(quality_coverage_cites),
+                "coverage_rate": float(quality_coverage_cites / len(citations_enriched)),
+            }
+        
+        # Domain classification coverage in actual citations
+        if "is_news" in citations_enriched.columns:
+            news_citations = citations_enriched["is_news"].sum()
+            stats["citation_domain_classification"] = {
+                "news_citations": int(news_citations),
+                "news_rate": float(news_citations / len(citations_enriched)),
+            }
+
     return stats
 
 
@@ -381,6 +409,32 @@ def generate_markdown_report(summary, output_path):
                     "",
                 ]
             )
+
+        # Add citation-level coverage statistics
+        if "citation_political_leaning_coverage" in domain_coverage:
+            cite_pol_cov = domain_coverage["citation_political_leaning_coverage"]
+            report_lines.extend(
+                [
+                    "### Citation-Level Coverage",
+                    f"- **Citations with Political Scores**: {cite_pol_cov['citations_with_scores']:,} ({cite_pol_cov['coverage_rate']:.1%})",
+                ]
+            )
+
+        if "citation_quality_ratings_coverage" in domain_coverage:
+            cite_qual_cov = domain_coverage["citation_quality_ratings_coverage"]
+            report_lines.append(
+                f"- **Citations with Quality Ratings**: {cite_qual_cov['citations_with_ratings']:,} ({cite_qual_cov['coverage_rate']:.1%})"
+            )
+
+        if "citation_domain_classification" in domain_coverage:
+            cite_class_info = domain_coverage["citation_domain_classification"]
+            report_lines.append(
+                f"- **News Citations**: {cite_class_info['news_citations']:,} ({cite_class_info['news_rate']:.1%})"
+            )
+
+        # Add blank line after citation coverage section
+        if any(key in domain_coverage for key in ["citation_political_leaning_coverage", "citation_quality_ratings_coverage", "citation_domain_classification"]):
+            report_lines.append("")
 
     # Citation patterns
     citation_patterns = summary["citation_patterns"]
