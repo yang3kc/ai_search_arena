@@ -202,7 +202,7 @@ def create_citation_style_effects_plot(coefficients, output_path):
 
             if plot_data:
                 df = pd.DataFrame(plot_data)
-                df = df.sort_values("coefficient", ascending=True)
+                df = df.iloc[::-1]
 
                 y_pos = np.arange(len(df))
 
