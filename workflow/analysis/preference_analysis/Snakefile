@@ -21,7 +21,8 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 rule all:
     input:
         OUTPUT_DIR / "preference_analysis_report.html",
-        OUTPUT_DIR / "visualizations" / "effect_sizes.png",
+        OUTPUT_DIR / "visualizations" / "individual_effects.png",
+        OUTPUT_DIR / "visualizations" / "citation_style_effects.png",
         OUTPUT_DIR / "visualizations" / "model_comparison.png",
         OUTPUT_DIR / "bt_ratings_results.json",
         OUTPUT_DIR / "individual_effects_results.json",
@@ -138,9 +139,8 @@ rule generate_report:
         battle_data = OUTPUT_DIR / "battle_data.parquet"
     output:
         report = OUTPUT_DIR / "preference_analysis_report.html",
-        effect_sizes = OUTPUT_DIR / "visualizations" / "effect_sizes.png",
-        confidence_intervals = OUTPUT_DIR / "visualizations" / "confidence_intervals.png",
-        significance = OUTPUT_DIR / "visualizations" / "statistical_significance.png",
+        individual_effects = OUTPUT_DIR / "visualizations" / "individual_effects.png",
+        citation_style_effects = OUTPUT_DIR / "visualizations" / "citation_style_effects.png",
         model_comparison = OUTPUT_DIR / "visualizations" / "model_comparison.png"
     script:
         "scripts/generate_report.py"
