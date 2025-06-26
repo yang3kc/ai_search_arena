@@ -6,10 +6,7 @@ This script examines the effects of individual citation features on user prefere
 running separate analyses for each feature to understand their isolated impact.
 """
 
-import pandas as pd
-import numpy as np
 import sys
-from pathlib import Path
 
 # Import utility functions
 from bt_utils import (
@@ -17,7 +14,6 @@ from bt_utils import (
     filter_battle_data,
     compute_style_coefficients,
     save_results,
-    print_summary,
 )
 
 
@@ -117,13 +113,30 @@ def main():
         },
         "response_signals": {
             "primary_features": [
+                "response_length",
                 "response_word_count",
                 "num_citations",
                 "proportion_news",
+                "proportion_academic",
+                "proportion_social_media",
+                "proportion_unclassified",
+                "proportion_wiki",
+                "proportion_gov_edu",
+                "proportion_tech",
+                "proportion_search_engine",
+                "proportion_community_blog",
                 "proportion_left_leaning",
                 "proportion_right_leaning",
+                "proportion_unknown_leaning",
                 "proportion_high_quality",
                 "proportion_low_quality",
+                "proportion_unknown_quality",
+                "news_proportion_high_quality",
+                "news_proportion_low_quality",
+                "news_proportion_unknown_quality",
+                "news_proportion_left_leaning",
+                "news_proportion_right_leaning",
+                "news_proportion_unknown_leaning",
             ]
         },
     }
@@ -179,7 +192,7 @@ def main():
         results = {"individual_feature_effects": individual_results}
 
         # Save results
-        coefficients_df = save_results(results, output_results, output_coefficients)
+        save_results(results, output_results, output_coefficients)
 
         # Print summary
         print_individual_summary(individual_results)
