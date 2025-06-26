@@ -119,21 +119,16 @@ def analyze_domain_coverage(tables):
         enriched = tables["domains_enriched"]
 
         # Political leaning coverage
-        if "political_leaning" in enriched.columns:
-            political_coverage = enriched["political_leaning"].notna().sum()
+        if "political_leaning_score" in enriched.columns:
+            political_coverage = enriched["political_leaning_score"].notna().sum()
             stats["political_leaning_coverage"] = {
                 "domains_with_scores": int(political_coverage),
                 "coverage_rate": float(political_coverage / len(enriched)),
             }
 
         # Quality ratings coverage
-        quality_cols = [
-            col
-            for col in enriched.columns
-            if "quality" in col.lower() or "credibility" in col.lower()
-        ]
-        if quality_cols:
-            quality_coverage = enriched[quality_cols[0]].notna().sum()
+        if "domain_quality_score" in enriched.columns:
+            quality_coverage = enriched["domain_quality_score"].notna().sum()
             stats["quality_ratings_coverage"] = {
                 "domains_with_ratings": int(quality_coverage),
                 "coverage_rate": float(quality_coverage / len(enriched)),
