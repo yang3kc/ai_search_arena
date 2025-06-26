@@ -9,7 +9,6 @@ The preference analysis has been split into separate Snakemake rules for maximum
 1. **Bradley-Terry Ratings** (`compute_bt_ratings`) - Basic model performance rankings
 2. **Individual Feature Effects** (`analyze_individual_effects`) - Single-feature impact analysis  
 3. **Citation Style Effects** (`analyze_citation_style_effects`) - Multi-feature model analysis
-4. **Comprehensive Analysis** (`analyze_preferences`) - All components together
 
 ## Quick Start
 
@@ -24,9 +23,6 @@ snakemake individual_effects_only --cores 1
 
 # Citation style effects only
 snakemake citation_style_effects_only --cores 1
-
-# Comprehensive analysis only
-snakemake comprehensive_analysis_only --cores 1
 ```
 
 ### Run All Analyses
@@ -96,10 +92,6 @@ Each analysis component produces dedicated output files:
 - `citation_style_effects_{model_set}_results.json` - Custom model set results
 - `citation_style_effects_{model_set}_coefficients.csv` - Custom model set CSV
 
-### Comprehensive Analysis
-- `preference_results.json` - All components combined
-- `preference_coefficients.csv` - All results in CSV format
-
 ### Reports and Visualizations
 - `preference_analysis_report.html` - Comprehensive HTML report
 - `visualizations/effect_sizes.png` - Effect size plots
@@ -124,8 +116,7 @@ battle_data.parquet
 ├── compute_bt_ratings → bt_ratings_results.json
 ├── analyze_individual_effects → individual_effects_results.json
 ├── analyze_citation_style_effects → citation_style_effects_results.json
-├── analyze_citation_style_custom → citation_style_effects_{model_set}_results.json
-└── analyze_preferences → preference_results.json
+└── analyze_citation_style_custom → citation_style_effects_{model_set}_results.json
 
 All results → generate_report → preference_analysis_report.html
 ```
@@ -135,7 +126,6 @@ All results → generate_report → preference_analysis_report.html
 - **Individual Effects**: Uses fewer bootstrap samples (config value ÷ 2) for faster execution
 - **Citation Style Effects**: Full bootstrap samples for comprehensive analysis
 - **Bradley-Terry Ratings**: Fastest, no bootstrap sampling required
-- **Comprehensive Analysis**: Runs all components, longest execution time
 
 ## Examples
 

@@ -25,8 +25,7 @@ rule all:
         OUTPUT_DIR / "visualizations" / "model_comparison.png",
         OUTPUT_DIR / "bt_ratings_results.json",
         OUTPUT_DIR / "individual_effects_results.json", 
-        OUTPUT_DIR / "citation_style_effects_results.json",
-        OUTPUT_DIR / "preference_results.json"
+        OUTPUT_DIR / "citation_style_effects_results.json"
 
 # Phase 1: Data Preparation
 rule prepare_data:
@@ -137,20 +136,6 @@ rule analyze_citation_style_custom:
     script:
         "scripts/citation_style_effects.py"
 
-# Phase 4d: Comprehensive Analysis (optional - runs all components)
-rule analyze_preferences:
-    input:
-        OUTPUT_DIR / "battle_data.parquet"
-    output:
-        results = OUTPUT_DIR / "preference_results.json",
-        coefficients = OUTPUT_DIR / "preference_coefficients.csv"
-    log:
-        OUTPUT_DIR / "logs" / "analyze_preferences.log"
-    params:
-        bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"],
-        random_seed = config["statistical_analysis"]["random_seed"]
-    script:
-        "scripts/analyze_preferences.py"
 
 # Phase 5: Reporting and Visualization
 rule generate_report:
@@ -159,12 +144,10 @@ rule generate_report:
         bt_ratings_results = OUTPUT_DIR / "bt_ratings_results.json",
         individual_effects_results = OUTPUT_DIR / "individual_effects_results.json",
         citation_style_effects_results = OUTPUT_DIR / "citation_style_effects_results.json",
-        comprehensive_results = OUTPUT_DIR / "preference_results.json",
         # All coefficients
         bt_ratings_coefficients = OUTPUT_DIR / "bt_ratings_coefficients.csv",
         individual_effects_coefficients = OUTPUT_DIR / "individual_effects_coefficients.csv",
         citation_style_effects_coefficients = OUTPUT_DIR / "citation_style_effects_coefficients.csv",
-        comprehensive_coefficients = OUTPUT_DIR / "preference_coefficients.csv",
         # Battle data for context
         battle_data = OUTPUT_DIR / "battle_data.parquet"
     output:
@@ -206,9 +189,6 @@ rule citation_style_effects_only:
     input:
         OUTPUT_DIR / "citation_style_effects_results.json"
 
-rule comprehensive_analysis_only:
-    input:
-        OUTPUT_DIR / "preference_results.json"
 
 rule report_only:
     input:
@@ -219,8 +199,7 @@ rule all_analyses:
     input:
         OUTPUT_DIR / "bt_ratings_results.json",
         OUTPUT_DIR / "individual_effects_results.json",
-        OUTPUT_DIR / "citation_style_effects_results.json",
-        OUTPUT_DIR / "preference_results.json"
+        OUTPUT_DIR / "citation_style_effects_results.json"
 
 # Clean intermediate files
 rule clean:
