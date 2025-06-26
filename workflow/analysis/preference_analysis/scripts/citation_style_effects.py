@@ -69,19 +69,20 @@ def create_default_model_specifications():
     )
 
     # Bias + quality among all citations
-    spec.add_model(
-        "bias_and_quality_all_citations",
-        [
-            "response_word_count",
-            "num_citations",
-            "proportion_news",
-            "proportion_left_leaning",
-            "proportion_right_leaning",
-            "proportion_high_quality",
-            "proportion_low_quality",
-        ],
-        "Political and quality among all citations.",
-    )
+    # The results are not very interesting, so we're not including it in the analysis.
+    # spec.add_model(
+    #     "bias_and_quality_all_citations",
+    #     [
+    #         "response_word_count",
+    #         "num_citations",
+    #         "proportion_news",
+    #         "proportion_left_leaning",
+    #         "proportion_right_leaning",
+    #         "proportion_high_quality",
+    #         "proportion_low_quality",
+    #     ],
+    #     "Political and quality among all citations.",
+    # )
 
     # Bias + quality among news citations
     spec.add_model(
@@ -92,6 +93,7 @@ def create_default_model_specifications():
             "proportion_news",
             "news_proportion_left_leaning",
             "news_proportion_right_leaning",
+            "news_proportion_unknown_leaning",
             "news_proportion_high_quality",
             "news_proportion_low_quality",
         ],
