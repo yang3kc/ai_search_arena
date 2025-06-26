@@ -378,6 +378,15 @@ def analyze_political_bias_patterns(data):
         }
     }
     
+    # Domain-level bias coverage analysis
+    unique_domains = data['domain'].nunique()
+    domains_with_bias = bias_data['domain'].nunique()
+    stats['domain_bias_coverage'] = {
+        'total_unique_domains': unique_domains,
+        'domains_with_bias_scores': domains_with_bias,
+        'domain_coverage_percentage': float(domains_with_bias / unique_domains * 100)
+    }
+    
     # Political leaning labels
     if 'political_leaning' in bias_data.columns:
         leaning_counts = bias_data['political_leaning'].value_counts()
@@ -459,6 +468,15 @@ def analyze_quality_patterns(data):
             'q25': float(quality_scores.quantile(0.25)),
             'q75': float(quality_scores.quantile(0.75))
         }
+    }
+    
+    # Domain-level quality coverage analysis
+    unique_domains = data['domain'].nunique()
+    domains_with_quality = quality_data['domain'].nunique()
+    stats['domain_quality_coverage'] = {
+        'total_unique_domains': unique_domains,
+        'domains_with_quality_scores': domains_with_quality,
+        'domain_coverage_percentage': float(domains_with_quality / unique_domains * 100)
     }
     
     # Quality labels
@@ -594,10 +612,15 @@ def analyze_joint_bias_quality(data):
     
     logger.info(f"Analyzing {len(joint_data):,} citations with both scores")
     
+    # Domain-level joint coverage
+    unique_domains = data['domain'].nunique()
+    domains_with_both = joint_data['domain'].nunique()
+    
     stats['joint_coverage'] = {
         'citations_with_both_scores': len(joint_data),
         'percentage_of_total': float(len(joint_data) / len(data) * 100),
-        'unique_domains_with_both': joint_data['domain'].nunique()
+        'unique_domains_with_both': domains_with_both,
+        'domain_joint_coverage_percentage': float(domains_with_both / unique_domains * 100)
     }
     
     # Correlation analysis
@@ -950,6 +973,15 @@ def generate_markdown_report(all_stats, output_path):
                 ""
             ])
             
+        if 'domain_bias_coverage' in bias:
+            domain_bias = bias['domain_bias_coverage']
+            report_lines.extend([
+                f"### Domain-Level Bias Coverage",
+                f"- **Total Unique News Domains**: {domain_bias['total_unique_domains']:,}",
+                f"- **Domains with Bias Scores**: {domain_bias['domains_with_bias_scores']:,} ({domain_bias['domain_coverage_percentage']:.1f}%)",
+                ""
+            ])
+            
         if 'political_leaning_distribution' in bias:
             leaning_dist = bias['political_leaning_distribution']
             report_lines.extend([
@@ -977,6 +1009,15 @@ def generate_markdown_report(all_stats, output_path):
                 f"- **Score Range**: {quality_dist['min_score']:.3f} to {quality_dist['max_score']:.3f}",
                 ""
             ])
+            
+        if 'domain_quality_coverage' in quality:
+            domain_quality = quality['domain_quality_coverage']
+            report_lines.extend([
+                f"### Domain-Level Quality Coverage",
+                f"- **Total Unique News Domains**: {domain_quality['total_unique_domains']:,}",
+                f"- **Domains with Quality Scores**: {domain_quality['domains_with_quality_scores']:,} ({domain_quality['domain_coverage_percentage']:.1f}%)",
+                ""
+            ])
     
     # Joint analysis
     if 'joint_analysis' in all_stats:
@@ -989,7 +1030,7 @@ def generate_markdown_report(all_stats, output_path):
                 "",
                 f"### Coverage",
                 f"- **Citations with Both Scores**: {coverage['citations_with_both_scores']:,} ({coverage['percentage_of_total']:.1f}%)",
-                f"- **Domains with Both Scores**: {coverage['unique_domains_with_both']:,}",
+                f"- **Domains with Both Scores**: {coverage['unique_domains_with_both']:,} ({coverage['domain_joint_coverage_percentage']:.1f}%)",
                 ""
             ])
             
