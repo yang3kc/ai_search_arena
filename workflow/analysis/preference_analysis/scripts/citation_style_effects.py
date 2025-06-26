@@ -352,6 +352,9 @@ def main():
                     )
                 # Get selected models from params if specified
                 selected_models = getattr(snakemake.params, "selected_models", None)
+                # Handle callable parameters (from lambda functions in Snakefile)
+                if callable(selected_models):
+                    selected_models = selected_models(snakemake.wildcards) if hasattr(snakemake, 'wildcards') else None
         else:
             # For standalone execution
             if len(sys.argv) < 4:

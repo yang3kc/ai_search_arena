@@ -17,11 +17,15 @@ SCRIPTS_DIR = Path(workflow.basedir) / "scripts"
 # Ensure output directory exists
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Final outputs
+# Final outputs - includes all analysis components
 rule all:
     input:
         OUTPUT_DIR / "preference_analysis_report.html",
         OUTPUT_DIR / "visualizations" / "effect_sizes.png",
+        OUTPUT_DIR / "visualizations" / "model_comparison.png",
+        OUTPUT_DIR / "bt_ratings_results.json",
+        OUTPUT_DIR / "individual_effects_results.json", 
+        OUTPUT_DIR / "citation_style_effects_results.json",
         OUTPUT_DIR / "preference_results.json"
 
 # Phase 1: Data Preparation
@@ -64,7 +68,76 @@ rule create_battles:
     script:
         "scripts/create_battle_data.py"
 
-# Phase 4: Statistical Analysis
+# Phase 4a: Bradley-Terry Ratings
+rule compute_bt_ratings:
+    input:
+        OUTPUT_DIR / "battle_data.parquet"
+    output:
+        results = OUTPUT_DIR / "bt_ratings_results.json",
+        coefficients = OUTPUT_DIR / "bt_ratings_coefficients.csv"
+    log:
+        OUTPUT_DIR / "logs" / "bt_ratings.log"
+    script:
+        "scripts/bt_ratings.py"
+
+# Phase 4b: Individual Feature Effects
+rule analyze_individual_effects:
+    input:
+        OUTPUT_DIR / "battle_data.parquet"
+    output:
+        results = OUTPUT_DIR / "individual_effects_results.json",
+        coefficients = OUTPUT_DIR / "individual_effects_coefficients.csv"
+    log:
+        OUTPUT_DIR / "logs" / "individual_effects.log"
+    params:
+        bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"] // 2,  # Fewer samples for individual analysis
+        random_seed = config["statistical_analysis"]["random_seed"]
+    script:
+        "scripts/individual_effects.py"
+
+# Phase 4c: Citation Style Effects with Flexible Models
+rule analyze_citation_style_effects:
+    input:
+        OUTPUT_DIR / "battle_data.parquet"
+    output:
+        results = OUTPUT_DIR / "citation_style_effects_results.json",
+        coefficients = OUTPUT_DIR / "citation_style_effects_coefficients.csv"
+    log:
+        OUTPUT_DIR / "logs" / "citation_style_effects.log"
+    params:
+        bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"],
+        random_seed = config["statistical_analysis"]["random_seed"],
+        selected_models = ["basic_response", "political_bias", "source_quality", "full_primary"]  # Can be customized
+    script:
+        "scripts/citation_style_effects.py"
+
+# Flexible citation style analysis with custom model specifications
+rule analyze_citation_style_custom:
+    input:
+        OUTPUT_DIR / "battle_data.parquet"
+    output:
+        results = OUTPUT_DIR / "citation_style_effects_{model_set}_results.json",
+        coefficients = OUTPUT_DIR / "citation_style_effects_{model_set}_coefficients.csv"
+    log:
+        OUTPUT_DIR / "logs" / "citation_style_effects_{model_set}.log"
+    params:
+        bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"],
+        random_seed = config["statistical_analysis"]["random_seed"],
+        # Selected models will be determined by the {model_set} wildcard
+        # Examples: "basic", "political", "quality", "extended", "all"
+        selected_models = lambda wildcards: {
+            "basic": ["basic_response"],
+            "political": ["political_bias", "source_types"],
+            "quality": ["source_quality", "politics_and_quality"],
+            "extended": ["extended_news"],
+            "all": None,  # Run all available models
+            "core": ["basic_response", "political_bias", "source_quality"],
+            "advanced": ["politics_and_quality", "full_primary", "extended_news"]
+        }.get(wildcards.model_set, ["basic_response"])
+    script:
+        "scripts/citation_style_effects.py"
+
+# Phase 4d: Comprehensive Analysis (optional - runs all components)
 rule analyze_preferences:
     input:
         OUTPUT_DIR / "battle_data.parquet"
@@ -82,39 +155,72 @@ rule analyze_preferences:
 # Phase 5: Reporting and Visualization
 rule generate_report:
     input:
-        results = OUTPUT_DIR / "preference_results.json",
-        battle_data = OUTPUT_DIR / "battle_data.parquet",
-        coefficients = OUTPUT_DIR / "preference_coefficients.csv"
+        # All analysis results
+        bt_ratings_results = OUTPUT_DIR / "bt_ratings_results.json",
+        individual_effects_results = OUTPUT_DIR / "individual_effects_results.json",
+        citation_style_effects_results = OUTPUT_DIR / "citation_style_effects_results.json",
+        comprehensive_results = OUTPUT_DIR / "preference_results.json",
+        # All coefficients
+        bt_ratings_coefficients = OUTPUT_DIR / "bt_ratings_coefficients.csv",
+        individual_effects_coefficients = OUTPUT_DIR / "individual_effects_coefficients.csv",
+        citation_style_effects_coefficients = OUTPUT_DIR / "citation_style_effects_coefficients.csv",
+        comprehensive_coefficients = OUTPUT_DIR / "preference_coefficients.csv",
+        # Battle data for context
+        battle_data = OUTPUT_DIR / "battle_data.parquet"
     output:
         report = OUTPUT_DIR / "preference_analysis_report.html",
         effect_sizes = OUTPUT_DIR / "visualizations" / "effect_sizes.png",
         confidence_intervals = OUTPUT_DIR / "visualizations" / "confidence_intervals.png",
-        significance = OUTPUT_DIR / "visualizations" / "statistical_significance.png"
+        significance = OUTPUT_DIR / "visualizations" / "statistical_significance.png",
+        model_comparison = OUTPUT_DIR / "visualizations" / "model_comparison.png"
     log:
         OUTPUT_DIR / "logs" / "generate_report.log"
     script:
         "scripts/generate_report.py"
 
 # Convenience rules for running partial workflows
+
+# Data preparation stages
 rule prepare_only:
     input:
         OUTPUT_DIR / "news_competitions.parquet"
 
 rule compute_signals_only:
     input:
-        OUTPUT_DIR / "response_signals.parquet"
+        OUTPUT_DIR / "news_competitions_response_signals.parquet"
 
 rule create_battles_only:
     input:
         OUTPUT_DIR / "battle_data.parquet"
 
-rule analyze_only:
+# Individual analysis components
+rule bt_ratings_only:
+    input:
+        OUTPUT_DIR / "bt_ratings_results.json"
+
+rule individual_effects_only:
+    input:
+        OUTPUT_DIR / "individual_effects_results.json"
+
+rule citation_style_effects_only:
+    input:
+        OUTPUT_DIR / "citation_style_effects_results.json"
+
+rule comprehensive_analysis_only:
     input:
         OUTPUT_DIR / "preference_results.json"
 
 rule report_only:
     input:
         OUTPUT_DIR / "preference_analysis_report.html"
+
+# All analysis components (without report)
+rule all_analyses:
+    input:
+        OUTPUT_DIR / "bt_ratings_results.json",
+        OUTPUT_DIR / "individual_effects_results.json",
+        OUTPUT_DIR / "citation_style_effects_results.json",
+        OUTPUT_DIR / "preference_results.json"
 
 # Clean intermediate files
 rule clean:
