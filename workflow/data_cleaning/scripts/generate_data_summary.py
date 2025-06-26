@@ -9,7 +9,6 @@ metrics, and data quality indicators.
 
 import pandas as pd
 from pathlib import Path
-import json
 from datetime import datetime
 import logging
 
@@ -273,17 +272,10 @@ def generate_summary_report(output_path, input_files):
         "model_comparison": analyze_model_comparison(tables),
     }
 
-    # Save JSON report
-    json_path = Path(output_path) / "data_summary_report.json"
-    json_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(json_path, "w") as f:
-        json.dump(summary, f, indent=2, default=str)
-
-    logger.info(f"JSON report saved to: {json_path}")
-
-    # Generate human-readable report
+    # Generate markdown report only
     markdown_path = Path(output_path) / "data_summary_report.md"
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+
     generate_markdown_report(summary, markdown_path)
 
     logger.info(f"Markdown report saved to: {markdown_path}")
