@@ -9,6 +9,7 @@ configfile: "config/config.yaml"
 # Define paths
 CLEANED_DATA_DIR = config["cleaned_data_dir"]
 ANALYSIS_DIR = config["analysis_dir"]
+OUTPUT_DIR = config["output_dir"]
 
 # Target rule - what we want to produce
 rule all:
@@ -28,8 +29,7 @@ rule all:
         f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
         f"{ANALYSIS_DIR}/source_quality_analysis_report.html",
         # Phase 6: News citation statistics report
-        f"{ANALYSIS_DIR}/news_citation_statistics.json",
-        f"{ANALYSIS_DIR}/news_citation_statistics_report.md"
+        f"{OUTPUT_DIR}/news_citation_statistics_report.md"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -88,7 +88,6 @@ rule generate_news_statistics:
     input:
         news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
     output:
-        statistics_json=f"{ANALYSIS_DIR}/news_citation_statistics.json",
-        statistics_report=f"{ANALYSIS_DIR}/news_citation_statistics_report.md"
+        f"{OUTPUT_DIR}/news_citation_statistics_report.md"
     script:
         "scripts/generate_news_statistics.py"

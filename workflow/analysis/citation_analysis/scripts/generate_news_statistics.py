@@ -597,11 +597,10 @@ def main():
     """Main function for news statistics generation."""
     # Get paths from Snakemake
     input_path = snakemake.input.news_citations
-    stats_output_path = snakemake.output.statistics_json
-    report_output_path = snakemake.output.statistics_report
+    report_output_path = snakemake.output[0]
     
     # Create output directory
-    output_dir = Path(stats_output_path).parent
+    output_dir = Path(report_output_path).parent
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Load news citations
@@ -622,12 +621,7 @@ def main():
         'joint_analysis': analyze_joint_bias_quality(data)
     }
     
-    # Save statistics as JSON
-    logger.info(f"Saving statistics to {stats_output_path}")
-    with open(stats_output_path, 'w') as f:
-        json.dump(all_stats, f, indent=2, default=str)
-    
-    # Generate markdown report
+    # Generate markdown report only
     generate_markdown_report(all_stats, report_output_path)
     logger.info(f"Saved markdown report to {report_output_path}")
     
