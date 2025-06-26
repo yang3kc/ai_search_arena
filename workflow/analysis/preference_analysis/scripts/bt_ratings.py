@@ -6,10 +6,7 @@ This script calculates basic Bradley-Terry model ratings for AI models
 without any citation style controls. It's focused on model performance ranking.
 """
 
-import pandas as pd
-import numpy as np
 import sys
-from pathlib import Path
 
 # Import utility functions
 from bt_utils import (
@@ -87,7 +84,7 @@ def main():
             print(f"  {i + 1}. {model}: {rating:.1f}")
 
         # Save results
-        coefficients_df = save_results(results, output_results, output_coefficients)
+        save_results(results, output_results, output_coefficients)
 
         # Print summary
         print_summary(results)
