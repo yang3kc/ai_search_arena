@@ -71,16 +71,30 @@ def analyze_thread_patterns(threads, news_citations):
     # Winner analysis for news threads
     if 'winner' in news_threads.columns:
         winner_dist = news_threads['winner'].value_counts()
+        threads_with_winner = len(news_threads[news_threads['winner'].notna()])
         stats['winner_analysis'] = {
-            'threads_with_winner': len(news_threads[news_threads['winner'].notna()]),
-            'winner_distribution': winner_dist.to_dict() if len(winner_dist) > 0 else {}
+            'threads_with_winner': threads_with_winner,
+            'winner_distribution': {
+                winner: {
+                    'count': int(count),
+                    'percentage': float(count / threads_with_winner * 100) if threads_with_winner > 0 else 0
+                }
+                for winner, count in winner_dist.items()
+            } if len(winner_dist) > 0 else {}
         }
     
     # Intent analysis for news threads
     if 'primary_intent' in news_threads.columns:
         intent_dist = news_threads['primary_intent'].value_counts()
+        total_threads = len(news_threads)
         stats['intent_analysis'] = {
-            'primary_intent_distribution': intent_dist.to_dict()
+            'primary_intent_distribution': {
+                intent: {
+                    'count': int(count),
+                    'percentage': float(count / total_threads * 100)
+                }
+                for intent, count in intent_dist.items()
+            }
         }
     
     # Turn analysis
@@ -125,8 +139,15 @@ def analyze_question_patterns(questions, news_citations):
     # Turn number analysis
     if 'turn_number' in news_questions.columns:
         turn_dist = news_questions['turn_number'].value_counts().sort_index()
+        total_questions = len(news_questions)
         stats['turn_analysis'] = {
-            'questions_by_turn': turn_dist.to_dict(),
+            'questions_by_turn': {
+                turn: {
+                    'count': int(count),
+                    'percentage': float(count / total_questions * 100)
+                }
+                for turn, count in turn_dist.items()
+            },
             'avg_turn_for_news': float(news_questions['turn_number'].mean()),
             'first_turn_news_percentage': float((news_questions['turn_number'] == 1).sum() / len(news_questions) * 100)
         }
@@ -168,23 +189,44 @@ def analyze_response_patterns(responses, news_citations):
     
     if model_col:
         model_dist = news_responses[model_col].value_counts()
+        total_responses = len(news_responses)
         stats['model_analysis'] = {
-            'responses_by_model': model_dist.to_dict(),
+            'responses_by_model': {
+                model: {
+                    'count': int(count),
+                    'percentage': float(count / total_responses * 100)
+                }
+                for model, count in model_dist.items()
+            },
             'unique_models_with_news': len(model_dist)
         }
     
     # Model side analysis
     if 'model_side' in news_responses.columns:
         side_dist = news_responses['model_side'].value_counts()
+        total_responses = len(news_responses)
         stats['model_side_analysis'] = {
-            'responses_by_side': side_dist.to_dict()
+            'responses_by_side': {
+                side: {
+                    'count': int(count),
+                    'percentage': float(count / total_responses * 100)
+                }
+                for side, count in side_dist.items()
+            }
         }
     
     # Citation format analysis
     if 'citation_format' in news_citations.columns:
         format_dist = news_citations['citation_format'].value_counts()
+        total_citations = len(news_citations)
         stats['citation_format_analysis'] = {
-            'citations_by_format': format_dist.to_dict()
+            'citations_by_format': {
+                format_type: {
+                    'count': int(count),
+                    'percentage': float(count / total_citations * 100)
+                }
+                for format_type, count in format_dist.items()
+            }
         }
     
     # News citations per response analysis
@@ -732,8 +774,8 @@ def generate_markdown_report(all_stats, output_path):
             
             if winner['winner_distribution']:
                 report_lines.append("**Winner Distribution:**")
-                for side, count in sorted(winner['winner_distribution'].items(), key=lambda x: x[1], reverse=True):
-                    report_lines.append(f"  - {side}: {count:,} threads")
+                for side, stats in sorted(winner['winner_distribution'].items(), key=lambda x: x[1]['count'], reverse=True):
+                    report_lines.append(f"  - {side}: {stats['count']:,} threads ({stats['percentage']:.1f}%)")
                 report_lines.append("")
         
         if 'intent_analysis' in thread:
@@ -743,8 +785,8 @@ def generate_markdown_report(all_stats, output_path):
                     "### Intent Analysis (News Threads)",
                     "**Primary Intent Distribution:**",
                 ])
-                for intent_type, count in sorted(intent['primary_intent_distribution'].items(), key=lambda x: x[1], reverse=True):
-                    report_lines.append(f"  - {intent_type}: {count:,} threads")
+                for intent_type, stats in sorted(intent['primary_intent_distribution'].items(), key=lambda x: x[1]['count'], reverse=True):
+                    report_lines.append(f"  - {intent_type}: {stats['count']:,} threads ({stats['percentage']:.1f}%)")
                 report_lines.append("")
         
         if 'conversation_length' in thread:
@@ -786,8 +828,8 @@ def generate_markdown_report(all_stats, output_path):
             
             if turn['questions_by_turn']:
                 report_lines.append("**Questions by Turn Number:**")
-                for turn_num, count in sorted(turn['questions_by_turn'].items()):
-                    report_lines.append(f"  - Turn {turn_num}: {count:,} questions")
+                for turn_num, stats in sorted(turn['questions_by_turn'].items()):
+                    report_lines.append(f"  - Turn {turn_num}: {stats['count']:,} questions ({stats['percentage']:.1f}%)")
                 report_lines.append("")
         
         if 'question_text_analysis' in question:
@@ -835,8 +877,8 @@ def generate_markdown_report(all_stats, output_path):
                     f"### Model Side Distribution",
                     ""
                 ])
-                for side_name, count in sorted(side['responses_by_side'].items(), key=lambda x: x[1], reverse=True):
-                    report_lines.append(f"- **{side_name}**: {count:,} responses")
+                for side_name, stats in sorted(side['responses_by_side'].items(), key=lambda x: x[1]['count'], reverse=True):
+                    report_lines.append(f"- **{side_name}**: {stats['count']:,} responses ({stats['percentage']:.1f}%)")
                 report_lines.append("")
         
         if 'citation_format_analysis' in response:
@@ -846,8 +888,8 @@ def generate_markdown_report(all_stats, output_path):
                     f"### Citation Format Distribution",
                     ""
                 ])
-                for format_type, count in sorted(format_analysis['citations_by_format'].items(), key=lambda x: x[1], reverse=True):
-                    report_lines.append(f"- **{format_type}**: {count:,} citations")
+                for format_type, stats in sorted(format_analysis['citations_by_format'].items(), key=lambda x: x[1]['count'], reverse=True):
+                    report_lines.append(f"- **{format_type}**: {stats['count']:,} citations ({stats['percentage']:.1f}%)")
                 report_lines.append("")
     
     # News relationships analysis
