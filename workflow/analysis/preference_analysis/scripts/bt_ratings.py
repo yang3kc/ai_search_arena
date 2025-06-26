@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 # Import utility functions
-from utils import (
+from bt_utils import (
     load_battle_data,
     filter_battle_data,
     compute_bradley_terry_ratings,

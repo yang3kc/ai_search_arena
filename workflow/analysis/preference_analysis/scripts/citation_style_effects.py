@@ -14,7 +14,7 @@ from pathlib import Path
 import json
 
 # Import utility functions
-from utils import (
+from bt_utils import (
     load_battle_data,
     filter_battle_data,
     compute_style_coefficients,
