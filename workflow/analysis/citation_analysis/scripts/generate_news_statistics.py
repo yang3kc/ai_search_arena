@@ -107,16 +107,6 @@ def analyze_thread_patterns(threads, news_citations):
             'min_turns': int(turn_stats.min())
         }
     
-    # Temporal analysis of news threads
-    if 'tstamp' in news_threads.columns:
-        news_threads['datetime'] = pd.to_datetime(news_threads['tstamp'])
-        stats['temporal_distribution'] = {
-            'date_range': {
-                'earliest': news_threads['datetime'].min().isoformat(),
-                'latest': news_threads['datetime'].max().isoformat(),
-                'span_days': (news_threads['datetime'].max() - news_threads['datetime'].min()).days
-            }
-        }
     
     return stats
 
@@ -240,52 +230,6 @@ def analyze_response_patterns(responses, news_citations):
     
     return stats
 
-
-def analyze_temporal_patterns(data):
-    """Analyze temporal patterns in news citations."""
-    logger.info("Analyzing temporal patterns...")
-    
-    stats = {}
-    
-    if 'timestamp' in data.columns:
-        # Convert to datetime
-        data['datetime'] = pd.to_datetime(data['timestamp'])
-        
-        # Basic temporal statistics
-        stats['date_range'] = {
-            'earliest': data['datetime'].min().isoformat(),
-            'latest': data['datetime'].max().isoformat(),
-            'span_days': (data['datetime'].max() - data['datetime'].min()).days
-        }
-        
-        # Daily citation patterns
-        daily_counts = data['datetime'].dt.date.value_counts().sort_index()
-        stats['daily_patterns'] = {
-            'avg_citations_per_day': float(daily_counts.mean()),
-            'peak_day': daily_counts.idxmax().isoformat(),
-            'peak_citations': int(daily_counts.max()),
-            'total_active_days': len(daily_counts)
-        }
-        
-        # Weekly patterns
-        data['weekday'] = data['datetime'].dt.day_name()
-        weekday_counts = data['weekday'].value_counts()
-        stats['weekly_patterns'] = {
-            'citations_by_weekday': weekday_counts.to_dict(),
-            'busiest_weekday': weekday_counts.idxmax(),
-            'quietest_weekday': weekday_counts.idxmin()
-        }
-        
-        # Hourly patterns (if time component available)
-        if data['datetime'].dt.hour.nunique() > 1:
-            hourly_counts = data['datetime'].dt.hour.value_counts().sort_index()
-            stats['hourly_patterns'] = {
-                'peak_hour': int(hourly_counts.idxmax()),
-                'quiet_hour': int(hourly_counts.idxmin()),
-                'citations_by_hour': hourly_counts.to_dict()
-            }
-    
-    return stats
 
 
 def analyze_domain_patterns(data):
@@ -936,27 +880,6 @@ def generate_markdown_report(all_stats, output_path):
                 ])
             report_lines.append("")
     
-    # Temporal patterns
-    if 'temporal_patterns' in all_stats:
-        temporal = all_stats['temporal_patterns']
-        if 'date_range' in temporal:
-            report_lines.extend([
-                "## Temporal Patterns",
-                "",
-                f"- **Date Range**: {temporal['date_range']['earliest']} to {temporal['date_range']['latest']}",
-                f"- **Span**: {temporal['date_range']['span_days']} days",
-                ""
-            ])
-            
-            if 'daily_patterns' in temporal:
-                daily = temporal['daily_patterns']
-                report_lines.extend([
-                    f"- **Average Citations per Day**: {daily['avg_citations_per_day']:.1f}",
-                    f"- **Peak Day**: {daily['peak_day']} ({daily['peak_citations']:,} citations)",
-                    f"- **Total Active Days**: {daily['total_active_days']:,}",
-                    ""
-                ])
-    
     # Domain analysis
     if 'domain_patterns' in all_stats:
         domain = all_stats['domain_patterns']
@@ -1108,7 +1031,6 @@ def main():
         'question_patterns': analyze_question_patterns(all_data['questions'], news_citations),
         'response_patterns': analyze_response_patterns(all_data['responses'], news_citations),
         'news_relationships': analyze_news_relationships(news_citations),
-        'temporal_patterns': analyze_temporal_patterns(news_citations),
         'domain_patterns': analyze_domain_patterns(news_citations),
         'model_comparison': analyze_model_comparison(news_citations),
         'political_bias': analyze_political_bias_patterns(news_citations),
