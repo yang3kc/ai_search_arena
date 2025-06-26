@@ -139,37 +139,61 @@ def analyze_domain_coverage(tables):
             classification_counts = enriched["domain_classification"].value_counts()
             stats["domain_classification"] = {
                 "classification_counts": classification_counts.to_dict(),
-                "total_classified": int((enriched["domain_classification"] != "unclassified").sum()),
-                "classification_rate": float((enriched["domain_classification"] != "unclassified").sum() / len(enriched)),
+                "total_classified": int(
+                    (enriched["domain_classification"] != "unclassified").sum()
+                ),
+                "classification_rate": float(
+                    (enriched["domain_classification"] != "unclassified").sum()
+                    / len(enriched)
+                ),
             }
 
     # Add enriched citation coverage analysis
     if tables["citations_enriched"] is not None:
         citations_enriched = tables["citations_enriched"]
-        
+
         # Political leaning coverage in actual citations
         if "political_leaning_score" in citations_enriched.columns:
-            political_coverage_cites = citations_enriched["political_leaning_score"].notna().sum()
+            political_coverage_cites = (
+                citations_enriched["political_leaning_score"].notna().sum()
+            )
             stats["citation_political_leaning_coverage"] = {
                 "citations_with_scores": int(political_coverage_cites),
-                "coverage_rate": float(political_coverage_cites / len(citations_enriched)),
+                "coverage_rate": float(
+                    political_coverage_cites / len(citations_enriched)
+                ),
             }
-        
+
         # Quality ratings coverage in actual citations
         if "domain_quality_score" in citations_enriched.columns:
-            quality_coverage_cites = citations_enriched["domain_quality_score"].notna().sum()
+            quality_coverage_cites = (
+                citations_enriched["domain_quality_score"].notna().sum()
+            )
             stats["citation_quality_ratings_coverage"] = {
                 "citations_with_ratings": int(quality_coverage_cites),
-                "coverage_rate": float(quality_coverage_cites / len(citations_enriched)),
+                "coverage_rate": float(
+                    quality_coverage_cites / len(citations_enriched)
+                ),
             }
-        
+
         # Domain classification coverage in actual citations
         if "domain_classification" in citations_enriched.columns:
-            citation_classification_counts = citations_enriched["domain_classification"].value_counts()
+            citation_classification_counts = citations_enriched[
+                "domain_classification"
+            ].value_counts()
             stats["citation_domain_classification"] = {
                 "classification_counts": citation_classification_counts.to_dict(),
-                "total_classified": int((citations_enriched["domain_classification"] != "unclassified").sum()),
-                "classification_rate": float((citations_enriched["domain_classification"] != "unclassified").sum() / len(citations_enriched)),
+                "total_classified": int(
+                    (
+                        citations_enriched["domain_classification"] != "unclassified"
+                    ).sum()
+                ),
+                "classification_rate": float(
+                    (
+                        citations_enriched["domain_classification"] != "unclassified"
+                    ).sum()
+                    / len(citations_enriched)
+                ),
             }
 
     return stats
@@ -189,48 +213,6 @@ def analyze_citation_patterns(tables):
                 "valid_urls": int(valid_urls),
                 "validity_rate": float(valid_urls / len(citations)),
             }
-
-        # Domain distribution
-        if "base_domain" in citations.columns:
-            domain_counts = citations["base_domain"].value_counts()
-            stats["domain_distribution"] = {
-                "top_10_domains": domain_counts.head(10).to_dict(),
-                "domains_cited_once": int((domain_counts == 1).sum()),
-                "concentration_top_10": float(
-                    domain_counts.head(10).sum() / len(citations)
-                ),
-            }
-
-        # News citation analysis
-        if "domain_classification" in citations.columns:
-            news_citations = (citations["domain_classification"] == "news").sum()
-            stats["news_citations"] = {
-                "count": int(news_citations),
-                "rate": float(news_citations / len(citations)),
-            }
-
-        # Political leaning distribution for news
-        if "political_leaning_score" in citations.columns and "domain_classification" in citations.columns:
-            news_cites = citations[citations["domain_classification"] == "news"]
-            if len(news_cites) > 0:
-                # Use political_leaning_score for numerical analysis
-                leaning_series = news_cites["political_leaning_score"].dropna()
-                if len(leaning_series) > 0:
-                    stats["political_leaning_distribution"] = {
-                        "mean": float(leaning_series.mean()),
-                        "std": float(leaning_series.std()),
-                        "median": float(leaning_series.median()),
-                        "coverage_in_news": float(
-                            news_cites["political_leaning_score"].notna().sum() / len(news_cites)
-                        ),
-                    }
-                else:
-                    stats["political_leaning_distribution"] = {
-                        "mean": None,
-                        "std": None,
-                        "median": None,
-                        "coverage_in_news": 0.0,
-                    }
 
     return stats
 
@@ -257,7 +239,9 @@ def analyze_model_comparison(tables):
 
         # News citation rates by model
         if "domain_classification" in model_citations.columns:
-            model_citations["is_news"] = model_citations["domain_classification"] == "news"
+            model_citations["is_news"] = (
+                model_citations["domain_classification"] == "news"
+            )
             news_by_model = model_citations.groupby(model_col)["is_news"].agg(
                 ["sum", "count", "mean"]
             )
@@ -417,10 +401,18 @@ def generate_markdown_report(summary, output_path):
                 ]
             )
             total_domains = sum(class_info["classification_counts"].values())
-            for domain_type, count in sorted(class_info["classification_counts"].items(), key=lambda x: x[1], reverse=True):
-                if domain_type != "unclassified":  # Skip unclassified in detailed breakdown
+            for domain_type, count in sorted(
+                class_info["classification_counts"].items(),
+                key=lambda x: x[1],
+                reverse=True,
+            ):
+                if (
+                    domain_type != "unclassified"
+                ):  # Skip unclassified in detailed breakdown
                     percentage = (count / total_domains) * 100
-                    report_lines.append(f"  - {domain_type}: {count:,} domains ({percentage:.1f}%)")
+                    report_lines.append(
+                        f"  - {domain_type}: {count:,} domains ({percentage:.1f}%)"
+                    )
             report_lines.append("")
 
         # Add citation-level coverage statistics
@@ -449,72 +441,18 @@ def generate_markdown_report(summary, output_path):
                 ]
             )
             total_citations = sum(cite_class_info["classification_counts"].values())
-            for domain_type, count in sorted(cite_class_info["classification_counts"].items(), key=lambda x: x[1], reverse=True):
-                if domain_type != "unclassified":  # Skip unclassified in detailed breakdown
+            for domain_type, count in sorted(
+                cite_class_info["classification_counts"].items(),
+                key=lambda x: x[1],
+                reverse=True,
+            ):
+                if (
+                    domain_type != "unclassified"
+                ):  # Skip unclassified in detailed breakdown
                     percentage = (count / total_citations) * 100
-                    report_lines.append(f"  - {domain_type}: {count:,} citations ({percentage:.1f}%)")
-
-        # Add blank line after citation coverage section
-        if any(key in domain_coverage for key in ["citation_political_leaning_coverage", "citation_quality_ratings_coverage", "citation_domain_classification"]):
-            report_lines.append("")
-
-    # Citation patterns
-    citation_patterns = summary["citation_patterns"]
-    if citation_patterns:
-        report_lines.extend(["## Citation Patterns", ""])
-
-        if "url_quality" in citation_patterns:
-            url_qual = citation_patterns["url_quality"]
-            report_lines.extend(
-                [
-                    f"- **Valid URLs**: {url_qual['valid_urls']:,} ({url_qual['validity_rate']:.1%})",
-                    "",
-                ]
-            )
-
-        if "news_citations" in citation_patterns:
-            news_cites = citation_patterns["news_citations"]
-            report_lines.extend(
-                [
-                    f"- **News Citations**: {news_cites['count']:,} ({news_cites['rate']:.1%} of all citations)",
-                    "",
-                ]
-            )
-
-        if "political_leaning_distribution" in citation_patterns:
-            pol_dist = citation_patterns["political_leaning_distribution"]
-            if pol_dist["mean"] is not None:
-                report_lines.extend(
-                    [
-                        "### Political Leaning Distribution (News Sources)",
-                        f"- **Mean Political Leaning**: {pol_dist['mean']:.3f}",
-                        f"- **Median Political Leaning**: {pol_dist['median']:.3f}",
-                        f"- **Standard Deviation**: {pol_dist['std']:.3f}",
-                        f"- **Coverage in News Citations**: {pol_dist['coverage_in_news']:.1%}",
-                        "",
-                    ]
-                )
-
-        if "domain_distribution" in citation_patterns:
-            domain_dist = citation_patterns["domain_distribution"]
-            report_lines.extend(["### Most Cited Domains", ""])
-            # Get total citations for percentage calculation
-            if "total_citations" in summary["dataset_overview"]:
-                total_all_citations = summary["dataset_overview"]["total_citations"]
-                for domain, count in domain_dist["top_10_domains"].items():
-                    percentage = (count / total_all_citations) * 100
-                    report_lines.append(f"- {domain}: {count:,} citations ({percentage:.2f}%)")
-            else:
-                for domain, count in domain_dist["top_10_domains"].items():
-                    report_lines.append(f"- {domain}: {count:,} citations")
-            report_lines.extend(
-                [
-                    "",
-                    f"- **Domains cited only once**: {domain_dist['domains_cited_once']:,}",
-                    f"- **Top 10 domains concentration**: {domain_dist['concentration_top_10']:.1%}",
-                    "",
-                ]
-            )
+                    report_lines.append(
+                        f"  - {domain_type}: {count:,} citations ({percentage:.1f}%)"
+                    )
 
     # Model comparison
     model_comparison = summary["model_comparison"]
