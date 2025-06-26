@@ -8,7 +8,6 @@ in effects as features are added or modified.
 """
 
 import pandas as pd
-import numpy as np
 import sys
 from pathlib import Path
 import json
@@ -18,8 +17,6 @@ from bt_utils import (
     load_battle_data,
     filter_battle_data,
     compute_style_coefficients,
-    save_results,
-    print_summary,
 )
 
 
@@ -61,46 +58,19 @@ def create_default_model_specifications():
     spec.add_model(
         "basic_response",
         ["response_word_count", "num_citations"],
-        "Basic response characteristics: length and citation count",
+        "Basic response characteristics: length and citation count. All models should include these two features as control variables.",
     )
 
     # Citation source types
     spec.add_model(
-        "source_types",
-        ["proportion_news", "num_citations"],
-        "Focus on source type diversity",
+        "proportion_news",
+        ["response_word_count", "num_citations", "proportion_news"],
+        "Proportion of news sources in the citation pool.",
     )
 
-    # Political bias features
+    # Bias + quality among all citations
     spec.add_model(
-        "political_bias",
-        ["proportion_left_leaning", "proportion_right_leaning", "proportion_news"],
-        "Political bias in news sources",
-    )
-
-    # Source quality features
-    spec.add_model(
-        "source_quality",
-        ["proportion_high_quality", "proportion_low_quality", "proportion_news"],
-        "Source quality and credibility",
-    )
-
-    # Combined political and quality
-    spec.add_model(
-        "politics_and_quality",
-        [
-            "proportion_left_leaning",
-            "proportion_right_leaning",
-            "proportion_high_quality",
-            "proportion_low_quality",
-            "proportion_news",
-        ],
-        "Combined political bias and source quality",
-    )
-
-    # Full primary model
-    spec.add_model(
-        "full_primary",
+        "bias_and_quality_all_citations",
         [
             "response_word_count",
             "num_citations",
@@ -110,43 +80,35 @@ def create_default_model_specifications():
             "proportion_high_quality",
             "proportion_low_quality",
         ],
-        "All primary features from original analysis",
+        "Political and quality among all citations.",
     )
 
-    # Extended model with news-specific features (if available)
+    # Bias + quality among news citations
     spec.add_model(
-        "extended_news",
+        "bias_and_quality_news_citations",
         [
             "response_word_count",
             "num_citations",
             "proportion_news",
-            "proportion_left_leaning",
-            "proportion_right_leaning",
-            "proportion_high_quality",
-            "proportion_low_quality",
+            "news_proportion_left_leaning",
             "news_proportion_right_leaning",
-            "news_proportion_unknown_leaning",
             "news_proportion_high_quality",
             "news_proportion_low_quality",
-            "news_proportion_unknown_quality",
         ],
-        "Extended model with news-specific proportions",
+        "Political and quality among news citations.",
     )
 
     return spec
 
 
-def analyze_citation_style_effects(
-    battle_df, model_specs, config, selected_models=None
-):
+def analyze_citation_style_effects(battle_df, model_specs, config):
     """Analyze citation style effects for multiple model specifications."""
     print("Analyzing citation style effects with flexible model specifications...")
 
     results = {}
 
     # Use all models if none specified
-    if selected_models is None:
-        selected_models = model_specs.list_models()
+    selected_models = model_specs.list_models()
 
     print(f"Running analysis for {len(selected_models)} model specifications")
 
@@ -350,11 +312,6 @@ def main():
                     config["statistical_analysis"]["random_seed"] = (
                         snakemake.params.random_seed
                     )
-                # Get selected models from params if specified
-                selected_models = getattr(snakemake.params, "selected_models", None)
-                # Handle callable parameters (from lambda functions in Snakefile)
-                if callable(selected_models):
-                    selected_models = selected_models(snakemake.wildcards) if hasattr(snakemake, 'wildcards') else None
         else:
             # For standalone execution
             if len(sys.argv) < 4:
@@ -365,8 +322,6 @@ def main():
             input_battle_data = sys.argv[1]
             output_results = sys.argv[2]
             output_coefficients = sys.argv[3]
-            # Parse selected models from command line
-            selected_models = sys.argv[4].split(",") if len(sys.argv) > 4 else None
 
         print("=" * 80)
         print("CITATION STYLE EFFECTS ANALYSIS - FLEXIBLE MODEL SPECIFICATION")
@@ -385,7 +340,7 @@ def main():
 
         # Run analysis for specified models
         results = analyze_citation_style_effects(
-            filtered_battle_df, model_specs, config, selected_models
+            filtered_battle_df, model_specs, config
         )
 
         if not results:
@@ -396,9 +351,7 @@ def main():
         compare_models(results)
 
         # Save results
-        coefficients_df = save_flexible_results(
-            results, output_results, output_coefficients
-        )
+        save_flexible_results(results, output_results, output_coefficients)
 
         print(f"\nCitation style effects analysis completed successfully!")
         print(f"Results saved to: {output_results}")

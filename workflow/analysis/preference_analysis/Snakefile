@@ -94,32 +94,7 @@ rule analyze_citation_style_effects:
         coefficients = OUTPUT_DIR / "citation_style_effects_coefficients.csv"
     params:
         bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"],
-        random_seed = config["statistical_analysis"]["random_seed"],
-        selected_models = ["basic_response", "political_bias", "source_quality", "full_primary"]  # Can be customized
-    script:
-        "scripts/citation_style_effects.py"
-
-# Flexible citation style analysis with custom model specifications
-rule analyze_citation_style_custom:
-    input:
-        OUTPUT_DIR / "battle_data.parquet"
-    output:
-        results = OUTPUT_DIR / "citation_style_effects_{model_set}_results.json",
-        coefficients = OUTPUT_DIR / "citation_style_effects_{model_set}_coefficients.csv"
-    params:
-        bootstrap_samples = config["statistical_analysis"]["bootstrap_samples"],
-        random_seed = config["statistical_analysis"]["random_seed"],
-        # Selected models will be determined by the {model_set} wildcard
-        # Examples: "basic", "political", "quality", "extended", "all"
-        selected_models = lambda wildcards: {
-            "basic": ["basic_response"],
-            "political": ["political_bias", "source_types"],
-            "quality": ["source_quality", "politics_and_quality"],
-            "extended": ["extended_news"],
-            "all": None,  # Run all available models
-            "core": ["basic_response", "political_bias", "source_quality"],
-            "advanced": ["politics_and_quality", "full_primary", "extended_news"]
-        }.get(wildcards.model_set, ["basic_response"])
+        random_seed = config["statistical_analysis"]["random_seed"]
     script:
         "scripts/citation_style_effects.py"
 
