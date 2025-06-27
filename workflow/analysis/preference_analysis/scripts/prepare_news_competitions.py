@@ -88,15 +88,19 @@ def filter_news_competitions(citations_df, responses_df, threads_df):
     )
     thread_news_counts.columns = ["thread_id", "responses_with_news", "total_responses"]
 
-    # Filter for threads with at least one response with news
-    valid_threads = thread_news_counts[(thread_news_counts["responses_with_news"] > 0)][
-        "thread_id"
-    ]
+    # Filter for threads where both models cite news
+    valid_threads = thread_news_counts[
+        (
+            thread_news_counts["responses_with_news"]
+            == thread_news_counts["total_responses"]
+        )
+    ]["thread_id"]
 
-    print(f"Found {len(valid_threads):,} threads where at least one model cites news")
+    print(f"Found {len(valid_threads):,} threads where both models cite news")
 
     # Filter threads data
     filtered_threads = threads_df[threads_df["thread_id"].isin(valid_threads)].copy()
+    # filtered_threads = threads_df
 
     # Remove ties and invalid outcomes
     valid_winners = ["model_a", "model_b"]
