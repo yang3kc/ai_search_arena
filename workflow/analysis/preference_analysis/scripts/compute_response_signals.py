@@ -99,6 +99,8 @@ def compute_quality_metrics(citations_df):
     for response_id, group in citations_df.groupby("response_id"):
         metrics = {"response_id": response_id}
 
+        # Filter out the news citations. The quality metrics only make sense for news citations. But we want to calculate their proportions among all citations.
+        news_citations = group[group["domain_classification"] == "news"]
         # Total citations for this response
         total_cites = len(group)
 
@@ -107,7 +109,7 @@ def compute_quality_metrics(citations_df):
 
         if total_cites > 0:
             # Quality distribution
-            quality_counts = group["domain_quality"].value_counts()
+            quality_counts = news_citations["domain_quality"].value_counts()
 
             # Compute proportions for each quality category
             for category in quality_categories:
@@ -132,6 +134,8 @@ def compute_bias_metrics(citations_df):
     for response_id, group in citations_df.groupby("response_id"):
         metrics = {"response_id": response_id}
 
+        # Filter out the news citations. The bias metrics only make sense for news citations. But we want to calculate their proportions among all citations.
+        news_citations = group[group["domain_classification"] == "news"]
         # Total citations for this response
         total_cites = len(group)
 
@@ -145,7 +149,7 @@ def compute_bias_metrics(citations_df):
 
         if total_cites > 0:
             # Political leaning distribution
-            leaning_counts = group["political_leaning"].value_counts()
+            leaning_counts = news_citations["political_leaning"].value_counts()
 
             # Compute proportions for each leaning category
             for category in leaning_categories:
