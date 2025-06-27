@@ -9,7 +9,7 @@ analysis_dir: "../../../data/intermediate/preference_analysis"
 statistical_analysis:
   anchor_model: "gpt-4o-search-preview"
   anchor_rating: 1000.0
-  bootstrap_samples: 500
+  bootstrap_samples: 1000
   random_seed: 42
   confidence_level: 0.95
 
