@@ -99,8 +99,9 @@ def filter_news_competitions(citations_df, responses_df, threads_df):
     print(f"Found {len(valid_threads):,} threads where both models cite news")
 
     # Filter threads data
-    filtered_threads = threads_df[threads_df["thread_id"].isin(valid_threads)].copy()
-    # filtered_threads = threads_df
+    # filtered_threads = threads_df[threads_df["thread_id"].isin(valid_threads)].copy()
+    # We will focus on all threads for now.
+    filtered_threads = threads_df
 
     # Remove ties and invalid outcomes
     valid_winners = ["model_a", "model_b"]
