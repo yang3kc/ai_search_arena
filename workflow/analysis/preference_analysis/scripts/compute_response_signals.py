@@ -108,10 +108,12 @@ def compute_quality_metrics(citations_df):
         if total_cites > 0:
             # Quality distribution
             quality_counts = group["domain_quality"].value_counts()
-            
+
             # Compute proportions for each quality category
             for category in quality_categories:
-                metrics[f"proportion_{category}"] = quality_counts.get(category, 0) / total_cites
+                metrics[f"proportion_{category}"] = (
+                    quality_counts.get(category, 0) / total_cites
+                )
         else:
             # No citations case - set all proportions to 0
             for category in quality_categories:
@@ -134,15 +136,22 @@ def compute_bias_metrics(citations_df):
         total_cites = len(group)
 
         # Define political leaning categories once
-        leaning_categories = ["left_leaning", "right_leaning", "unknown_leaning"]
+        leaning_categories = [
+            "left_leaning",
+            "right_leaning",
+            "center_leaning",
+            "unknown_leaning",
+        ]
 
         if total_cites > 0:
             # Political leaning distribution
             leaning_counts = group["political_leaning"].value_counts()
-            
+
             # Compute proportions for each leaning category
             for category in leaning_categories:
-                metrics[f"proportion_{category}"] = leaning_counts.get(category, 0) / total_cites
+                metrics[f"proportion_{category}"] = (
+                    leaning_counts.get(category, 0) / total_cites
+                )
         else:
             # No citations case - set all proportions to 0
             for category in leaning_categories:
@@ -171,10 +180,12 @@ def compute_news_quality_metrics(citations_df):
         if total_news_cites > 0:
             # Quality distribution among news citations only
             news_quality_counts = news_citations["domain_quality"].value_counts()
-            
+
             # Compute proportions for each quality category among news citations
             for category in quality_categories:
-                metrics[f"news_proportion_{category}"] = news_quality_counts.get(category, 0) / total_news_cites
+                metrics[f"news_proportion_{category}"] = (
+                    news_quality_counts.get(category, 0) / total_news_cites
+                )
         else:
             # No news citations case - set all proportions to 0
             for category in quality_categories:
@@ -198,15 +209,22 @@ def compute_news_bias_metrics(citations_df):
         total_news_cites = len(news_citations)
 
         # Define political leaning categories once
-        leaning_categories = ["left_leaning", "right_leaning", "unknown_leaning"]
+        leaning_categories = [
+            "left_leaning",
+            "right_leaning",
+            "center_leaning",
+            "unknown_leaning",
+        ]
 
         if total_news_cites > 0:
             # Political leaning distribution among news citations only
             news_leaning_counts = news_citations["political_leaning"].value_counts()
-            
+
             # Compute proportions for each leaning category among news citations
             for category in leaning_categories:
-                metrics[f"news_proportion_{category}"] = news_leaning_counts.get(category, 0) / total_news_cites
+                metrics[f"news_proportion_{category}"] = (
+                    news_leaning_counts.get(category, 0) / total_news_cites
+                )
         else:
             # No news citations case - set all proportions to 0
             for category in leaning_categories:
