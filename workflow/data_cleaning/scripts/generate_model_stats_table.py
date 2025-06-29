@@ -30,6 +30,18 @@ def load_data(responses_path, citations_path):
     return responses, citations
 
 
+def get_model_provider(model_name):
+    """Extract provider from model name."""
+    if model_name.startswith("gpt-"):
+        return "OpenAI"
+    elif model_name.startswith("sonar"):
+        return "Perplexity"
+    elif model_name.startswith("gemini"):
+        return "Google"
+    else:
+        return "Unknown"
+
+
 def generate_model_stats(responses, citations):
     """Generate model statistics table."""
     print("Generating model statistics...")
@@ -75,30 +87,13 @@ def generate_model_stats(responses, citations):
     # Handle division by zero (models with no citations)
     stats.loc[stats["num_citations"] == 0, "news_citation_percentage"] = 0.0
 
-    # Sort by number of responses (descending)
-    stats = stats.sort_values("num_responses", ascending=False)
+    # Add provider column
+    stats["provider"] = stats["model_name"].apply(get_model_provider)
+
+    # Sort by provider first, then by number of responses (descending) within each provider
+    stats = stats.sort_values(["provider", "num_responses"], ascending=[True, False])
 
     return stats
-
-
-def format_model_name(model_name):
-    """Format model name for LaTeX display."""
-    # Handle common model names
-    name_mapping = {
-        "sonar": "Perplexity Sonar",
-        "gpt-4o": "GPT-4o",
-        "gpt-4o-mini": "GPT-4o-mini",
-        "claude-3-5-sonnet": "Claude-3.5-Sonnet",
-        "claude-3-haiku": "Claude-3-Haiku",
-        "claude-3-opus": "Claude-3-Opus",
-        "gemini-1.5-pro": "Gemini-1.5-Pro",
-        "gemini-1.5-flash": "Gemini-1.5-Flash",
-        "llama-3.1-405b": "Llama-3.1-405B",
-        "llama-3.1-70b": "Llama-3.1-70B",
-        "llama-3.1-8b": "Llama-3.1-8B",
-    }
-
-    return name_mapping.get(model_name, model_name.replace("_", "-"))
 
 
 def generate_latex_table(stats):
@@ -107,9 +102,6 @@ def generate_latex_table(stats):
 
     # Prepare data for LaTeX table
     table_data = stats.copy()
-
-    # Format model names
-    table_data["model_name"] = table_data["model_name"].apply(format_model_name)
 
     # Format numbers with commas and percentage
     table_data["num_responses_formatted"] = table_data["num_responses"].apply(
@@ -135,6 +127,7 @@ def generate_latex_table(stats):
 
     totals_row = pd.DataFrame(
         {
+            "provider": ["\\textbf{All}"],
             "model_name": ["\\textbf{Total}"],
             "num_responses_formatted": [f"\\textbf{{{total_responses:,}}}"],
             "num_citations_formatted": [f"\\textbf{{{total_citations:,}}}"],
@@ -147,6 +140,7 @@ def generate_latex_table(stats):
 
     # Select columns for output
     display_columns = [
+        "provider",
         "model_name",
         "num_responses_formatted",
         "num_citations_formatted",
@@ -161,11 +155,18 @@ def generate_latex_table(stats):
     # Generate LaTeX table using to_latex
     latex_table = table_data_final.to_latex(
         index=False,
-        column_format="lrrrr",
+        column_format="llrrrr",
         columns=display_columns,
-        header=["Model", "Responses", "Citations", "News Citations", "News \\%"],
+        header=[
+            "Provider",
+            "Model",
+            "Responses",
+            "Citations",
+            "News Citations",
+            "News \\%",
+        ],
         escape=False,  # Don't escape LaTeX commands
-        caption="Model Statistics: Response Counts and Citation Patterns",
+        caption="Model Statistics: Response Counts and Citation Patterns by Provider",
         label="tab:model_stats",
         position="htbp",
     )
