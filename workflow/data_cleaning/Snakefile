@@ -32,7 +32,9 @@ rule all:
         # Final enriched citations
         f"{INTERMEDIATE_DIR}/citations_enriched.parquet",
         # Data summary report for paper
-        f"{OUTPUT_DIR}/data_summary_report.md"
+        f"{OUTPUT_DIR}/data_summary_report.md",
+        # Model statistics LaTeX table for paper
+        f"{OUTPUT_DIR}/model_stats_table.tex"
 
 # Phase 1: Data exploration and validation
 rule explore_data:
@@ -144,3 +146,14 @@ rule generate_summary:
     script:
         "scripts/generate_data_summary.py"
 
+# Phase 11: Generate model statistics LaTeX table for paper
+rule generate_model_stats_table:
+    input:
+        responses=f"{INTERMEDIATE_DIR}/responses.parquet",
+        citations_enriched=f"{INTERMEDIATE_DIR}/citations_enriched.parquet"
+    output:
+        f"{OUTPUT_DIR}/model_stats_table.tex"
+    params:
+        intermediate_dir=INTERMEDIATE_DIR
+    script:
+        "scripts/generate_model_stats_table.py"
