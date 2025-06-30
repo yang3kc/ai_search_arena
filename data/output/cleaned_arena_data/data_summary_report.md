@@ -1,6 +1,6 @@
 # AI Search Arena Dataset Summary Report
 
-*Generated on: 2025-06-26T00:31:13.048068*
+*Generated on: 2025-06-30T14:29:39.354525*
 
 ## Dataset Overview
 
@@ -10,6 +10,19 @@
 - **Total Responses**: 65,768
 - **Responses per Question**: 2.00
 - **Total Citations**: 366,087
+
+### Temporal Coverage
+- **Date Range**: 2025-03-18 to 2025-05-09
+- **Full Timestamp Range**: 2025-03-18 16:39:00 to 2025-05-09 05:20:05
+- **Collection Period**: 51 days (7 weeks, 1.7 months)
+- **Active Days**: 53 out of 51 total days
+
+**Activity Statistics:**
+- **Average Conversations per Day**: 454.1
+- **Peak Daily Activity**: 796 conversations
+- **Minimum Daily Activity**: 57 conversations
+- **Average Conversations per Week**: 3009
+- **Average Conversations per Month**: 8023
 
 ### Model Distribution
 - **Unique Models**: 13

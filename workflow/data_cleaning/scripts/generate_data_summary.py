@@ -57,14 +57,43 @@ def analyze_dataset_overview(tables):
         )
 
         # Date range analysis
-        if "tstamp" in threads.columns:
+        timestamp_col = "timestamp" if "timestamp" in threads.columns else "tstamp"
+        if timestamp_col in threads.columns:
+            # Convert timestamps to datetime
+            threads_with_dates = threads.copy()
+            threads_with_dates["datetime"] = pd.to_datetime(
+                threads_with_dates[timestamp_col]
+            )
+
+            earliest_date = threads_with_dates["datetime"].min()
+            latest_date = threads_with_dates["datetime"].max()
+            span_days = (latest_date - earliest_date).days
+
+            # Calculate additional temporal statistics
+            threads_per_day = threads_with_dates.groupby(
+                threads_with_dates["datetime"].dt.date
+            ).size()
+            threads_per_month = threads_with_dates.groupby(
+                threads_with_dates["datetime"].dt.to_period("M")
+            ).size()
+            threads_per_week = threads_with_dates.groupby(
+                threads_with_dates["datetime"].dt.to_period("W")
+            ).size()
+
             stats["date_range"] = {
-                "earliest": threads["tstamp"].min(),
-                "latest": threads["tstamp"].max(),
-                "span_days": (
-                    pd.to_datetime(threads["tstamp"].max())
-                    - pd.to_datetime(threads["tstamp"].min())
-                ).days,
+                "earliest": earliest_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "latest": latest_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "earliest_date_only": earliest_date.strftime("%Y-%m-%d"),
+                "latest_date_only": latest_date.strftime("%Y-%m-%d"),
+                "span_days": span_days,
+                "span_weeks": span_days // 7,
+                "span_months": round(span_days / 30.4, 1),
+                "avg_conversations_per_day": float(threads_per_day.mean()),
+                "max_conversations_per_day": int(threads_per_day.max()),
+                "min_conversations_per_day": int(threads_per_day.min()),
+                "avg_conversations_per_week": float(threads_per_week.mean()),
+                "avg_conversations_per_month": float(threads_per_month.mean()),
+                "total_active_days": len(threads_per_day),
             }
 
     if tables["questions"] is not None:
@@ -314,8 +343,17 @@ def generate_markdown_report(summary, output_path):
         report_lines.extend(
             [
                 "### Temporal Coverage",
-                f"- **Date Range**: {date_info['earliest']} to {date_info['latest']}",
-                f"- **Span**: {date_info['span_days']} days",
+                f"- **Date Range**: {date_info['earliest_date_only']} to {date_info['latest_date_only']}",
+                f"- **Full Timestamp Range**: {date_info['earliest']} to {date_info['latest']}",
+                f"- **Collection Period**: {date_info['span_days']} days ({date_info['span_weeks']} weeks, {date_info['span_months']} months)",
+                f"- **Active Days**: {date_info['total_active_days']} out of {date_info['span_days']} total days",
+                "",
+                "**Activity Statistics:**",
+                f"- **Average Conversations per Day**: {date_info['avg_conversations_per_day']:.1f}",
+                f"- **Peak Daily Activity**: {date_info['max_conversations_per_day']} conversations",
+                f"- **Minimum Daily Activity**: {date_info['min_conversations_per_day']} conversations",
+                f"- **Average Conversations per Week**: {date_info['avg_conversations_per_week']:.0f}",
+                f"- **Average Conversations per Month**: {date_info['avg_conversations_per_month']:.0f}",
                 "",
             ]
         )
