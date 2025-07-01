@@ -38,7 +38,10 @@ rule all:
         f"{ANALYSIS_DIR}/news_similarity_summary.json",
         # Phase 8: Top news sources by model family
         f"{OUTPUT_DIR}/top_news_sources_by_family.csv",
-        f"{OUTPUT_DIR}/top_news_sources_latex_table.tex"
+        f"{OUTPUT_DIR}/top_news_sources_latex_table.tex",
+        # Phase 9: Overrepresented news sources by model family
+        f"{OUTPUT_DIR}/overrepresented_sources_by_family.csv",
+        f"{OUTPUT_DIR}/overrepresented_sources_latex_table.tex"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -127,3 +130,13 @@ rule generate_top_news_sources:
         latex=f"{OUTPUT_DIR}/top_news_sources_latex_table.tex"
     script:
         "scripts/generate_top_news_sources.py"
+
+# Phase 9: Identify overrepresented news sources using log-odds ratio
+rule generate_overrepresented_sources:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        csv=f"{OUTPUT_DIR}/overrepresented_sources_by_family.csv",
+        latex=f"{OUTPUT_DIR}/overrepresented_sources_latex_table.tex"
+    script:
+        "scripts/generate_overrepresented_sources.py"
