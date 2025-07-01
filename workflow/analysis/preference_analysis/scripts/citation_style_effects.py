@@ -78,28 +78,23 @@ def create_default_model_specifications():
             "proportion_left_leaning",
             "proportion_right_leaning",
             "proportion_center_leaning",
-            "proportion_unknown_leaning",
+            # "proportion_unknown_leaning",
             "proportion_high_quality",
             "proportion_low_quality",
-            "proportion_unknown_quality",
+            # "proportion_unknown_quality",
         ],
         "Political and quality among all citations.",
     )
 
     # Bias + quality among news citations
     spec.add_model(
-        "bias_and_quality_news_citations",
+        "no_control_variables",
         [
-            "response_word_count",
-            "num_citations",
-            "proportion_news",
-            "news_proportion_left_leaning",
-            "news_proportion_right_leaning",
-            "news_proportion_center_leaning",
-            "news_proportion_unknown_leaning",
-            "news_proportion_high_quality",
-            "news_proportion_low_quality",
-            "news_proportion_unknown_quality",
+            "proportion_left_leaning",
+            "proportion_right_leaning",
+            "proportion_center_leaning",
+            "proportion_high_quality",
+            "proportion_low_quality",
         ],
         "Political and quality among news citations.",
     )
