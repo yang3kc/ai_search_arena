@@ -35,7 +35,10 @@ rule all:
         f"{ANALYSIS_DIR}/news_similarities_cosine.parquet",
         f"{ANALYSIS_DIR}/news_similarity_matrix_jaccard.parquet",
         f"{ANALYSIS_DIR}/news_similarity_matrix_cosine.parquet",
-        f"{ANALYSIS_DIR}/news_similarity_summary.json"
+        f"{ANALYSIS_DIR}/news_similarity_summary.json",
+        # Phase 8: Top news sources by model family
+        f"{OUTPUT_DIR}/top_news_sources_by_family.csv",
+        f"{OUTPUT_DIR}/top_news_sources_latex_table.tex"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -113,3 +116,14 @@ rule calculate_news_similarity:
         analysis_summary=f"{ANALYSIS_DIR}/news_similarity_summary.json"
     script:
         "scripts/calculate_news_similarity.py"
+
+
+# Phase 8: Most Frequent News Sources for Each Family
+rule generate_top_news_sources:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        csv=f"{OUTPUT_DIR}/top_news_sources_by_family.csv",
+        latex=f"{OUTPUT_DIR}/top_news_sources_latex_table.tex"
+    script:
+        "scripts/generate_top_news_sources.py"
