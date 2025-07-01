@@ -31,8 +31,10 @@ rule all:
         # Phase 6: News citation statistics report
         f"{OUTPUT_DIR}/news_citation_statistics_report.md",
         # Phase 7: News citation similarity analysis
-        f"{ANALYSIS_DIR}/news_similarities.parquet",
-        f"{ANALYSIS_DIR}/news_similarity_matrix.parquet",
+        f"{ANALYSIS_DIR}/news_similarities_jaccard.parquet",
+        f"{ANALYSIS_DIR}/news_similarities_cosine.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_matrix_jaccard.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_matrix_cosine.parquet",
         f"{ANALYSIS_DIR}/news_similarity_summary.json"
 
 # Phase 1: Data Integration Pipeline
@@ -104,8 +106,10 @@ rule calculate_news_similarity:
     input:
         news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
     output:
-        similarities=f"{ANALYSIS_DIR}/news_similarities.parquet",
-        similarity_matrix=f"{ANALYSIS_DIR}/news_similarity_matrix.parquet",
+        similarities_jaccard=f"{ANALYSIS_DIR}/news_similarities_jaccard.parquet",
+        similarities_cosine=f"{ANALYSIS_DIR}/news_similarities_cosine.parquet",
+        similarity_matrix_jaccard=f"{ANALYSIS_DIR}/news_similarity_matrix_jaccard.parquet",
+        similarity_matrix_cosine=f"{ANALYSIS_DIR}/news_similarity_matrix_cosine.parquet",
         analysis_summary=f"{ANALYSIS_DIR}/news_similarity_summary.json"
     script:
         "scripts/calculate_news_similarity.py"
