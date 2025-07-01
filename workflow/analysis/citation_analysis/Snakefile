@@ -29,7 +29,11 @@ rule all:
         f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
         f"{ANALYSIS_DIR}/source_quality_analysis_report.html",
         # Phase 6: News citation statistics report
-        f"{OUTPUT_DIR}/news_citation_statistics_report.md"
+        f"{OUTPUT_DIR}/news_citation_statistics_report.md",
+        # Phase 7: News citation similarity analysis
+        f"{ANALYSIS_DIR}/news_similarities.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_matrix.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_summary.json"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -94,3 +98,14 @@ rule generate_news_statistics:
         f"{OUTPUT_DIR}/news_citation_statistics_report.md"
     script:
         "scripts/generate_news_statistics.py"
+
+# Phase 7: News Citation Similarity Analysis
+rule calculate_news_similarity:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        similarities=f"{ANALYSIS_DIR}/news_similarities.parquet",
+        similarity_matrix=f"{ANALYSIS_DIR}/news_similarity_matrix.parquet",
+        analysis_summary=f"{ANALYSIS_DIR}/news_similarity_summary.json"
+    script:
+        "scripts/calculate_news_similarity.py"
