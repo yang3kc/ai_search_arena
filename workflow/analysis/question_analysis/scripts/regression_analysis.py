@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # Configure logging
 logging.basicConfig(
@@ -177,6 +178,34 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
     return feature_data, all_predictors
 
 
+def calculate_vif(X):
+    """Calculate Variance Inflation Factor for multicollinearity diagnosis."""
+    try:
+        # Add constant for VIF calculation
+        X_with_const = sm.add_constant(X)
+        
+        # Calculate VIF for each feature
+        vif_data = []
+        for i in range(1, X_with_const.shape[1]):  # Skip constant term
+            try:
+                vif_value = variance_inflation_factor(X_with_const.values, i)
+                vif_data.append({
+                    'feature': X_with_const.columns[i],
+                    'vif': float(vif_value)
+                })
+            except:
+                # Handle cases where VIF calculation fails
+                vif_data.append({
+                    'feature': X_with_const.columns[i],
+                    'vif': np.nan
+                })
+        
+        return vif_data
+    except Exception as e:
+        logger.warning(f"VIF calculation failed: {e}")
+        return []
+
+
 def run_regression_analysis(X, y, outcome_name):
     """Run OLS regression analysis using statsmodels for a single outcome."""
     logger.info(f"Running OLS regression for {outcome_name}")
@@ -195,6 +224,10 @@ def run_regression_analysis(X, y, outcome_name):
         logger.error(f"No valid data for {outcome_name}")
         return None
 
+    # Calculate multicollinearity diagnostics
+    logger.info(f"Calculating multicollinearity diagnostics for {outcome_name}")
+    vif_data = calculate_vif(X_clean)
+    
     # Add intercept term
     X_with_const = sm.add_constant(X_clean)
 
@@ -270,6 +303,10 @@ def run_regression_analysis(X, y, outcome_name):
             jb_stat, jb_pvalue = np.nan, np.nan
             dw_stat = np.nan
 
+        # Multicollinearity analysis
+        high_vif_features = [vif for vif in vif_data if not np.isnan(vif["vif"]) and vif["vif"] > 10]
+        moderate_vif_features = [vif for vif in vif_data if not np.isnan(vif["vif"]) and 5 <= vif["vif"] <= 10]
+        
         results["diagnostics"] = {
             "condition_number": float(np.linalg.cond(X_with_const)),
             "jarque_bera_stat": float(jb_stat),
@@ -278,6 +315,13 @@ def run_regression_analysis(X, y, outcome_name):
             "n_significant_features": sum(
                 1 for feat in results["coefficients"]["features"] if feat["significant"]
             ),
+            "multicollinearity": {
+                "vif_data": vif_data,
+                "high_vif_count": len(high_vif_features),
+                "moderate_vif_count": len(moderate_vif_features),
+                "max_vif": max([vif["vif"] for vif in vif_data if not np.isnan(vif["vif"])]) if vif_data else np.nan,
+                "mean_vif": np.mean([vif["vif"] for vif in vif_data if not np.isnan(vif["vif"])]) if vif_data else np.nan,
+            },
         }
 
         return results

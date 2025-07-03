@@ -424,6 +424,70 @@ def create_model_comparison_plots(data, results):
     return plots
 
 
+def create_multicollinearity_plots(results):
+    """Create multicollinearity diagnostic plots."""
+    logger.info("Creating multicollinearity diagnostic plots...")
+
+    plots = []
+
+    for result in results["regression_results"]:
+        outcome = result["outcome"]
+        multicollinearity = result["diagnostics"].get("multicollinearity", {})
+        vif_data = multicollinearity.get("vif_data", [])
+        
+        if not vif_data:
+            continue
+            
+        # Filter out NaN values and sort by VIF
+        valid_vif = [vif for vif in vif_data if not np.isnan(vif["vif"])]
+        if not valid_vif:
+            continue
+            
+        # Sort by VIF value and take top 20
+        valid_vif.sort(key=lambda x: x["vif"], reverse=True)
+        top_vif = valid_vif[:20]
+        
+        # Create VIF plot
+        feature_names = [vif["feature"] for vif in top_vif]
+        vif_values = [vif["vif"] for vif in top_vif]
+        
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        # Color bars by VIF level
+        colors = ['red' if vif >= 10 else 'orange' if vif >= 5 else 'blue' for vif in vif_values]
+        
+        y_pos = range(len(feature_names))
+        bars = ax.barh(y_pos, vif_values, color=colors)
+        
+        # Add reference lines
+        ax.axvline(x=5, color='orange', linestyle='--', alpha=0.7, label='VIF = 5 (moderate)')
+        ax.axvline(x=10, color='red', linestyle='--', alpha=0.7, label='VIF = 10 (high)')
+        
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(feature_names)
+        ax.set_xlabel('Variance Inflation Factor (VIF)')
+        ax.set_ylabel('Features')
+        ax.set_title(f'Multicollinearity Diagnosis (VIF): {outcome}')
+        ax.legend()
+        ax.grid(True, axis='x', alpha=0.3)
+        
+        # Add value labels on bars
+        for i, (bar, vif) in enumerate(zip(bars, vif_values)):
+            ax.text(vif + max(vif_values) * 0.01, i, f'{vif:.1f}', 
+                   va='center', fontsize=8)
+        
+        plt.tight_layout()
+        
+        plots.append({
+            "outcome": outcome,
+            "figure": fig,
+            "high_vif_count": multicollinearity.get("high_vif_count", 0),
+            "mean_vif": multicollinearity.get("mean_vif", 0)
+        })
+    
+    return plots
+
+
 def create_performance_summary_table(results):
     """Create model performance summary table."""
     logger.info("Creating performance summary table...")
@@ -433,6 +497,7 @@ def create_performance_summary_table(results):
     for result in results["regression_results"]:
         perf = result["model_performance"]
         diag = result["diagnostics"]
+        multicollinearity = diag.get("multicollinearity", {})
 
         performance_data.append(
             {
@@ -445,6 +510,9 @@ def create_performance_summary_table(results):
                 "BIC": f"{perf['bic']:.1f}",
                 "RMSE": f"{perf['rmse']:.4f}",
                 "N Significant Features": diag["n_significant_features"],
+                "High VIF Features": multicollinearity.get("high_vif_count", 0),
+                "Mean VIF": f"{multicollinearity.get('mean_vif', 0):.2f}",
+                "Max VIF": f"{multicollinearity.get('max_vif', 0):.2f}",
                 "Sample Size": f"{result['n_samples']:,}",
             }
         )
@@ -462,6 +530,7 @@ def generate_html_report(data, results, output_path):
     coefficient_plots = create_regression_coefficient_plots(results)
     importance_fig = create_feature_importance_plot(results)
     model_comparison_plots = create_model_comparison_plots(data, results)
+    multicollinearity_plots = create_multicollinearity_plots(results)
     performance_table = create_performance_summary_table(results)
 
     # Start HTML content
@@ -556,6 +625,28 @@ def generate_html_report(data, results, output_path):
                 <h3>{plot_data["outcome"]}</h3>
                 <div class="plot-container">
                     <img src="{model_img}" style="max-width: 100%; height: auto;">
+                </div>
+            """
+
+    # Add multicollinearity diagnostic plots
+    if multicollinearity_plots:
+        html_content += "<h2>Multicollinearity Diagnostics</h2>"
+        html_content += """
+        <div class="summary">
+            <p><strong>Interpretation:</strong> Variance Inflation Factor (VIF) measures multicollinearity.</p>
+            <ul>
+                <li><strong>VIF < 5:</strong> Low multicollinearity (acceptable)</li>
+                <li><strong>5 ≤ VIF < 10:</strong> Moderate multicollinearity (concerning)</li>
+                <li><strong>VIF ≥ 10:</strong> High multicollinearity (problematic)</li>
+            </ul>
+        </div>
+        """
+        for i, plot_data in enumerate(multicollinearity_plots):
+            vif_img = fig_to_base64(plot_data["figure"])
+            html_content += f"""
+                <h3>{plot_data["outcome"]} (High VIF: {plot_data["high_vif_count"]}, Mean VIF: {plot_data["mean_vif"]:.2f})</h3>
+                <div class="plot-container">
+                    <img src="{vif_img}" style="max-width: 100%; height: auto;">
                 </div>
             """
 
