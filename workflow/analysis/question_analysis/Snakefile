@@ -1,0 +1,12 @@
+# Snakemake workflow for Question Analysis
+#
+# This workflow analyzes how different questions are related to AI models'
+# news citation patterns
+
+import os
+from pathlib import Path
+
+# Configuration
+configfile: "config/config.yaml"
+
+# Define paths from config
