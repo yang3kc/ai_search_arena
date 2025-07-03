@@ -249,6 +249,37 @@ def apply_pca_to_embeddings(data, n_components=20):
     return pca_data
 
 
+def convert_proportions_to_percentages(data):
+    """Convert proportion features from decimals (0-1) to percentages (0-100)."""
+    logger.info("Converting proportion features to percentages...")
+    
+    converted_data = data.copy()
+    
+    # Find all proportion columns
+    proportion_cols = [col for col in data.columns if 'proportion_' in col]
+    
+    if not proportion_cols:
+        logger.warning("No proportion columns found")
+        return converted_data
+        
+    # Convert each proportion column from decimal to percentage
+    conversion_summary = {}
+    for col in proportion_cols:
+        original_range = (data[col].min(), data[col].max())
+        converted_data[col] = data[col] * 100.0
+        new_range = (converted_data[col].min(), converted_data[col].max())
+        
+        conversion_summary[col] = {
+            'original_range': original_range,
+            'new_range': new_range
+        }
+        
+        logger.info(f"  {col}: {original_range[0]:.3f}-{original_range[1]:.3f} → {new_range[0]:.1f}-{new_range[1]:.1f}%")
+    
+    logger.info(f"Converted {len(proportion_cols)} proportion columns to percentages")
+    return converted_data
+
+
 def handle_missing_values(data):
     """Handle remaining missing values in the dataset."""
     logger.info("Handling missing values...")
@@ -274,7 +305,7 @@ def handle_missing_values(data):
                 # Fill turn numbers with 1 (first turn)
                 cleaned_data[col] = cleaned_data[col].fillna(1)
             elif "proportion_" in col or "news_proportion_" in col:
-                # Fill proportion columns with 0
+                # Fill proportion columns with 0 (now in percentage scale)
                 cleaned_data[col] = cleaned_data[col].fillna(0)
             elif col == "num_citations":
                 # Fill citation count with 0
@@ -393,10 +424,13 @@ def main():
     # Step 5: Apply PCA to embeddings
     data_with_pca = apply_pca_to_embeddings(data_standardized)
 
-    # Step 6: Handle missing values
-    data_cleaned = handle_missing_values(data_with_pca)
+    # Step 6: Convert proportions to percentages
+    data_with_percentages = convert_proportions_to_percentages(data_with_pca)
 
-    # Step 7: Validate cleaned data
+    # Step 7: Handle missing values
+    data_cleaned = handle_missing_values(data_with_percentages)
+
+    # Step 8: Validate cleaned data
     final_data = validate_cleaned_data(data_cleaned)
 
     # Create output directory
