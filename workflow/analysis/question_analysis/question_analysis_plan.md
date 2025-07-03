@@ -81,11 +81,8 @@ This analysis aims to understand how different features of user questions relate
     - Control variables (turn number, thread characteristics)
   - **Models to fit**:
     - Linear regression for continuous outcomes
-    - Logistic regression for binary outcomes
-    - Mixed-effects models accounting for thread/user clustering
   - **Analysis outputs**:
     - Coefficient tables with confidence intervals
-    - Feature importance rankings
     - Model diagnostics and fit statistics
   - Output: `data/output/question_analysis/regression_results.json`
 
