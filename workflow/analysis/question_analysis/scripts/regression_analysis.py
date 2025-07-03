@@ -38,11 +38,11 @@ def identify_variable_groups(data):
     """Identify different groups of variables in the dataset."""
     logger.info("Identifying variable groups...")
 
-    # Embedding dimensions (original and PCA)
+    # Embedding dimensions (original and PCA) - keep pattern matching for these
     embedding_cols = [col for col in data.columns if col.startswith("embedding_dim_")]
     pca_cols = [col for col in data.columns if col.startswith("embedding_pc_")]
 
-    # Citation pattern outcomes (dependent variables)
+    # Citation pattern outcomes (dependent variables) - explicitly listed
     citation_outcomes = [
         "proportion_left_leaning",
         "proportion_right_leaning",
@@ -58,46 +58,77 @@ def identify_variable_groups(data):
         "num_citations",
     ]
 
-    # Question features
+    # Question features - explicitly listed
     question_features = [
-        col for col in data.columns if col.endswith("_log") and "question_length" in col
-    ] + ["turn_number", "total_turns"]
+        "question_length_chars_log",
+        "question_length_words_log",
+        "turn_number",
+        "total_turns",
+    ]
 
-    # Response features
+    # Response features - explicitly listed
     response_features = [
-        col for col in data.columns if col.endswith("_log") and "response" in col
+        "response_length_log",
+        "response_word_count_log",
     ]
 
-    # Categorical dummy variables
-    dummy_vars = [
-        col
-        for col in data.columns
-        if any(
-            prefix in col
-            for prefix in [
-                "client_country_",
-                "model_family_",
-                "primary_intent_",
-            ]
-        )
+    # Categorical dummy variables - explicitly listed by group
+    dummy_vars = []
+    
+    # Client country dummies (based on actual data)
+    client_country_dummies = [
+        "client_country_US", "client_country_GB", "client_country_CA", 
+        "client_country_DE", "client_country_CN", "client_country_HK",
+        "client_country_IN", "client_country_MX", "client_country_RU",
+        "client_country_Other", "client_country_nan"
     ]
+    dummy_vars.extend([col for col in client_country_dummies if col in data.columns])
+    
+    # Model family dummies (based on actual data)
+    model_family_dummies = [
+        "model_family_openai", "model_family_perplexity", "model_family_nan"
+    ]
+    dummy_vars.extend([col for col in model_family_dummies if col in data.columns])
+    
+    # Primary intent dummies (based on actual data)
+    primary_intent_dummies = [
+        "primary_intent_Creative Generation", "primary_intent_Explanation", 
+        "primary_intent_Factual Lookup", "primary_intent_Guidance",
+        "primary_intent_Info Synthesis", "primary_intent_Other",
+        "primary_intent_Recommendation", "primary_intent_Text Processing", 
+        "primary_intent_nan"
+    ]
+    dummy_vars.extend([col for col in primary_intent_dummies if col in data.columns])
 
-    # Source composition variables
+    # Source composition variables - explicitly listed
     source_composition = [
-        col
-        for col in data.columns
-        if col.startswith("proportion_")
-        and not any(
-            x in col
-            for x in [
-                "left_leaning",
-                "right_leaning",
-                "center_leaning",
-                "high_quality",
-                "low_quality",
-            ]
-        )
+        "proportion_academic",
+        "proportion_community_blog", 
+        "proportion_gov_edu",
+        "proportion_other",
+        "proportion_search_engine",
+        "proportion_social_media",
+        "proportion_tech",
+        "proportion_unclassified",
+        "proportion_unknown_leaning",
+        "proportion_unknown_quality",
+        "proportion_wiki",
     ]
+
+    # Validate which variables actually exist in the data
+    def filter_existing_vars(var_list, var_type):
+        existing = [var for var in var_list if var in data.columns]
+        missing = [var for var in var_list if var not in data.columns]
+        if missing:
+            logger.warning(f"Missing {var_type} variables: {missing}")
+        return existing
+
+    # Filter to only existing variables
+    citation_outcomes = filter_existing_vars(citation_outcomes, "citation outcome")
+    question_features = filter_existing_vars(question_features, "question feature")
+    response_features = filter_existing_vars(response_features, "response feature")
+    dummy_vars = filter_existing_vars(dummy_vars, "dummy variable")
+    source_composition = filter_existing_vars(source_composition, "source composition")
 
     logger.info(f"Original embedding dimensions: {len(embedding_cols)}")
     logger.info(f"PCA embedding dimensions: {len(pca_cols)}")
@@ -136,21 +167,32 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
 
     # Handle dummy variables - exclude one from each group as reference
     dummy_vars_filtered = []
-    dummy_groups = ["client_country_", "model_family_", "primary_intent_"]
+    
+    # Define dummy variable groups with explicit reference categories
+    dummy_groups = {
+        "client_country_": "client_country_BR",  # Reference: Brazil (excluded from our list)
+        "model_family_": "model_family_google",   # Reference: Google (excluded from our list)
+        "primary_intent_": "primary_intent_Analysis"  # Reference: Analysis (excluded from our list)
+    }
 
-    for group_prefix in dummy_groups:
+    for group_prefix, reference_var in dummy_groups.items():
         group_vars = [
             col for col in variable_groups["dummy_vars"] if col.startswith(group_prefix)
         ]
         if group_vars:
-            # Sort to ensure consistent reference category selection
+            # Sort to ensure consistent ordering
             group_vars.sort()
-            # Exclude the first category as reference (alphabetically first)
-            reference_var = group_vars[0]
-            included_vars = group_vars[1:]
+            
+            # If the intended reference is in the data, exclude it; otherwise exclude the first
+            if reference_var in group_vars:
+                excluded_var = reference_var
+                included_vars = [var for var in group_vars if var != reference_var]
+            else:
+                excluded_var = group_vars[0]
+                included_vars = group_vars[1:]
 
             logger.info(
-                f"Dummy group '{group_prefix}': excluding '{reference_var}' as reference, including {len(included_vars)} variables"
+                f"Dummy group '{group_prefix}': excluding '{excluded_var}' as reference, including {len(included_vars)} variables"
             )
             dummy_vars_filtered.extend(included_vars)
 
