@@ -44,9 +44,6 @@ This analysis aims to understand how different features of user questions relate
   - Key metrics to include:
     - Proportion of left/right/center-leaning sources
     - Proportion of high/low quality sources
-    - News vs non-news citation ratios
-    - Domain diversity metrics
-    - Overrepresentation scores for specific news sources
   - Output: `data/intermediate/question_analysis/citation_patterns.parquet`
 
 ### Phase 5: Data Integration
@@ -93,17 +90,6 @@ This analysis aims to understand how different features of user questions relate
   - Output: `data/output/question_analysis/question_analysis_report.html`
 
 ## Technical Implementation Details
-
-### Dependencies Required
-```python
-# New dependencies to add
-sentence-transformers==2.2.2
-langdetect==1.0.9
-spacy>=3.4.0
-scikit-learn>=1.1.0
-statsmodels>=0.14.0
-plotly>=5.0.0
-```
 
 ### Key Data Structures
 
@@ -162,7 +148,7 @@ rule extract_question_features:
 rule compute_citation_patterns:
     input:
         questions="data/intermediate/question_analysis/english_questions.parquet",
-        citations="data/intermediate/citation_analysis/news_citations.parquet",
+        citations="data/intermediate/citation_analysis/integrated_citations.parquet",
         responses="data/intermediate/cleaned_arena_data/responses.parquet"
     output: "data/intermediate/question_analysis/citation_patterns.parquet"
 

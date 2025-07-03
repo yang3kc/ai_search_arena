@@ -67,7 +67,7 @@ rule extract_question_features:
 rule compute_citation_patterns:
     input:
         questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
-        citations=f"{CITATION_ANALYSIS_DIR}/news_citations.parquet",
+        citations=f"{CITATION_ANALYSIS_DIR}/integrated_citations.parquet",
         responses=f"{CLEANED_DATA_DIR}/responses.parquet"
     output:
         f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet"
