@@ -78,7 +78,6 @@ def add_response_metadata(patterns_df, responses_df):
     response_metadata_cols = [
         "response_id",
         "thread_id",
-        "model_name_llm",
         "model_name_raw",
         "model_side",
     ]
@@ -171,56 +170,6 @@ def add_thread_metadata(integrated_data, threads_df):
 
     logger.info(f"Final integrated dataset: {len(integrated_with_threads):,} rows")
     return integrated_with_threads
-
-
-def add_model_family_variables(integrated_data):
-    """Extract and add model family variables from response data."""
-    logger.info("Adding model family variables...")
-
-    if "model_name_llm" in integrated_data.columns:
-        # Create model family mappings based on model names
-        def extract_model_family(model_name):
-            if pd.isna(model_name):
-                return "unknown"
-            model_name = str(model_name).lower()
-
-            if "gpt" in model_name:
-                return "openai"
-            elif "claude" in model_name:
-                return "anthropic"
-            elif "gemini" in model_name:
-                return "google"
-            elif "sonar" in model_name:
-                return "perplexity"
-            elif "llama" in model_name:
-                return "meta"
-            else:
-                return "other"
-
-        integrated_data["model_family"] = integrated_data["model_name_llm"].apply(
-            extract_model_family
-        )
-
-        # Model family distribution
-        family_counts = integrated_data["model_family"].value_counts()
-        logger.info(f"Model family distribution:\n{family_counts}")
-
-        # Add binary indicators for major families
-        major_families = ["openai", "anthropic", "google", "perplexity"]
-        for family in major_families:
-            integrated_data[f"is_{family}"] = (
-                integrated_data["model_family"] == family
-            ).astype(int)
-
-        logger.info(
-            f"Added model family variables for {len(major_families)} major families"
-        )
-    else:
-        logger.warning(
-            "No model_name_llm column found - skipping model family variables"
-        )
-
-    return integrated_data
 
 
 def handle_missing_data(integrated_data):
@@ -421,16 +370,13 @@ def main():
     # Step 4: Add thread metadata
     integrated_with_threads = add_thread_metadata(integrated_data, threads_df)
 
-    # Step 5: Add model family variables
-    integrated_with_models = add_model_family_variables(integrated_with_threads)
+    # Step 5: Handle missing data
+    analysis_ready_data = handle_missing_data(integrated_with_threads)
 
-    # Step 6: Handle missing data
-    analysis_ready_data = handle_missing_data(integrated_with_models)
-
-    # Step 7: Validate integrated data
+    # Step 6: Validate integrated data
     validate_integrated_data(analysis_ready_data)
 
-    # Step 8: Analyze data coverage
+    # Step 7: Analyze data coverage
     analyze_data_coverage(analysis_ready_data)
 
     # Create output directory
@@ -464,6 +410,7 @@ def main():
         if col
         in [
             "client_country",
+            "model_name_raw",
             "question_length_chars",
             "question_length_words",
             "turn_number",
