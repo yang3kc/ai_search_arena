@@ -7,7 +7,6 @@ responses into model_a vs model_b comparisons for statistical preference analysi
 """
 
 import pandas as pd
-import numpy as np
 from pathlib import Path
 import sys
 

@@ -164,7 +164,7 @@ def extract_questions():
         return
 
     # Log statistics
-    logger.info(f"\n=== QUESTION EXTRACTION STATISTICS ===")
+    logger.info("\n=== QUESTION EXTRACTION STATISTICS ===")
     logger.info(f"Total questions extracted: {len(questions_df)}")
     logger.info(f"Total threads represented: {questions_df['thread_id'].nunique()}")
     logger.info(f"Average questions per thread: {len(questions_df) / questions_df['thread_id'].nunique():.2f}")
@@ -172,13 +172,13 @@ def extract_questions():
 
     # Turn distribution
     turn_dist = questions_df["turn_number"].value_counts().sort_index()
-    logger.info(f"Turn distribution:")
+    logger.info("Turn distribution:")
     for turn, count in turn_dist.head(10).items():
         logger.info(f"  Turn {turn}: {count} questions ({count/len(questions_df)*100:.1f}%)")
 
     # Question length statistics
     questions_df["query_length"] = questions_df["user_query"].str.len()
-    logger.info(f"Question length statistics:")
+    logger.info("Question length statistics:")
     logger.info(f"  Mean length: {questions_df['query_length'].mean():.1f} characters")
     logger.info(f"  Median length: {questions_df['query_length'].median():.1f} characters")
     logger.info(f"  Min length: {questions_df['query_length'].min()}")
@@ -186,7 +186,7 @@ def extract_questions():
 
     # Language distribution (based on sample)
     sample_questions = questions_df["user_query"].head(100).tolist()
-    logger.info(f"Sample questions:")
+    logger.info("Sample questions:")
     for i, q in enumerate(sample_questions[:5]):
         logger.info(f"  {i+1}. {q[:100]}{'...' if len(q) > 100 else ''}")
 

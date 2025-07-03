@@ -89,7 +89,7 @@ def main():
         # Print summary
         print_summary(results)
 
-        print(f"\nBradley-Terry ratings calculated successfully!")
+        print("\nBradley-Terry ratings calculated successfully!")
         print(f"Results saved to: {output_results}")
         print(f"Coefficients saved to: {output_coefficients}")
 

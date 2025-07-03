@@ -51,7 +51,7 @@ def generate_final_summary_stats(enriched_citations):
         print(f"Political leaning domain coverage: {pol_domains_covered:,} / {total_unique_domains:,} unique domains ({pol_domains_covered / total_unique_domains * 100:.1f}%)")
         
         if "political_leaning" in enriched_citations.columns:
-            print(f"Political leaning categories:")
+            print("Political leaning categories:")
             leaning_counts = enriched_citations["political_leaning"].value_counts()
             for leaning, count in leaning_counts.items():
                 pct = count / total_citations * 100
@@ -65,7 +65,7 @@ def generate_final_summary_stats(enriched_citations):
         print(f"Domain quality domain coverage: {qual_domains_covered:,} / {total_unique_domains:,} unique domains ({qual_domains_covered / total_unique_domains * 100:.1f}%)")
         
         if "domain_quality" in enriched_citations.columns:
-            print(f"Domain quality categories:")
+            print("Domain quality categories:")
             quality_counts = enriched_citations["domain_quality"].value_counts()
             for quality, count in quality_counts.items():
                 pct = count / total_citations * 100
@@ -112,7 +112,7 @@ def main():
     print(f"\nSaving enriched citations to {output_path}")
     enriched_citations.to_parquet(output_path, index=False)
     
-    print(f"\n✅ Final citations enrichment completed!")
+    print("\n✅ Final citations enrichment completed!")
     print(f"Final dataset: {len(enriched_citations):,} rows, {len(enriched_citations.columns)} columns")
 
 

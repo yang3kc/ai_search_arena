@@ -8,11 +8,9 @@ distribution, and source quality metrics for research papers.
 """
 
 import pandas as pd
-import numpy as np
 from pathlib import Path
 from datetime import datetime
 import logging
-import json
 
 # Configure logging
 logging.basicConfig(
@@ -725,7 +723,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'thread_overview' in thread:
             overview = thread['thread_overview']
             report_lines.extend([
-                f"### Thread Overview",
+                "### Thread Overview",
                 f"- **News-Related Threads Analyzed**: {overview['news_threads_analyzed']:,}",
                 f"- **Unique Thread IDs**: {overview['unique_news_thread_ids']:,}",
                 ""
@@ -734,7 +732,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'winner_analysis' in thread:
             winner = thread['winner_analysis']
             report_lines.extend([
-                f"### Winner Analysis (News Threads)",
+                "### Winner Analysis (News Threads)",
                 f"- **Threads with Winners**: {winner['threads_with_winner']:,}",
                 ""
             ])
@@ -759,7 +757,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'conversation_length' in thread:
             length = thread['conversation_length']
             report_lines.extend([
-                f"### Conversation Length (News Threads)",
+                "### Conversation Length (News Threads)",
                 f"- **Average Turns**: {length['avg_turns']:.1f}",
                 f"- **Median Turns**: {length['median_turns']:.1f}",
                 f"- **Range**: {length['min_turns']} to {length['max_turns']} turns",
@@ -778,7 +776,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'question_overview' in question:
             overview = question['question_overview']
             report_lines.extend([
-                f"### Question Overview",
+                "### Question Overview",
                 f"- **News-Related Questions Analyzed**: {overview['news_questions_analyzed']:,}",
                 f"- **Unique Question IDs**: {overview['unique_news_question_ids']:,}",
                 ""
@@ -787,7 +785,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'turn_analysis' in question:
             turn = question['turn_analysis']
             report_lines.extend([
-                f"### Turn Analysis",
+                "### Turn Analysis",
                 f"- **Average Turn for News**: {turn['avg_turn_for_news']:.1f}",
                 f"- **First Turn News Percentage**: {turn['first_turn_news_percentage']:.1f}%",
                 ""
@@ -802,7 +800,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'question_text_analysis' in question:
             text = question['question_text_analysis']
             report_lines.extend([
-                f"### Question Text Analysis",
+                "### Question Text Analysis",
                 f"- **Average Length**: {text['avg_question_length']:.0f} characters",
                 f"- **Median Length**: {text['median_question_length']:.0f} characters",
                 f"- **Range**: {text['min_question_length']} to {text['max_question_length']} characters",
@@ -821,7 +819,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'response_overview' in response:
             overview = response['response_overview']
             report_lines.extend([
-                f"### Response Overview",
+                "### Response Overview",
                 f"- **News-Related Responses Analyzed**: {overview['news_responses_analyzed']:,}",
                 f"- **Unique Response IDs**: {overview['unique_news_response_ids']:,}",
                 ""
@@ -830,7 +828,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'citations_per_response' in response:
             cpr = response['citations_per_response']
             report_lines.extend([
-                f"### News Citations per Response",
+                "### News Citations per Response",
                 f"- **Average**: {cpr['avg_news_citations_per_response']:.1f}",
                 f"- **Median**: {cpr['median_news_citations_per_response']:.1f}",
                 f"- **Range**: {cpr['min_news_citations_per_response']} to {cpr['max_news_citations_per_response']} citations",
@@ -841,7 +839,7 @@ def generate_markdown_report(all_stats, output_path):
             side = response['model_side_analysis']
             if side['responses_by_side']:
                 report_lines.extend([
-                    f"### Model Side Distribution",
+                    "### Model Side Distribution",
                     ""
                 ])
                 for side_name, stats in sorted(side['responses_by_side'].items(), key=lambda x: x[1]['count'], reverse=True):
@@ -852,7 +850,7 @@ def generate_markdown_report(all_stats, output_path):
             format_analysis = response['citation_format_analysis']
             if format_analysis['citations_by_format']:
                 report_lines.extend([
-                    f"### Citation Format Distribution",
+                    "### Citation Format Distribution",
                     ""
                 ])
                 for format_type, stats in sorted(format_analysis['citations_by_format'].items(), key=lambda x: x[1]['count'], reverse=True):
@@ -871,7 +869,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'citations_per_thread' in relationships:
             cpt = relationships['citations_per_thread']
             report_lines.extend([
-                f"### Citations per Thread",
+                "### Citations per Thread",
                 f"- **Average**: {cpt['avg_citations_per_thread']:.1f}",
                 f"- **Median**: {cpt['median_citations_per_thread']:.1f}",
                 f"- **Range**: {cpt['min_citations_per_thread']} to {cpt['max_citations_per_thread']} citations",
@@ -881,7 +879,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'citations_per_question' in relationships:
             cpq = relationships['citations_per_question']
             report_lines.extend([
-                f"### Citations per Question",
+                "### Citations per Question",
                 f"- **Average**: {cpq['avg_citations_per_question']:.1f}",
                 f"- **Median**: {cpq['median_citations_per_question']:.1f}",
                 f"- **Range**: {cpq['min_citations_per_question']} to {cpq['max_citations_per_question']} citations",
@@ -891,7 +889,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'thread_level_stats' in relationships:
             tls = relationships['thread_level_stats']
             report_lines.extend([
-                f"### Thread-Level Aggregation",
+                "### Thread-Level Aggregation",
                 f"- **Average Responses per Thread**: {tls['avg_responses_per_thread']:.1f}",
                 f"- **Median Responses per Thread**: {tls['median_responses_per_thread']:.1f}",
             ])
@@ -910,7 +908,7 @@ def generate_markdown_report(all_stats, output_path):
         report_lines.extend([
             "## Domain Analysis",
             "",
-            f"### Domain Overview",
+            "### Domain Overview",
             f"- **Unique Domains**: {domain['domain_overview']['unique_domains']:,}",
             f"- **Average Citations per Domain**: {domain['domain_overview']['avg_citations_per_domain']:.1f}",
             f"- **Median Citations per Domain**: {domain['domain_overview']['median_citations_per_domain']:.1f}",
@@ -920,7 +918,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'top_domains' in domain:
             top = domain['top_domains']
             report_lines.extend([
-                f"### Top News Domains",
+                "### Top News Domains",
                 f"- **Top 10 Coverage**: {top['top_10_coverage']:.1f}% of all news citations",
                 f"- **Top 20 Coverage**: {top['top_20_coverage']:.1f}% of all news citations",
                 "",
@@ -939,7 +937,7 @@ def generate_markdown_report(all_stats, output_path):
         report_lines.extend([
             "## Model Comparison",
             "",
-            f"### News Citations by Model",
+            "### News Citations by Model",
             f"- **Unique Models**: {model['model_overview']['unique_models']}",
             f"- **Most Citing Model**: {model['model_overview']['most_citing_model']}",
             ""
@@ -965,7 +963,7 @@ def generate_markdown_report(all_stats, output_path):
             report_lines.extend([
                 "## Political Bias Analysis",
                 "",
-                f"### Bias Score Coverage",
+                "### Bias Score Coverage",
                 f"- **Citations with Bias Scores**: {bias_dist['total_with_bias_scores']:,} ({bias_dist['coverage_percentage']:.1f}%)",
                 f"- **Mean Bias Score**: {bias_dist['mean_score']:.3f}",
                 f"- **Median Bias Score**: {bias_dist['median_score']:.3f}",
@@ -976,7 +974,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'domain_bias_coverage' in bias:
             domain_bias = bias['domain_bias_coverage']
             report_lines.extend([
-                f"### Domain-Level Bias Coverage",
+                "### Domain-Level Bias Coverage",
                 f"- **Total Unique News Domains**: {domain_bias['total_unique_domains']:,}",
                 f"- **Domains with Bias Scores**: {domain_bias['domains_with_bias_scores']:,} ({domain_bias['domain_coverage_percentage']:.1f}%)",
                 ""
@@ -1002,7 +1000,7 @@ def generate_markdown_report(all_stats, output_path):
             report_lines.extend([
                 "## Source Quality Analysis",
                 "",
-                f"### Quality Score Coverage",
+                "### Quality Score Coverage",
                 f"- **Citations with Quality Scores**: {quality_dist['total_with_quality_scores']:,} ({quality_dist['coverage_percentage']:.1f}%)",
                 f"- **Mean Quality Score**: {quality_dist['mean_score']:.3f}",
                 f"- **Median Quality Score**: {quality_dist['median_score']:.3f}",
@@ -1013,7 +1011,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'domain_quality_coverage' in quality:
             domain_quality = quality['domain_quality_coverage']
             report_lines.extend([
-                f"### Domain-Level Quality Coverage",
+                "### Domain-Level Quality Coverage",
                 f"- **Total Unique News Domains**: {domain_quality['total_unique_domains']:,}",
                 f"- **Domains with Quality Scores**: {domain_quality['domains_with_quality_scores']:,} ({domain_quality['domain_coverage_percentage']:.1f}%)",
                 ""
@@ -1028,7 +1026,7 @@ def generate_markdown_report(all_stats, output_path):
             report_lines.extend([
                 "## Joint Bias & Quality Analysis",
                 "",
-                f"### Coverage",
+                "### Coverage",
                 f"- **Citations with Both Scores**: {coverage['citations_with_both_scores']:,} ({coverage['percentage_of_total']:.1f}%)",
                 f"- **Domains with Both Scores**: {coverage['unique_domains_with_both']:,} ({coverage['domain_joint_coverage_percentage']:.1f}%)",
                 ""
@@ -1037,7 +1035,7 @@ def generate_markdown_report(all_stats, output_path):
         if 'bias_quality_correlation' in joint:
             corr = joint['bias_quality_correlation']
             report_lines.extend([
-                f"### Correlation Analysis",
+                "### Correlation Analysis",
                 f"- **Bias-Quality Correlation**: {corr['correlation_coefficient']:.3f} ({corr['correlation_interpretation']})",
                 ""
             ])

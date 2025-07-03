@@ -36,19 +36,19 @@ def load_all_results(input_files):
     if input_files["bt_ratings_results"].exists():
         with open(input_files["bt_ratings_results"], "r") as f:
             results["bt_ratings"] = json.load(f)
-        print(f"  Loaded Bradley-Terry ratings")
+        print("  Loaded Bradley-Terry ratings")
 
     # Load individual effects
     if input_files["individual_effects_results"].exists():
         with open(input_files["individual_effects_results"], "r") as f:
             results["individual_effects"] = json.load(f)
-        print(f"  Loaded individual effects")
+        print("  Loaded individual effects")
 
     # Load citation style effects
     if input_files["citation_style_effects_results"].exists():
         with open(input_files["citation_style_effects_results"], "r") as f:
             results["citation_style_effects"] = json.load(f)
-        print(f"  Loaded citation style effects")
+        print("  Loaded citation style effects")
 
     return results
 
@@ -866,7 +866,7 @@ def main():
             results, coefficients, input_files["battle_data"], output_files["report"]
         )
 
-        print(f"\nReport generation completed successfully!")
+        print("\nReport generation completed successfully!")
         print(f"HTML report: {output_files['report']}")
         print(f"Visualizations: {output_files['individual_effects'].parent}")
 

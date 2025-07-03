@@ -210,7 +210,7 @@ def compare_models(results):
     for result in results.values():
         all_features.update(result["features"])
 
-    print(f"\nFeature Effects Across Models:")
+    print("\nFeature Effects Across Models:")
     print("  (Showing features that appear in multiple models)")
 
     for feature in sorted(all_features):
@@ -354,7 +354,7 @@ def main():
         # Save results
         save_flexible_results(results, output_results, output_coefficients)
 
-        print(f"\nCitation style effects analysis completed successfully!")
+        print("\nCitation style effects analysis completed successfully!")
         print(f"Results saved to: {output_results}")
         print(f"Coefficients saved to: {output_coefficients}")
 

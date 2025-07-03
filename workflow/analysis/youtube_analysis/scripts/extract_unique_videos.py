@@ -51,7 +51,7 @@ def generate_unique_videos_summary(unique_videos):
     
     # Citation frequency distribution
     citation_counts = unique_videos['citation_count']
-    print(f"\nCitation frequency distribution:")
+    print("\nCitation frequency distribution:")
     print(f"  Videos cited once: {(citation_counts == 1).sum():,}")
     print(f"  Videos cited 2-5 times: {((citation_counts >= 2) & (citation_counts <= 5)).sum():,}")
     print(f"  Videos cited 6-10 times: {((citation_counts >= 6) & (citation_counts <= 10)).sum():,}")
@@ -59,13 +59,13 @@ def generate_unique_videos_summary(unique_videos):
     
     # Response distribution
     response_counts = unique_videos['unique_response_count']
-    print(f"\nResponse distribution:")
+    print("\nResponse distribution:")
     print(f"  Videos cited in 1 response: {(response_counts == 1).sum():,}")
     print(f"  Videos cited in 2-3 responses: {((response_counts >= 2) & (response_counts <= 3)).sum():,}")
     print(f"  Videos cited in 4+ responses: {(response_counts >= 4).sum():,}")
     
     # Most cited videos
-    print(f"\nTop 15 most cited videos:")
+    print("\nTop 15 most cited videos:")
     top_videos = unique_videos.head(15)
     for _, row in top_videos.iterrows():
         print(f"  {row['video_id']}: {row['citation_count']} citations in {row['unique_response_count']} responses")
@@ -73,7 +73,7 @@ def generate_unique_videos_summary(unique_videos):
         print()
     
     # Citation statistics
-    print(f"Citation statistics:")
+    print("Citation statistics:")
     print(f"  Total citations: {citation_counts.sum():,}")
     print(f"  Mean citations per video: {citation_counts.mean():.1f}")
     print(f"  Median citations per video: {citation_counts.median():.1f}")
@@ -81,7 +81,7 @@ def generate_unique_videos_summary(unique_videos):
     print(f"  Min citations for single video: {citation_counts.min()}")
     
     # API efficiency calculation
-    print(f"\nAPI efficiency:")
+    print("\nAPI efficiency:")
     api_requests_needed = (total_videos + 49) // 50  # Round up to nearest 50
     print(f"  Videos to fetch: {total_videos:,}")
     print(f"  API requests needed: {api_requests_needed:,} (50 videos per request)")
@@ -109,7 +109,7 @@ def main():
     print(f"\nSaving unique videos to {output_path}")
     unique_videos.to_parquet(output_path, index=False)
     
-    print(f"\n✅ Unique video extraction completed!")
+    print("\n✅ Unique video extraction completed!")
     print(f"Output: {len(unique_videos):,} unique videos")
     print(f"Columns: {list(unique_videos.columns)}")
 

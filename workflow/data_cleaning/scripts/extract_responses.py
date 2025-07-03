@@ -209,7 +209,7 @@ def extract_responses():
             logger.warning(f"Unbalanced model_side distribution: A={model_side_counts['a']}, B={model_side_counts['b']}")
 
     # Log statistics
-    logger.info(f"\n=== RESPONSE EXTRACTION STATISTICS ===")
+    logger.info("\n=== RESPONSE EXTRACTION STATISTICS ===")
     logger.info(f"Total responses extracted: {len(responses_df)}")
     logger.info(f"Total questions represented: {responses_df['question_id'].nunique()}")
     logger.info(f"Total threads represented: {responses_df['thread_id'].nunique()}")
@@ -219,32 +219,32 @@ def extract_responses():
 
     # Model distribution (LLM config names)
     model_llm_counts = responses_df["model_name_llm"].value_counts()
-    logger.info(f"Model distribution (LLM config) (top 10):")
+    logger.info("Model distribution (LLM config) (top 10):")
     for model, count in model_llm_counts.head(10).items():
         logger.info(f"  {model}: {count} responses ({count/len(responses_df)*100:.1f}%)")
     
     # Model distribution (raw names)
     model_raw_counts = responses_df["model_name_raw"].value_counts()
-    logger.info(f"Model distribution (raw data) (top 10):")
+    logger.info("Model distribution (raw data) (top 10):")
     for model, count in model_raw_counts.head(10).items():
         logger.info(f"  {model}: {count} responses ({count/len(responses_df)*100:.1f}%)")
 
     # Model side distribution
     side_dist = responses_df["model_side"].value_counts()
-    logger.info(f"Model side distribution:")
+    logger.info("Model side distribution:")
     for side, count in side_dist.items():
         logger.info(f"  Side {side}: {count} responses ({count/len(responses_df)*100:.1f}%)")
 
     # Response length statistics
     responses_df["response_length"] = responses_df["response_text"].str.len()
-    logger.info(f"Response length statistics:")
+    logger.info("Response length statistics:")
     logger.info(f"  Mean length: {responses_df['response_length'].mean():.1f} characters")
     logger.info(f"  Median length: {responses_df['response_length'].median():.1f} characters")
     logger.info(f"  Min length: {responses_df['response_length'].min()}")
     logger.info(f"  Max length: {responses_df['response_length'].max()}")
 
     # LLM configuration statistics
-    logger.info(f"LLM configuration statistics:")
+    logger.info("LLM configuration statistics:")
     temp_stats = responses_df["llm_temperature"].describe()
     logger.info(f"  Temperature: mean={temp_stats['mean']:.2f}, min={temp_stats['min']:.2f}, max={temp_stats['max']:.2f}")
     

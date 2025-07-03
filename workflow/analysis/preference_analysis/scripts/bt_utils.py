@@ -165,7 +165,7 @@ def compute_style_coefficients(battle_df, features, num_bootstrap=1000, random_s
     n_features = feature_matrix.shape[1]
 
     if len(matchups) == 0:
-        print(f"  ERROR: No valid battles found after preprocessing")
+        print("  ERROR: No valid battles found after preprocessing")
         return None
 
     print(
@@ -580,7 +580,7 @@ def _fit_contextual_bt(
         else:
             return None
 
-    except Exception as e:
+    except Exception:
         return None
 
 

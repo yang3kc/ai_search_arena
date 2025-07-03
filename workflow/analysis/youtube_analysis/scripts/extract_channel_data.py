@@ -55,14 +55,14 @@ def generate_channel_summary(channel_stats):
     
     # Citation frequency distribution
     citation_counts = channel_stats['cited_video_count'].value_counts().sort_index()
-    print(f"\nChannel citation frequency distribution:")
+    print("\nChannel citation frequency distribution:")
     print(f"  Channels with 1 cited video: {(channel_stats['cited_video_count'] == 1).sum():,}")
     print(f"  Channels with 2-5 cited videos: {((channel_stats['cited_video_count'] >= 2) & (channel_stats['cited_video_count'] <= 5)).sum():,}")
     print(f"  Channels with 6-10 cited videos: {((channel_stats['cited_video_count'] >= 6) & (channel_stats['cited_video_count'] <= 10)).sum():,}")
     print(f"  Channels with 11+ cited videos: {(channel_stats['cited_video_count'] >= 11).sum():,}")
     
     # Top channels by citation count
-    print(f"\nTop 15 most cited channels:")
+    print("\nTop 15 most cited channels:")
     top_channels = channel_stats.head(15)
     for _, row in top_channels.iterrows():
         channel_name = row['channel_title'] if row['channel_title'] else 'Unknown Channel'
@@ -74,7 +74,7 @@ def generate_channel_summary(channel_stats):
     # View statistics
     if (channel_stats['total_views_of_cited_videos'] > 0).any():
         view_stats = channel_stats[channel_stats['total_views_of_cited_videos'] > 0]
-        print(f"View statistics for cited videos:")
+        print("View statistics for cited videos:")
         print(f"  Channels with view data: {len(view_stats):,}")
         print(f"  Total views across all cited videos: {view_stats['total_views_of_cited_videos'].sum():,.0f}")
         print(f"  Average total views per channel: {view_stats['total_views_of_cited_videos'].mean():,.0f}")
@@ -83,7 +83,7 @@ def generate_channel_summary(channel_stats):
     # Channel name availability
     named_channels = channel_stats['channel_title'].notna().sum()
     unnamed_channels = total_channels - named_channels
-    print(f"\nChannel name availability:")
+    print("\nChannel name availability:")
     print(f"  Channels with names: {named_channels:,} ({named_channels/total_channels*100:.1f}%)")
     print(f"  Channels without names: {unnamed_channels:,} ({unnamed_channels/total_channels*100:.1f}%)")
 
@@ -109,7 +109,7 @@ def main():
     print(f"\nSaving channel data to {output_path}")
     channel_stats.to_parquet(output_path, index=False)
     
-    print(f"\n✅ Channel data extraction completed!")
+    print("\n✅ Channel data extraction completed!")
     print(f"Output: {len(channel_stats):,} unique channels")
     print(f"Columns: {list(channel_stats.columns)}")
 

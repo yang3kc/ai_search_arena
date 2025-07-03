@@ -99,19 +99,19 @@ def extract_threads():
         return
 
     # Log statistics
-    logger.info(f"\n=== THREAD EXTRACTION STATISTICS ===")
+    logger.info("\n=== THREAD EXTRACTION STATISTICS ===")
     logger.info(f"Total threads extracted: {len(threads_df)}")
     logger.info(
         f"Threads with winners: {threads_df['winner'].notna().sum()} ({threads_df['winner'].notna().mean() * 100:.1f}%)"
     )
-    logger.info(f"Turn distribution:")
+    logger.info("Turn distribution:")
     turn_dist = threads_df["total_turns"].value_counts().sort_index()
     for turns, count in turn_dist.items():
         logger.info(
             f"  {turns} turn(s): {count} threads ({count / len(threads_df) * 100:.1f}%)"
         )
 
-    logger.info(f"Primary intent distribution (top 10):")
+    logger.info("Primary intent distribution (top 10):")
     if threads_df["primary_intent"].notna().any():
         intent_dist = threads_df["primary_intent"].value_counts().head(10)
         for intent, count in intent_dist.items():

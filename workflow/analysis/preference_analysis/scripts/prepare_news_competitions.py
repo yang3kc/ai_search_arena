@@ -130,7 +130,7 @@ def validate_competition_structure(threads_df, responses_df):
 
     # Check responses per thread
     responses_per_thread = responses_df.groupby("thread_id").size()
-    print(f"Responses per thread distribution:")
+    print("Responses per thread distribution:")
     print(responses_per_thread.value_counts().sort_index())
 
     # Check model pairs
@@ -211,7 +211,7 @@ def main():
         filtered_responses.to_parquet(output_responses, index=False)
         filtered_citations.to_parquet(output_citations, index=False)
 
-        print(f"\nSaved prepared data:")
+        print("\nSaved prepared data:")
         print(f"  Threads: {output_threads}")
         print(f"  Responses: {output_responses}")
         print(f"  Citations: {output_citations}")
@@ -226,7 +226,7 @@ def main():
             "winner_distribution": filtered_threads["winner"].value_counts().to_dict(),
         }
 
-        print(f"\nSummary statistics:")
+        print("\nSummary statistics:")
         for key, value in summary.items():
             print(f"  {key}: {value}")
 

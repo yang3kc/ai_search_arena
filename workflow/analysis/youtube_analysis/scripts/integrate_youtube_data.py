@@ -11,7 +11,7 @@ import pandas as pd
 
 def integrate_youtube_datasets(youtube_citations, video_metadata, channel_metadata):
     """Integrate all YouTube datasets into a comprehensive analysis dataset."""
-    print(f"Integrating datasets:")
+    print("Integrating datasets:")
     print(f"  YouTube citations: {len(youtube_citations):,} rows")
     print(f"  Video metadata: {len(video_metadata):,} rows")
     print(f"  Channel metadata: {len(channel_metadata):,} rows")
@@ -32,7 +32,7 @@ def integrate_youtube_datasets(youtube_citations, video_metadata, channel_metada
     
     print(f"After video merge: {len(integrated_data):,} rows")
     if len(integrated_data) != before_video_merge:
-        print(f"⚠️  Warning: Row count changed during video merge!")
+        print("⚠️  Warning: Row count changed during video merge!")
     
     # Check video metadata coverage
     video_coverage = integrated_data['title'].notna().sum()
@@ -50,7 +50,7 @@ def integrate_youtube_datasets(youtube_citations, video_metadata, channel_metada
     
     print(f"After channel merge: {len(integrated_data):,} rows")
     if len(integrated_data) != before_channel_merge:
-        print(f"⚠️  Warning: Row count changed during channel merge!")
+        print("⚠️  Warning: Row count changed during channel merge!")
     
     # Check channel metadata coverage
     channel_coverage = integrated_data['subscriber_count'].notna().sum()
@@ -61,7 +61,7 @@ def integrate_youtube_datasets(youtube_citations, video_metadata, channel_metada
 
 def clean_and_optimize_dataset(integrated_data):
     """Clean and optimize the integrated dataset."""
-    print(f"\nCleaning and optimizing dataset...")
+    print("\nCleaning and optimizing dataset...")
     
     # Handle duplicate column names from merges
     duplicate_columns = []
@@ -116,14 +116,14 @@ def generate_integration_summary(integrated_data):
     unique_channels = integrated_data['channel_id'].nunique()
     unique_responses = integrated_data['response_id'].nunique()
     
-    print(f"Dataset overview:")
+    print("Dataset overview:")
     print(f"  Total YouTube citations: {total_citations:,}")
     print(f"  Unique videos: {unique_videos:,}")
     print(f"  Unique channels: {unique_channels:,}")
     print(f"  Unique responses with YouTube citations: {unique_responses:,}")
     
     # Data completeness
-    print(f"\nData completeness:")
+    print("\nData completeness:")
     key_fields = ['title', 'channel_title', 'subscriber_count', 'view_count', 'published_at']
     for field in key_fields:
         if field in integrated_data.columns:
@@ -135,7 +135,7 @@ def generate_integration_summary(integrated_data):
     if 'view_count' in integrated_data.columns:
         video_view_stats = integrated_data[integrated_data['view_count'] > 0]['view_count']
         if len(video_view_stats) > 0:
-            print(f"\nVideo view statistics:")
+            print("\nVideo view statistics:")
             print(f"  Videos with view data: {len(video_view_stats):,}")
             print(f"  Total views across all cited videos: {video_view_stats.sum():,.0f}")
             print(f"  Mean views per video: {video_view_stats.mean():,.0f}")
@@ -146,7 +146,7 @@ def generate_integration_summary(integrated_data):
     if 'subscriber_count' in integrated_data.columns:
         channel_sub_stats = integrated_data[integrated_data['subscriber_count'] > 0]
         if len(channel_sub_stats) > 0:
-            print(f"\nChannel subscriber statistics:")
+            print("\nChannel subscriber statistics:")
             print(f"  Citations from channels with subscriber data: {len(channel_sub_stats):,}")
             channel_subs = channel_sub_stats.groupby('channel_id')['subscriber_count'].first()
             print(f"  Mean subscribers per channel: {channel_subs.mean():,.0f}")
@@ -154,7 +154,7 @@ def generate_integration_summary(integrated_data):
             print(f"  Largest channel: {channel_subs.max():,.0f} subscribers")
     
     # Most cited content
-    print(f"\nMost cited videos:")
+    print("\nMost cited videos:")
     video_citation_counts = integrated_data['video_id'].value_counts().head(10)
     for video_id, count in video_citation_counts.items():
         video_info = integrated_data[integrated_data['video_id'] == video_id].iloc[0]
@@ -163,7 +163,7 @@ def generate_integration_summary(integrated_data):
         views = video_info.get('view_count', 0)
         print(f"  {count}x: \"{title}\" by {channel} ({views:,} views)")
     
-    print(f"\nMost cited channels:")
+    print("\nMost cited channels:")
     channel_citation_counts = integrated_data.groupby('channel_id').agg({
         'video_id': 'count',
         'channel_title': 'first',
@@ -182,7 +182,7 @@ def generate_integration_summary(integrated_data):
         if len(pub_data) > 0:
             pub_data['pub_year'] = pub_data['published_at'].dt.year
             year_counts = pub_data['pub_year'].value_counts().sort_index()
-            print(f"\nCited video publication years (top 10):")
+            print("\nCited video publication years (top 10):")
             for year, count in year_counts.tail(10).items():
                 print(f"  {int(year)}: {count} citations")
     
@@ -190,7 +190,7 @@ def generate_integration_summary(integrated_data):
     if 'category_id' in integrated_data.columns:
         category_counts = integrated_data['category_id'].value_counts().head(10)
         if len(category_counts) > 0:
-            print(f"\nTop video categories (by category ID):")
+            print("\nTop video categories (by category ID):")
             for category_id, count in category_counts.items():
                 pct = count / total_citations * 100
                 print(f"  Category {category_id}: {count:,} citations ({pct:.1f}%)")
@@ -227,12 +227,12 @@ def main():
     print(f"\nSaving integrated YouTube dataset to {output_path}")
     integrated_data.to_parquet(output_path, index=False)
     
-    print(f"\n✅ YouTube data integration completed!")
+    print("\n✅ YouTube data integration completed!")
     print(f"Final dataset: {len(integrated_data):,} rows, {len(integrated_data.columns)} columns")
     print(f"File size: {integrated_data.memory_usage(deep=True).sum() / 1024**2:.1f} MB")
     
     # List all columns for reference
-    print(f"\nColumns in final dataset:")
+    print("\nColumns in final dataset:")
     for i, col in enumerate(sorted(integrated_data.columns), 1):
         print(f"  {i:2d}. {col}")
 

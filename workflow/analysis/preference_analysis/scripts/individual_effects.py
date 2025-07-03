@@ -81,7 +81,7 @@ def print_individual_summary(individual_results):
     # Sort by effect size (absolute value)
     effects.sort(key=lambda x: abs(x[1]), reverse=True)
 
-    print(f"\nFeature Effects (ranked by magnitude):")
+    print("\nFeature Effects (ranked by magnitude):")
     print("  (* = statistically significant)")
 
     for feature, coeff, ci, significant in effects:
@@ -197,7 +197,7 @@ def main():
         # Print summary
         print_individual_summary(individual_results)
 
-        print(f"\nIndividual feature effects analysis completed successfully!")
+        print("\nIndividual feature effects analysis completed successfully!")
         print(f"Results saved to: {output_results}")
         print(f"Coefficients saved to: {output_coefficients}")
 

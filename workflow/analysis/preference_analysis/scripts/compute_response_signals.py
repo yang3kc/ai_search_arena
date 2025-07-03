@@ -7,7 +7,6 @@ citation counts, quality metrics, and bias metrics for news citation analysis.
 """
 
 import pandas as pd
-import numpy as np
 from pathlib import Path
 import sys
 

@@ -180,7 +180,7 @@ def extract_citations():
             return
 
     # Log statistics
-    logger.info(f"\n=== CITATION EXTRACTION STATISTICS ===")
+    logger.info("\n=== CITATION EXTRACTION STATISTICS ===")
     logger.info(f"Total citations extracted: {len(citations_df)}")
     if len(citations_df) > 0:
         logger.info(f"Total responses with citations: {citations_df['response_id'].nunique()}")
@@ -191,20 +191,20 @@ def extract_citations():
 
         # Citation number distribution
         citation_num_dist = citations_df["citation_number"].value_counts().sort_index()
-        logger.info(f"Citation number distribution (top 10):")
+        logger.info("Citation number distribution (top 10):")
         for num, count in citation_num_dist.head(10).items():
             logger.info(f"  [{num}]: {count} citations ({count/len(citations_df)*100:.1f}%)")
 
         # Top domains (full with subdomains)
         domain_full_counts = citations_df["domain_full"].value_counts()
-        logger.info(f"Top cited domains (full with subdomains) (top 10):")
+        logger.info("Top cited domains (full with subdomains) (top 10):")
         for domain, count in domain_full_counts.head(10).items():
             if domain:  # Skip None domains
                 logger.info(f"  {domain}: {count} citations ({count/len(citations_df)*100:.1f}%)")
         
         # Top domains (base without subdomains)
         domain_counts = citations_df["domain"].value_counts()
-        logger.info(f"Top cited domains (base without subdomains) (top 10):")
+        logger.info("Top cited domains (base without subdomains) (top 10):")
         for domain, count in domain_counts.head(10).items():
             if domain:  # Skip None domains
                 logger.info(f"  {domain}: {count} citations ({count/len(citations_df)*100:.1f}%)")

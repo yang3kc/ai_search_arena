@@ -54,7 +54,7 @@ def validate_extraction():
 
     # Start validation report
     report_lines = []
-    report_lines.append(f"=== DATA EXTRACTION VALIDATION REPORT ===\n")
+    report_lines.append("=== DATA EXTRACTION VALIDATION REPORT ===\n")
     report_lines.append(f"Generated: {datetime.now()}\n")
     report_lines.append(f"Validation timestamp: {pd.Timestamp.now()}\n\n")
 
@@ -288,7 +288,7 @@ def validate_extraction():
     # ============================================================================
     if enriched_citations_df is not None:
         logger.info("\n=== ENRICHED CITATIONS VALIDATION ===")
-        report_lines.append(f"\n=== ENRICHED CITATIONS VALIDATION ===\n")
+        report_lines.append("\n=== ENRICHED CITATIONS VALIDATION ===\n")
         
         # Check row count consistency
         enriched_count = len(enriched_citations_df)
@@ -362,7 +362,7 @@ def validate_extraction():
     # 9. VALIDATION SUMMARY
     # ============================================================================
     logger.info("\n=== VALIDATION SUMMARY ===")
-    report_lines.append(f"\n=== VALIDATION SUMMARY ===\n")
+    report_lines.append("\n=== VALIDATION SUMMARY ===\n")
 
     total_tests = validation_results["passed"] + validation_results["failed"] + validation_results["warnings"]
     

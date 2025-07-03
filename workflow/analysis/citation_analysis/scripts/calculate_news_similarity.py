@@ -11,10 +11,8 @@ import numpy as np
 import json
 from pathlib import Path
 from itertools import combinations
-from collections import defaultdict
 import logging
 from sklearn.metrics.pairwise import cosine_similarity
-from scipy.sparse import csr_matrix
 
 # Configure logging
 logging.basicConfig(

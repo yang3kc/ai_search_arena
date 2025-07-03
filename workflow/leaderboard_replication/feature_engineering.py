@@ -3,10 +3,6 @@ Feature engineering functions to transform normalized data into leaderboard form
 """
 
 import pandas as pd
-import numpy as np
-import re
-from urllib.parse import urlparse
-from typing import Dict, List, Tuple
 
 
 # Domain categorization mappings

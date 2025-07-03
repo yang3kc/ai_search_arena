@@ -41,7 +41,7 @@ def load_political_leaning_data(filepath):
         "unknown_leaning"
     )
 
-    print(f"Political leaning distribution:")
+    print("Political leaning distribution:")
     leaning_counts = df["political_leaning"].value_counts()
     for leaning, count in leaning_counts.items():
         print(f"  {leaning}: {count} ({count / len(df) * 100:.1f}%)")

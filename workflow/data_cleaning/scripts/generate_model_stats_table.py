@@ -12,7 +12,6 @@ This script creates a table showing:
 import pandas as pd
 import sys
 import os
-from pathlib import Path
 
 
 def load_data(responses_path, citations_path):

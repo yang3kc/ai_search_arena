@@ -36,7 +36,7 @@ def generate_domains_summary_stats(enriched_domains):
             enriched_domains["political_leaning_score"].notna()
         ]["citation_count"].sum()
 
-        print(f"\nPolitical leaning coverage:")
+        print("\nPolitical leaning coverage:")
         print(
             f"  Domains: {pol_domains_covered:,} / {total_domains:,} ({pol_domains_covered / total_domains * 100:.1f}%)"
         )
@@ -45,7 +45,7 @@ def generate_domains_summary_stats(enriched_domains):
         )
 
         if "political_leaning" in enriched_domains.columns:
-            print(f"  Political leaning categories (by citation count):")
+            print("  Political leaning categories (by citation count):")
             for category in ["left_leaning", "right_leaning", "unknown_leaning"]:
                 cat_citations = enriched_domains[
                     enriched_domains["political_leaning"] == category
@@ -63,7 +63,7 @@ def generate_domains_summary_stats(enriched_domains):
             enriched_domains["domain_quality_score"].notna()
         ]["citation_count"].sum()
 
-        print(f"\nDomain quality coverage:")
+        print("\nDomain quality coverage:")
         print(
             f"  Domains: {qual_domains_covered:,} / {total_domains:,} ({qual_domains_covered / total_domains * 100:.1f}%)"
         )
@@ -72,7 +72,7 @@ def generate_domains_summary_stats(enriched_domains):
         )
 
         if "domain_quality" in enriched_domains.columns:
-            print(f"  Domain quality categories (by citation count):")
+            print("  Domain quality categories (by citation count):")
             for category in ["high_quality", "low_quality", "unknown_quality"]:
                 cat_citations = enriched_domains[
                     enriched_domains["domain_quality"] == category
@@ -85,7 +85,7 @@ def generate_domains_summary_stats(enriched_domains):
 
     # Domain classification coverage
     if "domain_classification" in enriched_domains.columns:
-        print(f"\nDomain classification coverage:")
+        print("\nDomain classification coverage:")
         print(
             f"  All domains classified: {total_domains:,} / {total_domains:,} (100.0%)"
         )
@@ -93,7 +93,7 @@ def generate_domains_summary_stats(enriched_domains):
             f"  All citations classified: {total_citations:,} / {total_citations:,} (100.0%)"
         )
 
-        print(f"  Domain classification categories (by citation count):")
+        print("  Domain classification categories (by citation count):")
         class_counts = enriched_domains["domain_classification"].value_counts()
         for category in class_counts.index:
             cat_citations = enriched_domains[
@@ -119,7 +119,7 @@ def generate_domains_summary_stats(enriched_domains):
             & (enriched_domains["domain_quality_score"].notna())
         ]["citation_count"].sum()
 
-        print(f"\nCombined signal coverage:")
+        print("\nCombined signal coverage:")
         print(
             f"  Domains: {combined_domains:,} / {total_domains:,} ({combined_domains / total_domains * 100:.1f}%)"
         )
@@ -128,7 +128,7 @@ def generate_domains_summary_stats(enriched_domains):
         )
 
     # Top domains by citation count
-    print(f"\nTop 10 cited domains:")
+    print("\nTop 10 cited domains:")
     top_domains = enriched_domains.head(10)
     for _, row in top_domains.iterrows():
         domain_info = f"  {row['domain']}: {row['citation_count']:,} citations"
@@ -226,9 +226,9 @@ def main():
     print(f"\nSaving enriched domains to {output_path}")
     enriched.to_parquet(output_path, index=False)
 
-    print(f"\n✅ Domain enrichment completed successfully!")
+    print("\n✅ Domain enrichment completed successfully!")
     print(f"Final dataset: {len(enriched):,} domains, {len(enriched.columns)} columns")
-    print(f"Signals added: political_leaning, domain_quality, domain_classification")
+    print("Signals added: political_leaning, domain_quality, domain_classification")
 
 
 if __name__ == "__main__":

@@ -7,7 +7,6 @@ examining how AI models cite sources across the political spectrum.
 """
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
@@ -32,14 +31,14 @@ def analyze_overall_bias_distribution(data):
 
     # Political leaning label distribution
     leaning_counts = bias_data["political_leaning"].value_counts()
-    print(f"\nPolitical leaning distribution:")
+    print("\nPolitical leaning distribution:")
     for leaning, count in leaning_counts.items():
         pct = count / len(bias_data) * 100
         print(f"  {leaning}: {count:,} citations ({pct:.1f}%)")
 
     # Bias score statistics
     bias_scores = bias_data["political_leaning_score"]
-    print(f"\nBias score statistics:")
+    print("\nBias score statistics:")
     print(f"  Mean: {bias_scores.mean():.3f}")
     print(f"  Median: {bias_scores.median():.3f}")
     print(f"  Standard deviation: {bias_scores.std():.3f}")
@@ -48,7 +47,7 @@ def analyze_overall_bias_distribution(data):
     print(f"  Range: {bias_scores.min():.3f} to {bias_scores.max():.3f}")
 
     # Most biased domains (extreme scores)
-    print(f"\nMost left-leaning domains (lowest scores):")
+    print("\nMost left-leaning domains (lowest scores):")
     left_domains = bias_data.nsmallest(10, "political_leaning_score")[
         ["domain", "political_leaning_score"]
     ].drop_duplicates("domain")
@@ -58,7 +57,7 @@ def analyze_overall_bias_distribution(data):
             f"  {row['domain']}: {row['political_leaning_score']:.3f} ({citations} citations)"
         )
 
-    print(f"\nMost right-leaning domains (highest scores):")
+    print("\nMost right-leaning domains (highest scores):")
     right_domains = bias_data.nlargest(10, "political_leaning_score")[
         ["domain", "political_leaning_score"]
     ].drop_duplicates("domain")
@@ -101,7 +100,7 @@ def analyze_model_bias_patterns(data):
         .round(3)
     )
 
-    print(f"Political bias statistics by model:")
+    print("Political bias statistics by model:")
     print(f"{'Model':<35} {'Mean':<8} {'Median':<8} {'Std':<8} {'Count':<8}")
     print("-" * 67)
     for model, stats in model_bias_stats.iterrows():
@@ -117,7 +116,7 @@ def analyze_model_bias_patterns(data):
             .round(3)
         )
 
-        print(f"\nPolitical bias statistics by model family:")
+        print("\nPolitical bias statistics by model family:")
         print(f"{'Family':<15} {'Mean':<8} {'Median':<8} {'Std':<8} {'Count':<8}")
         print("-" * 47)
         for family, stats in family_bias_stats.iterrows():
@@ -133,13 +132,13 @@ def analyze_model_bias_patterns(data):
         model_leaning_crosstab.div(model_leaning_crosstab.sum(axis=1), axis=0) * 100
     )
 
-    print(f"\nPolitical leaning distribution by model (%):")
+    print("\nPolitical leaning distribution by model (%):")
     print(model_leaning_pcts.round(1))
 
     # Statistical significance tests between models
     models = bias_data["model_name_raw"].unique()
     if len(models) >= 2:
-        print(f"\nStatistical tests (p-values for difference in bias scores):")
+        print("\nStatistical tests (p-values for difference in bias scores):")
         print("Models with significantly different bias patterns (p < 0.05):")
 
         significant_pairs = []
@@ -196,7 +195,7 @@ def analyze_model_family_bias_patterns(data):
         .round(3)
     )
 
-    print(f"Detailed political bias statistics by model family:")
+    print("Detailed political bias statistics by model family:")
     print(
         f"{'Family':<15} {'Mean':<8} {'Median':<8} {'Std':<8} {'Count':<8} {'Min':<8} {'Max':<8}"
     )
@@ -214,11 +213,11 @@ def analyze_model_family_bias_patterns(data):
         family_leaning_crosstab.div(family_leaning_crosstab.sum(axis=1), axis=0) * 100
     )
 
-    print(f"\nPolitical leaning distribution by model family (%):")
+    print("\nPolitical leaning distribution by model family (%):")
     print(family_leaning_pcts.round(1))
 
     # Quantile analysis by family
-    print(f"\nQuantile analysis by model family:")
+    print("\nQuantile analysis by model family:")
     quantiles = [0.1, 0.25, 0.5, 0.75, 0.9]
     family_quantiles = (
         bias_data.groupby("model_family")["political_leaning_score"]
@@ -236,7 +235,7 @@ def analyze_model_family_bias_patterns(data):
     # Statistical significance tests between families
     families = bias_data["model_family"].unique()
     if len(families) >= 2:
-        print(f"\nStatistical tests between model families:")
+        print("\nStatistical tests between model families:")
         print("Family pairs with significantly different bias patterns (p < 0.05):")
 
         family_significant_pairs = []
@@ -271,7 +270,7 @@ def analyze_model_family_bias_patterns(data):
             )
 
     # Variance analysis - which family has most consistent bias?
-    print(f"\nBias consistency analysis (lower std = more consistent):")
+    print("\nBias consistency analysis (lower std = more consistent):")
     family_consistency = family_bias_stats["std"].sort_values()
     for family, std_val in family_consistency.items():
         consistency_level = (
@@ -285,7 +284,7 @@ def analyze_model_family_bias_patterns(data):
 
     # Domain preference patterns within families
     if "domain" in bias_data.columns:
-        print(f"\nTop domains by family (showing bias diversity):")
+        print("\nTop domains by family (showing bias diversity):")
         for family in families:
             family_data = bias_data[bias_data["model_family"] == family]
             top_domains = (
@@ -329,7 +328,7 @@ def analyze_intent_bias_patterns(data):
         .round(3)
     )
 
-    print(f"Political bias statistics by query intent:")
+    print("Political bias statistics by query intent:")
     print(f"{'Intent':<20} {'Mean':<8} {'Median':<8} {'Std':<8} {'Count':<8}")
     print("-" * 52)
     for intent, stats in intent_bias_stats.iterrows():
@@ -345,7 +344,7 @@ def analyze_intent_bias_patterns(data):
         intent_leaning_crosstab.div(intent_leaning_crosstab.sum(axis=1), axis=0) * 100
     )
 
-    print(f"\nPolitical leaning distribution by intent (%):")
+    print("\nPolitical leaning distribution by intent (%):")
     print(intent_leaning_pcts.round(1))
 
     return {
@@ -379,7 +378,7 @@ def analyze_winner_bias_patterns(data):
     winner_stats = winners["political_leaning_score"].describe()
     loser_stats = losers["political_leaning_score"].describe()
 
-    print(f"\nBias score statistics:")
+    print("\nBias score statistics:")
     print(f"{'Metric':<15} {'Winners':<12} {'Losers':<12} {'Difference':<12}")
     print("-" * 51)
     print(
@@ -396,7 +395,7 @@ def analyze_winner_bias_patterns(data):
     winner_leaning = winners["political_leaning"].value_counts(normalize=True) * 100
     loser_leaning = losers["political_leaning"].value_counts(normalize=True) * 100
 
-    print(f"\nPolitical leaning distribution (%):")
+    print("\nPolitical leaning distribution (%):")
     comparison_df = pd.DataFrame(
         {"Winners": winner_leaning, "Losers": loser_leaning}
     ).fillna(0)
@@ -410,7 +409,7 @@ def analyze_winner_bias_patterns(data):
         alternative="two-sided",
     )
 
-    print(f"\nStatistical significance test:")
+    print("\nStatistical significance test:")
     print(f"Mann-Whitney U test p-value: {p_value:.3e}")
     if p_value < 0.05:
         mean_diff = winner_stats["mean"] - loser_stats["mean"]
@@ -457,7 +456,7 @@ def analyze_bias_over_time(data):
         daily_bias["count"] >= 10
     ]  # Filter days with sufficient data
 
-    print(f"Daily bias trends (days with ≥10 citations):")
+    print("Daily bias trends (days with ≥10 citations):")
     print(f"Date range: {daily_bias['date'].min()} to {daily_bias['date'].max()}")
     print(f"Average daily bias score: {daily_bias['mean'].mean():.3f}")
     print(f"Standard deviation across days: {daily_bias['mean'].std():.3f}")
@@ -479,7 +478,7 @@ def analyze_bias_over_time(data):
             week_numbers, weekly_bias["mean"]
         )
 
-        print(f"\nWeekly trend analysis:")
+        print("\nWeekly trend analysis:")
         print(f"Linear trend slope: {slope:.4f} per week")
         print(f"R-squared: {r_value**2:.3f}")
         print(f"Trend p-value: {p_value:.3e}")
@@ -848,7 +847,7 @@ def main():
     with open(report_output_path, "w") as f:
         f.write(html_content)
 
-    print(f"\n✅ Political bias analysis completed!")
+    print("\n✅ Political bias analysis completed!")
     print(f"Analysis results: {analysis_output_path}")
     print(f"HTML report: {report_output_path}")
     print(f"Generated {len(visualization_paths)} visualization files:")

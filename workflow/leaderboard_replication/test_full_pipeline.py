@@ -88,7 +88,7 @@ def test_full_pipeline():
         print(f"Error in leaderboard computation: {e}")
         print("Debugging information:")
         print(f"  Sample conv_metadata: {list(battles_no_ties['conv_metadata'].iloc[0].keys())}")
-        print(f"  First few rows:")
+        print("  First few rows:")
         print(battles_no_ties[['model_a', 'model_b', 'winner']].head())
         raise
 

@@ -166,7 +166,7 @@ def fetch_all_channel_metadata(unique_channels_df):
         print(f"  Success: {len(success_channels)} channels")
         print(f"  Failed: {len(failed_ids)} channels")
     
-    print(f"\nFetch completed:")
+    print("\nFetch completed:")
     print(f"  Total successful: {len(all_channel_metadata):,}")
     print(f"  Total failed: {len(failed_channel_ids):,}")
     
@@ -184,7 +184,7 @@ def generate_channel_metadata_summary(channel_metadata_df):
     print(f"Total channels with metadata: {total_channels:,}")
     
     # Basic statistics
-    print(f"\nBasic statistics:")
+    print("\nBasic statistics:")
     print(f"  Channels with titles: {channel_metadata_df['title'].notna().sum():,}")
     print(f"  Channels with descriptions: {channel_metadata_df['description'].notna().sum():,}")
     print(f"  Channels with custom URLs: {channel_metadata_df['custom_url'].notna().sum():,}")
@@ -192,7 +192,7 @@ def generate_channel_metadata_summary(channel_metadata_df):
     
     # Subscriber statistics
     if (channel_metadata_df['subscriber_count'] > 0).any():
-        print(f"\nSubscriber statistics:")
+        print("\nSubscriber statistics:")
         sub_stats = channel_metadata_df[channel_metadata_df['subscriber_count'] > 0]['subscriber_count']
         print(f"  Channels with subscriber data: {len(sub_stats):,}")
         print(f"  Mean subscribers: {sub_stats.mean():,.0f}")
@@ -201,7 +201,7 @@ def generate_channel_metadata_summary(channel_metadata_df):
         print(f"  Min subscribers: {sub_stats.min():,.0f}")
         
         # Subscriber ranges
-        print(f"\nSubscriber ranges:")
+        print("\nSubscriber ranges:")
         print(f"  <1K subscribers: {(sub_stats < 1000).sum():,}")
         print(f"  1K-10K subscribers: {((sub_stats >= 1000) & (sub_stats < 10000)).sum():,}")
         print(f"  10K-100K subscribers: {((sub_stats >= 10000) & (sub_stats < 100000)).sum():,}")
@@ -210,7 +210,7 @@ def generate_channel_metadata_summary(channel_metadata_df):
     
     # Video count statistics
     if (channel_metadata_df['video_count'] > 0).any():
-        print(f"\nVideo count statistics:")
+        print("\nVideo count statistics:")
         video_stats = channel_metadata_df[channel_metadata_df['video_count'] > 0]['video_count']
         print(f"  Channels with video count data: {len(video_stats):,}")
         print(f"  Mean videos per channel: {video_stats.mean():,.0f}")
@@ -220,7 +220,7 @@ def generate_channel_metadata_summary(channel_metadata_df):
     
     # View count statistics
     if (channel_metadata_df['view_count'] > 0).any():
-        print(f"\nChannel view statistics:")
+        print("\nChannel view statistics:")
         view_stats = channel_metadata_df[channel_metadata_df['view_count'] > 0]['view_count']
         print(f"  Channels with view data: {len(view_stats):,}")
         print(f"  Mean total views: {view_stats.mean():,.0f}")
@@ -231,7 +231,7 @@ def generate_channel_metadata_summary(channel_metadata_df):
     if 'country' in channel_metadata_df.columns:
         country_counts = channel_metadata_df['country'].value_counts()
         if len(country_counts) > 0:
-            print(f"\nTop 10 countries:")
+            print("\nTop 10 countries:")
             for country, count in country_counts.head(10).items():
                 print(f"  {country}: {count} channels")
     
@@ -239,14 +239,14 @@ def generate_channel_metadata_summary(channel_metadata_df):
     if 'published_at' in channel_metadata_df.columns:
         channel_metadata_df['created_year'] = pd.to_datetime(channel_metadata_df['published_at'], errors='coerce').dt.year
         year_counts = channel_metadata_df['created_year'].value_counts().sort_index()
-        print(f"\nChannel creation year distribution (recent years):")
+        print("\nChannel creation year distribution (recent years):")
         for year, count in year_counts.tail(10).items():
             if pd.notna(year):
                 print(f"  {int(year)}: {count} channels")
     
     # Top channels by subscribers
     if (channel_metadata_df['subscriber_count'] > 0).any():
-        print(f"\nTop 10 channels by subscriber count:")
+        print("\nTop 10 channels by subscriber count:")
         top_channels = channel_metadata_df.nlargest(10, 'subscriber_count')
         for _, row in top_channels.iterrows():
             print(f"  {row['title']}: {row['subscriber_count']:,} subscribers")
@@ -277,7 +277,7 @@ def main():
         print(f"\nSaving channel metadata to {output_path}")
         channel_metadata_df.to_parquet(output_path, index=False)
         
-        print(f"\n✅ Channel metadata collection completed!")
+        print("\n✅ Channel metadata collection completed!")
         print(f"Successfully processed: {len(channel_metadata_df):,} channels")
         print(f"Failed to process: {len(failed_channel_ids):,} channels")
         print(f"Columns: {list(channel_metadata_df.columns)}")

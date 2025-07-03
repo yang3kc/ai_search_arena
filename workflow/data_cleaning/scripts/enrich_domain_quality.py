@@ -34,14 +34,14 @@ def load_domain_quality_data(filepath):
     df.loc[df["domain_quality_score"] < 0.5, "domain_quality"] = "low_quality"
     df.loc[df["domain_quality_score"].isna(), "domain_quality"] = "unknown_quality"
 
-    print(f"Domain quality distribution:")
+    print("Domain quality distribution:")
     quality_stats = df["domain_quality_score"].describe()
     print(f"  Score Mean: {quality_stats['mean']:.3f}")
     print(f"  Score Std:  {quality_stats['std']:.3f}")
     print(f"  Score Min:  {quality_stats['min']:.3f}")
     print(f"  Score Max:  {quality_stats['max']:.3f}")
 
-    print(f"Domain quality categories:")
+    print("Domain quality categories:")
     quality_counts = df["domain_quality"].value_counts()
     for quality, count in quality_counts.items():
         print(f"  {quality}: {count} ({count / len(df) * 100:.1f}%)")

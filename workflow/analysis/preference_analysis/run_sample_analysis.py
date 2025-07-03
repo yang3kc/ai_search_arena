@@ -157,7 +157,7 @@ def main():
     # Create executive summary
     create_executive_summary(results, battle_clean, sample_threads, output_dir)
 
-    print(f"\n=== Analysis Complete ===")
+    print("\n=== Analysis Complete ===")
     print(f"Sample: {len(sample_threads):,} threads → {len(battle_clean):,} battles")
     print(f"Results: {results_file}")
     print(f"Summary: {output_dir / 'executive_summary.md'}")
