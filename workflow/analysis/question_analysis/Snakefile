@@ -56,7 +56,8 @@ rule generate_question_embeddings:
 # Phase 3: Extract Question Features
 rule extract_question_features:
     input:
-        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
+        questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet"
     output:
         f"{QUESTION_ANALYSIS_DIR}/question_features.parquet"
     script:

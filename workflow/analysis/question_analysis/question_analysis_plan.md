@@ -26,7 +26,7 @@ This analysis aims to understand how different features of user questions relate
   - Output: `data/intermediate/question_analysis/question_embeddings.parquet`
 
 ### Phase 3: Question Feature Extraction
-**Goal**: Extract linguistic and semantic features from questions
+**Goal**: Extract features from questions
 
 **Scripts to create**:
 - `scripts/extract_question_features.py`
@@ -154,7 +154,9 @@ rule generate_question_embeddings:
     output: "data/intermediate/question_analysis/question_embeddings.parquet"
 
 rule extract_question_features:
-    input: "data/intermediate/question_analysis/english_questions.parquet"
+    input:
+        questions="data/intermediate/question_analysis/english_questions.parquet",
+        threads="data/intermediate/cleaned_arena_data/threads.parquet"
     output: "data/intermediate/question_analysis/question_features.parquet"
 
 rule compute_citation_patterns:
