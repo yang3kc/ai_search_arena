@@ -54,15 +54,26 @@ def extract_questions():
         system_b_metadata = row.get("system_b_metadata", {})
 
         # Get formatted_messages from system_a_metadata (primary source)
-        if not isinstance(system_a_metadata, dict) or "formatted_messages" not in system_a_metadata:
-            logger.warning(f"No formatted_messages in system_a_metadata for row {idx}, skipping")
+        if (
+            not isinstance(system_a_metadata, dict)
+            or "formatted_messages" not in system_a_metadata
+        ):
+            logger.warning(
+                f"No formatted_messages in system_a_metadata for row {idx}, skipping"
+            )
             continue
 
         messages_a = system_a_metadata.get("formatted_messages", [])
-        messages_b = system_b_metadata.get("formatted_messages", []) if isinstance(system_b_metadata, dict) else []
+        messages_b = (
+            system_b_metadata.get("formatted_messages", [])
+            if isinstance(system_b_metadata, dict)
+            else []
+        )
 
         if not hasattr(messages_a, "__len__") or len(messages_a) == 0:
-            logger.warning(f"Empty formatted_messages in system_a_metadata for row {idx}, skipping")
+            logger.warning(
+                f"Empty formatted_messages in system_a_metadata for row {idx}, skipping"
+            )
             continue
 
         # Process messages to extract user questions
@@ -88,7 +99,9 @@ def extract_questions():
                 )
             else:
                 # Check if user message content matches
-                for turn_idx, (msg_a, msg_b) in enumerate(zip(user_messages_a, user_messages_b)):
+                for turn_idx, (msg_a, msg_b) in enumerate(
+                    zip(user_messages_a, user_messages_b)
+                ):
                     content_a = msg_a.get("content", "")
                     content_b = msg_b.get("content", "")
                     if content_a != content_b:
@@ -167,20 +180,28 @@ def extract_questions():
     logger.info("\n=== QUESTION EXTRACTION STATISTICS ===")
     logger.info(f"Total questions extracted: {len(questions_df)}")
     logger.info(f"Total threads represented: {questions_df['thread_id'].nunique()}")
-    logger.info(f"Average questions per thread: {len(questions_df) / questions_df['thread_id'].nunique():.2f}")
-    logger.info(f"Turn count mismatches: {mismatch_count}/{len(df)} ({mismatch_count/len(df)*100:.1f}%)")
+    logger.info(
+        f"Average questions per thread: {len(questions_df) / questions_df['thread_id'].nunique():.2f}"
+    )
+    logger.info(
+        f"Turn count mismatches: {mismatch_count}/{len(df)} ({mismatch_count / len(df) * 100:.1f}%)"
+    )
 
     # Turn distribution
     turn_dist = questions_df["turn_number"].value_counts().sort_index()
     logger.info("Turn distribution:")
     for turn, count in turn_dist.head(10).items():
-        logger.info(f"  Turn {turn}: {count} questions ({count/len(questions_df)*100:.1f}%)")
+        logger.info(
+            f"  Turn {turn}: {count} questions ({count / len(questions_df) * 100:.1f}%)"
+        )
 
     # Question length statistics
     questions_df["query_length"] = questions_df["user_query"].str.len()
     logger.info("Question length statistics:")
     logger.info(f"  Mean length: {questions_df['query_length'].mean():.1f} characters")
-    logger.info(f"  Median length: {questions_df['query_length'].median():.1f} characters")
+    logger.info(
+        f"  Median length: {questions_df['query_length'].median():.1f} characters"
+    )
     logger.info(f"  Min length: {questions_df['query_length'].min()}")
     logger.info(f"  Max length: {questions_df['query_length'].max()}")
 
@@ -188,7 +209,7 @@ def extract_questions():
     sample_questions = questions_df["user_query"].head(100).tolist()
     logger.info("Sample questions:")
     for i, q in enumerate(sample_questions[:5]):
-        logger.info(f"  {i+1}. {q[:100]}{'...' if len(q) > 100 else ''}")
+        logger.info(f"  {i + 1}. {q[:100]}{'...' if len(q) > 100 else ''}")
 
     # Save to parquet
     logger.info(f"Saving questions table to {output_file}")

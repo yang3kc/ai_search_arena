@@ -372,6 +372,7 @@ def print_summary(results):
 
 # Private helper functions for Bradley-Terry model fitting
 
+
 def _preprocess_for_bt(df):
     """Preprocess battle data for Bradley-Terry fitting (adapted from leaderboard code)."""
     n_rows = len(df)

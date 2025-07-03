@@ -48,8 +48,8 @@ def extract_responses():
     for idx, row in df.iterrows():
         # Get thread_id and corresponding questions for this thread
         thread_id = f"{config['thread_id_prefix']}{idx:08d}"
-        thread_questions = questions_df[questions_df['thread_id'] == thread_id]
-        
+        thread_questions = questions_df[questions_df["thread_id"] == thread_id]
+
         if len(thread_questions) == 0:
             logger.warning(f"No questions found for thread {thread_id}, skipping")
             continue
@@ -58,7 +58,9 @@ def extract_responses():
         system_a_metadata = row.get("system_a_metadata", {})
         system_b_metadata = row.get("system_b_metadata", {})
 
-        if not isinstance(system_a_metadata, dict) or not isinstance(system_b_metadata, dict):
+        if not isinstance(system_a_metadata, dict) or not isinstance(
+            system_b_metadata, dict
+        ):
             missing_metadata_count += 1
             logger.warning(f"Missing system metadata for row {idx}, skipping")
             continue
@@ -74,18 +76,21 @@ def extract_responses():
         # Extract assistant responses from both models
         assistant_responses_a = []
         assistant_responses_b = []
-        
+
         for message in messages_a:
             if isinstance(message, dict) and message.get("role") == "assistant":
                 assistant_responses_a.append(message)
-                
+
         for message in messages_b:
             if isinstance(message, dict) and message.get("role") == "assistant":
                 assistant_responses_b.append(message)
 
         # Validate response counts match questions
         expected_responses = len(thread_questions)
-        if len(assistant_responses_a) != expected_responses or len(assistant_responses_b) != expected_responses:
+        if (
+            len(assistant_responses_a) != expected_responses
+            or len(assistant_responses_b) != expected_responses
+        ):
             mismatch_count += 1
             if (idx + 1) % 1000 == 0:
                 logger.info(
@@ -94,15 +99,19 @@ def extract_responses():
                 )
 
         # Extract model names from both system metadata and raw data
-        model_a_llm_name = system_a_metadata.get("llm_config", {}).get("name", "unknown")
-        model_b_llm_name = system_b_metadata.get("llm_config", {}).get("name", "unknown")
+        model_a_llm_name = system_a_metadata.get("llm_config", {}).get(
+            "name", "unknown"
+        )
+        model_b_llm_name = system_b_metadata.get("llm_config", {}).get(
+            "name", "unknown"
+        )
         model_a_raw = row.get("model_a", "unknown")
         model_b_raw = row.get("model_b", "unknown")
 
         # Extract LLM configuration parameters
         llm_config_a = system_a_metadata.get("llm_config", {}).get("params", {})
         llm_config_b = system_b_metadata.get("llm_config", {}).get("params", {})
-        
+
         web_search_config_a = system_a_metadata.get("web_search_config", {})
         web_search_config_b = system_b_metadata.get("web_search_config", {})
 
@@ -110,11 +119,13 @@ def extract_responses():
         for question_idx, question_row in thread_questions.iterrows():
             question_id = question_row["question_id"]
             turn_number = question_row["turn_number"]
-            
+
             # Ensure we have responses for this turn (turn_number is 1-indexed)
             response_idx = turn_number - 1
-            
-            if response_idx < len(assistant_responses_a) and response_idx < len(assistant_responses_b):
+
+            if response_idx < len(assistant_responses_a) and response_idx < len(
+                assistant_responses_b
+            ):
                 # Model A response
                 response_a_id = f"{config['response_id_prefix']}{total_responses:08d}"
                 response_a = {
@@ -125,14 +136,29 @@ def extract_responses():
                     "model_name_llm": model_a_llm_name,
                     "model_name_raw": model_a_raw,
                     "model_side": "a",
-                    "response_text": assistant_responses_a[response_idx].get("content", ""),
-                    "response_role": assistant_responses_a[response_idx].get("role", "assistant"),
-                    "citation_format": system_a_metadata.get("citation_format_standardized", ""),
+                    "response_text": assistant_responses_a[response_idx].get(
+                        "content", ""
+                    ),
+                    "response_role": assistant_responses_a[response_idx].get(
+                        "role", "assistant"
+                    ),
+                    "citation_format": system_a_metadata.get(
+                        "citation_format_standardized", ""
+                    ),
                     "llm_temperature": llm_config_a.get("temperature"),
                     "llm_top_p": llm_config_a.get("top_p"),
-                    "llm_max_tokens": llm_config_a.get("max_tokens") or llm_config_a.get("max_completion_tokens"),
-                    "search_context_size": llm_config_a.get("web_search_options", {}).get("search_context_size") if llm_config_a.get("web_search_options") else None,
-                    "user_location_country": llm_config_a.get("web_search_options", {}).get("user_location") if llm_config_a.get("web_search_options") else None,
+                    "llm_max_tokens": llm_config_a.get("max_tokens")
+                    or llm_config_a.get("max_completion_tokens"),
+                    "search_context_size": llm_config_a.get(
+                        "web_search_options", {}
+                    ).get("search_context_size")
+                    if llm_config_a.get("web_search_options")
+                    else None,
+                    "user_location_country": llm_config_a.get(
+                        "web_search_options", {}
+                    ).get("user_location")
+                    if llm_config_a.get("web_search_options")
+                    else None,
                     "search_engine": web_search_config_a.get("search_engine"),
                     "scrape_engine": web_search_config_a.get("scrape_engine"),
                     "context_manager": web_search_config_a.get("context_manager"),
@@ -150,14 +176,29 @@ def extract_responses():
                     "model_name_llm": model_b_llm_name,
                     "model_name_raw": model_b_raw,
                     "model_side": "b",
-                    "response_text": assistant_responses_b[response_idx].get("content", ""),
-                    "response_role": assistant_responses_b[response_idx].get("role", "assistant"),
-                    "citation_format": system_b_metadata.get("citation_format_standardized", ""),
+                    "response_text": assistant_responses_b[response_idx].get(
+                        "content", ""
+                    ),
+                    "response_role": assistant_responses_b[response_idx].get(
+                        "role", "assistant"
+                    ),
+                    "citation_format": system_b_metadata.get(
+                        "citation_format_standardized", ""
+                    ),
                     "llm_temperature": llm_config_b.get("temperature"),
                     "llm_top_p": llm_config_b.get("top_p"),
-                    "llm_max_tokens": llm_config_b.get("max_tokens") or llm_config_b.get("max_completion_tokens"),
-                    "search_context_size": llm_config_b.get("web_search_options", {}).get("search_context_size") if llm_config_b.get("web_search_options") else None,
-                    "user_location_country": llm_config_b.get("web_search_options", {}).get("user_location") if llm_config_b.get("web_search_options") else None,
+                    "llm_max_tokens": llm_config_b.get("max_tokens")
+                    or llm_config_b.get("max_completion_tokens"),
+                    "search_context_size": llm_config_b.get(
+                        "web_search_options", {}
+                    ).get("search_context_size")
+                    if llm_config_b.get("web_search_options")
+                    else None,
+                    "user_location_country": llm_config_b.get(
+                        "web_search_options", {}
+                    ).get("user_location")
+                    if llm_config_b.get("web_search_options")
+                    else None,
                     "search_engine": web_search_config_b.get("search_engine"),
                     "scrape_engine": web_search_config_b.get("scrape_engine"),
                     "context_manager": web_search_config_b.get("context_manager"),
@@ -165,7 +206,9 @@ def extract_responses():
                 responses_data.append(response_b)
                 total_responses += 1
             else:
-                logger.warning(f"Missing response for turn {turn_number} in thread {thread_id}")
+                logger.warning(
+                    f"Missing response for turn {turn_number} in thread {thread_id}"
+                )
 
         # Log progress every 1000 rows
         if (idx + 1) % 1000 == 0:
@@ -178,7 +221,16 @@ def extract_responses():
     logger.info("Validating responses data...")
 
     # Check for required fields
-    required_fields = ["response_id", "question_id", "thread_id", "turn_number", "model_name_llm", "model_name_raw", "model_side", "response_text"]
+    required_fields = [
+        "response_id",
+        "question_id",
+        "thread_id",
+        "turn_number",
+        "model_name_llm",
+        "model_name_raw",
+        "model_side",
+        "response_text",
+    ]
     missing_required = []
     for field in required_fields:
         if responses_df[field].isna().any():
@@ -197,57 +249,85 @@ def extract_responses():
     valid_question_ids = set(questions_df["question_id"])
     invalid_question_ids = set(responses_df["question_id"]) - valid_question_ids
     if invalid_question_ids:
-        logger.error(f"Invalid question_id references found: {len(invalid_question_ids)}")
+        logger.error(
+            f"Invalid question_id references found: {len(invalid_question_ids)}"
+        )
         return
 
     # Validate model_side distribution
     model_side_counts = responses_df["model_side"].value_counts()
-    if len(model_side_counts) != 2 or "a" not in model_side_counts or "b" not in model_side_counts:
+    if (
+        len(model_side_counts) != 2
+        or "a" not in model_side_counts
+        or "b" not in model_side_counts
+    ):
         logger.warning("Unexpected model_side distribution")
     else:
-        if abs(model_side_counts["a"] - model_side_counts["b"]) > 10:  # Allow small differences
-            logger.warning(f"Unbalanced model_side distribution: A={model_side_counts['a']}, B={model_side_counts['b']}")
+        if (
+            abs(model_side_counts["a"] - model_side_counts["b"]) > 10
+        ):  # Allow small differences
+            logger.warning(
+                f"Unbalanced model_side distribution: A={model_side_counts['a']}, B={model_side_counts['b']}"
+            )
 
     # Log statistics
     logger.info("\n=== RESPONSE EXTRACTION STATISTICS ===")
     logger.info(f"Total responses extracted: {len(responses_df)}")
     logger.info(f"Total questions represented: {responses_df['question_id'].nunique()}")
     logger.info(f"Total threads represented: {responses_df['thread_id'].nunique()}")
-    logger.info(f"Responses per question: {len(responses_df) / responses_df['question_id'].nunique():.2f}")
-    logger.info(f"Missing metadata count: {missing_metadata_count}/{len(df)} ({missing_metadata_count/len(df)*100:.1f}%)")
-    logger.info(f"Response count mismatches: {mismatch_count}/{len(df)} ({mismatch_count/len(df)*100:.1f}%)")
+    logger.info(
+        f"Responses per question: {len(responses_df) / responses_df['question_id'].nunique():.2f}"
+    )
+    logger.info(
+        f"Missing metadata count: {missing_metadata_count}/{len(df)} ({missing_metadata_count / len(df) * 100:.1f}%)"
+    )
+    logger.info(
+        f"Response count mismatches: {mismatch_count}/{len(df)} ({mismatch_count / len(df) * 100:.1f}%)"
+    )
 
     # Model distribution (LLM config names)
     model_llm_counts = responses_df["model_name_llm"].value_counts()
     logger.info("Model distribution (LLM config) (top 10):")
     for model, count in model_llm_counts.head(10).items():
-        logger.info(f"  {model}: {count} responses ({count/len(responses_df)*100:.1f}%)")
-    
+        logger.info(
+            f"  {model}: {count} responses ({count / len(responses_df) * 100:.1f}%)"
+        )
+
     # Model distribution (raw names)
     model_raw_counts = responses_df["model_name_raw"].value_counts()
     logger.info("Model distribution (raw data) (top 10):")
     for model, count in model_raw_counts.head(10).items():
-        logger.info(f"  {model}: {count} responses ({count/len(responses_df)*100:.1f}%)")
+        logger.info(
+            f"  {model}: {count} responses ({count / len(responses_df) * 100:.1f}%)"
+        )
 
     # Model side distribution
     side_dist = responses_df["model_side"].value_counts()
     logger.info("Model side distribution:")
     for side, count in side_dist.items():
-        logger.info(f"  Side {side}: {count} responses ({count/len(responses_df)*100:.1f}%)")
+        logger.info(
+            f"  Side {side}: {count} responses ({count / len(responses_df) * 100:.1f}%)"
+        )
 
     # Response length statistics
     responses_df["response_length"] = responses_df["response_text"].str.len()
     logger.info("Response length statistics:")
-    logger.info(f"  Mean length: {responses_df['response_length'].mean():.1f} characters")
-    logger.info(f"  Median length: {responses_df['response_length'].median():.1f} characters")
+    logger.info(
+        f"  Mean length: {responses_df['response_length'].mean():.1f} characters"
+    )
+    logger.info(
+        f"  Median length: {responses_df['response_length'].median():.1f} characters"
+    )
     logger.info(f"  Min length: {responses_df['response_length'].min()}")
     logger.info(f"  Max length: {responses_df['response_length'].max()}")
 
     # LLM configuration statistics
     logger.info("LLM configuration statistics:")
     temp_stats = responses_df["llm_temperature"].describe()
-    logger.info(f"  Temperature: mean={temp_stats['mean']:.2f}, min={temp_stats['min']:.2f}, max={temp_stats['max']:.2f}")
-    
+    logger.info(
+        f"  Temperature: mean={temp_stats['mean']:.2f}, min={temp_stats['min']:.2f}, max={temp_stats['max']:.2f}"
+    )
+
     # Save to parquet
     logger.info(f"Saving responses table to {output_file}")
     try:

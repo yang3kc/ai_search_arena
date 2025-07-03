@@ -59,79 +59,83 @@ def calculate_jaccard_similarity(set1, set2):
 def create_domain_vectors(model_domains, citations_df):
     """Create one-hot encoded vectors for each model based on news domain citations."""
     logger.info("Creating domain vectors for cosine similarity...")
-    
+
     # Get all unique domains across all models
     all_domains = set()
     for domains in model_domains.values():
         all_domains.update(domains)
     all_domains = sorted(list(all_domains))
-    
+
     logger.info(f"Total unique domains across all models: {len(all_domains):,}")
-    
+
     # Create domain to index mapping
     domain_to_idx = {domain: idx for idx, domain in enumerate(all_domains)}
-    
+
     # Create vectors for each model
     model_vectors = {}
     models = list(model_domains.keys())
-    
+
     for model in models:
         # Get citation counts for this model (weighted by frequency)
-        model_citations = citations_df[citations_df['model_name_raw'] == model]
-        domain_counts = model_citations['domain'].value_counts()
-        
+        model_citations = citations_df[citations_df["model_name_raw"] == model]
+        domain_counts = model_citations["domain"].value_counts()
+
         # Create vector with citation counts (not just binary)
         vector = np.zeros(len(all_domains))
         for domain, count in domain_counts.items():
             if domain in domain_to_idx:
                 vector[domain_to_idx[domain]] = count
-        
+
         model_vectors[model] = vector
-        logger.info(f"{model}: {np.count_nonzero(vector):,} domains cited, "
-                   f"total citations: {int(vector.sum()):,}")
-    
+        logger.info(
+            f"{model}: {np.count_nonzero(vector):,} domains cited, "
+            f"total citations: {int(vector.sum()):,}"
+        )
+
     return model_vectors, all_domains
 
 
 def calculate_cosine_similarities(model_vectors):
     """Calculate pairwise cosine similarities between model vectors."""
     logger.info("Calculating pairwise cosine similarities...")
-    
+
     models = list(model_vectors.keys())
-    
+
     # Create matrix of all model vectors
     vectors_matrix = np.array([model_vectors[model] for model in models])
-    
+
     # Calculate cosine similarity matrix
     cosine_sim_matrix = cosine_similarity(vectors_matrix)
-    
+
     # Extract pairwise similarities
     cosine_similarities = []
     for i, model1 in enumerate(models):
         for j, model2 in enumerate(models):
             if i < j:  # Only calculate upper triangle to avoid duplicates
                 cosine_sim = cosine_sim_matrix[i][j]
-                
+
                 # Additional vector statistics
                 vector1 = model_vectors[model1]
                 vector2 = model_vectors[model2]
-                
+
                 dot_product = np.dot(vector1, vector2)
                 norm1 = np.linalg.norm(vector1)
                 norm2 = np.linalg.norm(vector2)
-                
-                cosine_similarities.append({
-                    'model1': model1,
-                    'model2': model2,
-                    'cosine_similarity': cosine_sim,
-                    'dot_product': dot_product,
-                    'norm1': norm1,
-                    'norm2': norm2,
-                    'vector1_citations': int(vector1.sum()),
-                    'vector2_citations': int(vector2.sum()),
-                    'shared_citation_weight': dot_product  # Sum of min counts for shared domains
-                })
-    
+
+                cosine_similarities.append(
+                    {
+                        "model1": model1,
+                        "model2": model2,
+                        "cosine_similarity": cosine_sim,
+                        "dot_product": dot_product,
+                        "norm1": norm1,
+                        "norm2": norm2,
+                        "vector1_citations": int(vector1.sum()),
+                        "vector2_citations": int(vector2.sum()),
+                        "shared_citation_weight": dot_product,  # Sum of min counts for shared domains
+                    }
+                )
+
     return pd.DataFrame(cosine_similarities)
 
 
@@ -219,7 +223,7 @@ def analyze_provider_similarities(jaccard_df, cosine_df=None):
         cosine_df["provider1"] = cosine_df["model1"].apply(get_model_provider)
         cosine_df["provider2"] = cosine_df["model2"].apply(get_model_provider)
         cosine_df["comparison_type"] = cosine_df.apply(get_comparison_type, axis=1)
-        
+
         cosine_analysis = (
             cosine_df.groupby("comparison_type")
             .agg(
@@ -427,7 +431,7 @@ def generate_analysis_report(
             "- Range: 0 (no overlap) to 1 (identical sets)",
             "- Focuses on domain diversity, not citation frequency",
             "",
-            "### Cosine Similarity", 
+            "### Cosine Similarity",
             "- Measures similarity between citation frequency vectors",
             "- Uses citation counts for each domain across all models",
             "- Range: 0 (orthogonal) to 1 (identical patterns)",
@@ -484,7 +488,9 @@ def main():
     cosine_df = calculate_cosine_similarities(model_vectors)
 
     # Analyze by provider families
-    jaccard_df, cosine_df, jaccard_analysis, cosine_analysis = analyze_provider_similarities(jaccard_df, cosine_df)
+    jaccard_df, cosine_df, jaccard_analysis, cosine_analysis = (
+        analyze_provider_similarities(jaccard_df, cosine_df)
+    )
 
     # Create similarity matrices
     jaccard_matrix = create_similarity_matrix(jaccard_df, "jaccard_similarity")
@@ -522,14 +528,14 @@ def main():
         # Convert provider analyses to JSON-serializable format
         "jaccard_provider_analysis": {
             str(idx): {
-                str(col): float(val) if pd.notna(val) else None 
+                str(col): float(val) if pd.notna(val) else None
                 for col, val in row.items()
             }
             for idx, row in jaccard_analysis.iterrows()
         },
         "cosine_provider_analysis": {
             str(idx): {
-                str(col): float(val) if pd.notna(val) else None 
+                str(col): float(val) if pd.notna(val) else None
                 for col, val in row.items()
             }
             for idx, row in cosine_analysis.iterrows()
@@ -541,7 +547,12 @@ def main():
 
     # Generate comprehensive report
     generate_analysis_report(
-        jaccard_df, cosine_df, jaccard_analysis, cosine_analysis, model_domains, output_dir
+        jaccard_df,
+        cosine_df,
+        jaccard_analysis,
+        cosine_analysis,
+        model_domains,
+        output_dir,
     )
 
     logger.info("News similarity analysis completed successfully!")
