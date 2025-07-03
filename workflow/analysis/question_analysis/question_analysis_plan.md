@@ -15,12 +15,21 @@ This analysis aims to understand how different features of user questions relate
   - Filter out non-English questions
   - Output: `data/intermediate/question_analysis/english_questions.parquet`
 
-### Phase 2: Question Feature Generation
-**Goal**: Generate comprehensive features for each question
+### Phase 2: Question Embeddings Generation
+**Goal**: Generate semantic embeddings for questions
 
 **Scripts to create**:
-- `scripts/generate_question_features.py`
+- `scripts/generate_question_embeddings.py`
   - **Text embeddings**: Use sentence transformers (e.g., `all-MiniLM-L6-v2`) to generate semantic embeddings
+  - **Batch processing**: Efficient processing of large question datasets
+  - **Embedding validation**: Ensure embedding quality and consistency
+  - Output: `data/intermediate/question_analysis/question_embeddings.parquet`
+
+### Phase 3: Question Feature Extraction
+**Goal**: Extract linguistic and semantic features from questions
+
+**Scripts to create**:
+- `scripts/extract_question_features.py`
   - **Political classification**: Binary classifier to identify political vs non-political questions
   - **Topic classification**: Classify questions into categories (news, health, tech, etc.)
   - **Question characteristics**:
@@ -31,7 +40,7 @@ This analysis aims to understand how different features of user questions relate
   - **Named entity recognition**: Extract persons, organizations, locations
   - Output: `data/intermediate/question_analysis/question_features.parquet`
 
-### Phase 3: News Citation Pattern Variables
+### Phase 4: News Citation Pattern Variables
 **Goal**: Compute response-level citation metrics (reuse from preference analysis)
 
 **Scripts to adapt**:
@@ -45,18 +54,18 @@ This analysis aims to understand how different features of user questions relate
     - Overrepresentation scores for specific news sources
   - Output: `data/intermediate/question_analysis/citation_patterns.parquet`
 
-### Phase 4: Data Integration
+### Phase 5: Data Integration
 **Goal**: Merge question features with citation patterns and model metadata
 
 **Scripts to create**:
 - `scripts/integrate_analysis_data.py`
   - Join questions with responses, citations, and threads
-  - Merge question features with citation patterns
+  - Merge question embeddings and features with citation patterns
   - Add model family and model-specific variables
   - Handle missing data and create analysis-ready dataset
   - Output: `data/intermediate/question_analysis/integrated_analysis_data.parquet`
 
-### Phase 5: Regression Analysis
+### Phase 6: Regression Analysis
 **Goal**: Analyze relationships between question features and citation patterns
 
 **Scripts to create**:
@@ -76,7 +85,7 @@ This analysis aims to understand how different features of user questions relate
     - Model diagnostics and fit statistics
   - Output: `data/output/question_analysis/regression_results.json`
 
-### Phase 6: Visualization and Reporting
+### Phase 7: Visualization and Reporting
 **Goal**: Generate comprehensive analysis report
 
 **Scripts to create**:
@@ -140,10 +149,16 @@ rule all:
         "data/output/question_analysis/regression_results.json"
 
 rule filter_english_questions:
-    input: "data/intermediate/cleaned_arena_data/questions.parquet"
+    input: 
+        questions="data/intermediate/cleaned_arena_data/questions.parquet",
+        threads="data/intermediate/cleaned_arena_data/threads.parquet"
     output: "data/intermediate/question_analysis/english_questions.parquet"
 
-rule generate_question_features:
+rule generate_question_embeddings:
+    input: "data/intermediate/question_analysis/english_questions.parquet"
+    output: "data/intermediate/question_analysis/question_embeddings.parquet"
+
+rule extract_question_features:
     input: "data/intermediate/question_analysis/english_questions.parquet"
     output: "data/intermediate/question_analysis/question_features.parquet"
 
@@ -156,6 +171,7 @@ rule compute_citation_patterns:
 
 rule integrate_analysis_data:
     input:
+        question_embeddings="data/intermediate/question_analysis/question_embeddings.parquet",
         question_features="data/intermediate/question_analysis/question_features.parquet",
         citation_patterns="data/intermediate/question_analysis/citation_patterns.parquet",
         threads="data/intermediate/cleaned_arena_data/threads.parquet"

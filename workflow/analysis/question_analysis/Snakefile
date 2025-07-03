@@ -21,15 +21,17 @@ rule all:
     input:
         # Phase 1: English question filtering
         f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
-        # Phase 2: Question feature generation
+        # Phase 2: Question embeddings generation
+        f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet",
+        # Phase 3: Question feature extraction
         f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
-        # Phase 3: Citation patterns computation
+        # Phase 4: Citation patterns computation
         f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
-        # Phase 4: Data integration
+        # Phase 5: Data integration
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
-        # Phase 5: Regression analysis
+        # Phase 6: Regression analysis
         f"{OUTPUT_DIR}/regression_results.json",
-        # Phase 6: Final report
+        # Phase 7: Final report
         f"{OUTPUT_DIR}/question_analysis_report.html"
 
 # Phase 1: Filter English Questions
@@ -42,16 +44,25 @@ rule filter_english_questions:
     script:
         "scripts/filter_english_questions.py"
 
-# Phase 2: Generate Question Features
-rule generate_question_features:
+# Phase 2: Generate Question Embeddings
+rule generate_question_embeddings:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet"
+    script:
+        "scripts/generate_question_embeddings.py"
+
+# Phase 3: Extract Question Features
+rule extract_question_features:
     input:
         f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
     output:
         f"{QUESTION_ANALYSIS_DIR}/question_features.parquet"
     script:
-        "scripts/generate_question_features.py"
+        "scripts/extract_question_features.py"
 
-# Phase 3: Compute Citation Patterns
+# Phase 4: Compute Citation Patterns
 rule compute_citation_patterns:
     input:
         questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
@@ -62,9 +73,10 @@ rule compute_citation_patterns:
     script:
         "scripts/compute_citation_patterns.py"
 
-# Phase 4: Integrate Analysis Data
+# Phase 5: Integrate Analysis Data
 rule integrate_analysis_data:
     input:
+        question_embeddings=f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet",
         question_features=f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
         citation_patterns=f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
         threads=f"{CLEANED_DATA_DIR}/threads.parquet"
@@ -73,7 +85,7 @@ rule integrate_analysis_data:
     script:
         "scripts/integrate_analysis_data.py"
 
-# Phase 5: Regression Analysis
+# Phase 6: Regression Analysis
 rule regression_analysis:
     input:
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
@@ -82,7 +94,7 @@ rule regression_analysis:
     script:
         "scripts/regression_analysis.py"
 
-# Phase 6: Generate Analysis Report
+# Phase 7: Generate Analysis Report
 rule generate_report:
     input:
         data=f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
