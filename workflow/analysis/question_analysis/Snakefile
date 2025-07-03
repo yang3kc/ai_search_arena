@@ -94,7 +94,7 @@ rule clean_features:
     input:
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
     output:
-        f"{QUESTION_ANALYSIS_DIR}/cleaned_regression_features.parquet"
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet"
     script:
         "scripts/clean_features.py"
 
