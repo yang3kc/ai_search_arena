@@ -157,7 +157,8 @@ rule integrate_analysis_data:
         question_embeddings="data/intermediate/question_analysis/question_embeddings.parquet",
         question_features="data/intermediate/question_analysis/question_features.parquet",
         citation_patterns="data/intermediate/question_analysis/citation_patterns.parquet",
-        threads="data/intermediate/cleaned_arena_data/threads.parquet"
+        threads="data/intermediate/cleaned_arena_data/threads.parquet",
+        responses="data/intermediate/cleaned_arena_data/responses.parquet"
     output: "data/intermediate/question_analysis/integrated_analysis_data.parquet"
 
 rule regression_analysis:

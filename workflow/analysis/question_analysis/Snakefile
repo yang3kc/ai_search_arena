@@ -80,7 +80,8 @@ rule integrate_analysis_data:
         question_embeddings=f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet",
         question_features=f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
         citation_patterns=f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
-        threads=f"{CLEANED_DATA_DIR}/threads.parquet"
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet"
     output:
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
     script:
