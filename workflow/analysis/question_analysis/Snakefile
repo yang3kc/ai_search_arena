@@ -10,3 +10,83 @@ from pathlib import Path
 configfile: "config/config.yaml"
 
 # Define paths from config
+BASE_DIR = config["base_dir"]
+CLEANED_DATA_DIR = config["cleaned_data_dir"]
+CITATION_ANALYSIS_DIR = config["citation_analysis_dir"]
+QUESTION_ANALYSIS_DIR = config["question_analysis_dir"]
+OUTPUT_DIR = config["output_dir"]
+
+# Target rule - what we want to produce
+rule all:
+    input:
+        # Phase 1: English question filtering
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        # Phase 2: Question feature generation
+        f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
+        # Phase 3: Citation patterns computation
+        f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
+        # Phase 4: Data integration
+        f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
+        # Phase 5: Regression analysis
+        f"{OUTPUT_DIR}/regression_results.json",
+        # Phase 6: Final report
+        f"{OUTPUT_DIR}/question_analysis_report.html"
+
+# Phase 1: Filter English Questions
+rule filter_english_questions:
+    input:
+        f"{CLEANED_DATA_DIR}/questions.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
+    script:
+        "scripts/filter_english_questions.py"
+
+# Phase 2: Generate Question Features
+rule generate_question_features:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/question_features.parquet"
+    script:
+        "scripts/generate_question_features.py"
+
+# Phase 3: Compute Citation Patterns
+rule compute_citation_patterns:
+    input:
+        questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        citations=f"{CITATION_ANALYSIS_DIR}/news_citations.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet"
+    script:
+        "scripts/compute_citation_patterns.py"
+
+# Phase 4: Integrate Analysis Data
+rule integrate_analysis_data:
+    input:
+        question_features=f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
+        citation_patterns=f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
+    script:
+        "scripts/integrate_analysis_data.py"
+
+# Phase 5: Regression Analysis
+rule regression_analysis:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
+    output:
+        f"{OUTPUT_DIR}/regression_results.json"
+    script:
+        "scripts/regression_analysis.py"
+
+# Phase 6: Generate Analysis Report
+rule generate_report:
+    input:
+        data=f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
+        results=f"{OUTPUT_DIR}/regression_results.json"
+    output:
+        f"{OUTPUT_DIR}/question_analysis_report.html"
+    script:
+        "scripts/generate_question_analysis_report.py"

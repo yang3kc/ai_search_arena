@@ -1,0 +1,40 @@
+# Configuration for Question Analysis Pipeline
+
+# Base directories
+base_dir: "/Users/yangkc/working/llm/ai_search_arena"
+cleaned_data_dir: "../../../data/intermediate/cleaned_arena_data"
+citation_analysis_dir: "../../../data/intermediate/citation_analysis"
+question_analysis_dir: "../../../data/intermediate/question_analysis"
+output_dir: "../../../data/output/question_analysis"
+
+# Analysis parameters
+question_filtering:
+  min_confidence: 0.8  # Minimum language detection confidence
+  max_length: 10000    # Maximum question length in characters
+
+embedding:
+  model_name: "all-MiniLM-L6-v2"  # Sentence transformer model
+  batch_size: 32
+
+political_classification:
+  political_keywords:
+    - "trump"
+    - "biden"
+    - "politics"
+    - "election"
+    - "republican"
+    - "democrat"
+    - "conservative"
+    - "liberal"
+    - "vote"
+    - "policy"
+    - "government"
+    - "congress"
+    - "senate"
+    - "president"
+    - "political"
+
+regression:
+  test_size: 0.2
+  random_state: 42
+  cross_validation_folds: 5
