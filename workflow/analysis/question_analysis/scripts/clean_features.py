@@ -74,10 +74,10 @@ def create_dummy_variables(data, categorical_vars, max_categories=10):
             )
 
             if var == "client_country":
-                # Keep top N countries, group others as "Other"
+                # Keep top N countries, group others as "Other", preserve NaN
                 top_countries = data[var].value_counts().head(max_categories).index
                 dummy_data[f"{var}_grouped"] = data[var].apply(
-                    lambda x: x if x in top_countries else "Other"
+                    lambda x: x if pd.isna(x) or x in top_countries else "Other"
                 )
 
                 # Create dummies for grouped variable
