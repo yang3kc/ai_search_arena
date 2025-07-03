@@ -9,8 +9,7 @@ output_dir: "../../../data/output/question_analysis"
 
 # Analysis parameters
 question_filtering:
-  min_confidence: 0.8  # Minimum language detection confidence
-  max_length: 10000    # Maximum question length in characters
+  max_length: 1000    # Maximum question length in characters
 
 embedding:
   model_name: "all-MiniLM-L6-v2"  # Sentence transformer model
