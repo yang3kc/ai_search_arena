@@ -15,24 +15,6 @@ embedding:
   model_name: "all-MiniLM-L6-v2"  # Sentence transformer model
   batch_size: 32
 
-political_classification:
-  political_keywords:
-    - "trump"
-    - "biden"
-    - "politics"
-    - "election"
-    - "republican"
-    - "democrat"
-    - "conservative"
-    - "liberal"
-    - "vote"
-    - "policy"
-    - "government"
-    - "congress"
-    - "senate"
-    - "president"
-    - "political"
-
 regression:
   test_size: 0.2
   random_state: 42

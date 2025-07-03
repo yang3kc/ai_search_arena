@@ -30,14 +30,9 @@ This analysis aims to understand how different features of user questions relate
 
 **Scripts to create**:
 - `scripts/extract_question_features.py`
-  - **Political classification**: Binary classifier to identify political vs non-political questions
-  - **Topic classification**: Classify questions into categories (news, health, tech, etc.)
-  - **Question characteristics**:
-    - Length (characters, words)
-    - Complexity metrics (sentence count, avg word length)
-    - Question type detection (what, how, why, etc.)
-    - Temporal references (current events, specific dates)
-  - **Named entity recognition**: Extract persons, organizations, locations
+  - **Question intent**: The primary intent of the question, from the thread metadata
+  - **Client country**: The country of the client, from the thread metadata
+  - **Question characteristics**: Length (characters, words)
   - Output: `data/intermediate/question_analysis/question_features.parquet`
 
 ### Phase 4: News Citation Pattern Variables
@@ -149,7 +144,7 @@ rule all:
         "data/output/question_analysis/regression_results.json"
 
 rule filter_english_questions:
-    input: 
+    input:
         questions="data/intermediate/cleaned_arena_data/questions.parquet",
         threads="data/intermediate/cleaned_arena_data/threads.parquet"
     output: "data/intermediate/question_analysis/english_questions.parquet"
