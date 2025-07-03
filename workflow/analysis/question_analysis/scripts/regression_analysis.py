@@ -76,8 +76,6 @@ def identify_variable_groups(data):
             for prefix in [
                 "client_country_",
                 "model_family_",
-                "model_side_",
-                "winner_",
                 "primary_intent_",
             ]
         )
@@ -135,12 +133,32 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
         )
         embedding_features = variable_groups["embeddings"]
 
+    # Handle dummy variables - exclude one from each group as reference
+    dummy_vars_filtered = []
+    dummy_groups = ["client_country_", "model_family_", "primary_intent_"]
+
+    for group_prefix in dummy_groups:
+        group_vars = [
+            col for col in variable_groups["dummy_vars"] if col.startswith(group_prefix)
+        ]
+        if group_vars:
+            # Sort to ensure consistent reference category selection
+            group_vars.sort()
+            # Exclude the first category as reference (alphabetically first)
+            reference_var = group_vars[0]
+            included_vars = group_vars[1:]
+
+            logger.info(
+                f"Dummy group '{group_prefix}': excluding '{reference_var}' as reference, including {len(included_vars)} variables"
+            )
+            dummy_vars_filtered.extend(included_vars)
+
     # Combine all predictor variables
     all_predictors = (
         embedding_features
         + variable_groups["question_features"]
         + variable_groups["response_features"]
-        + variable_groups["dummy_vars"]
+        + dummy_vars_filtered
         + variable_groups["source_composition"]
     )
 
@@ -152,6 +170,9 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
 
     logger.info(f"Final feature matrix: {feature_data.shape}")
     logger.info(f"Using {'PCA' if use_pca else 'original'} embedding features")
+    logger.info(
+        f"Excluded {len(variable_groups['dummy_vars']) - len(dummy_vars_filtered)} dummy variables as reference categories"
+    )
 
     return feature_data, all_predictors
 
@@ -383,10 +404,14 @@ def main():
     key_outcomes = [
         "proportion_left_leaning",
         "proportion_right_leaning",
+        "proportion_center_leaning",
         "proportion_high_quality",
+        "proportion_low_quality",
         "news_proportion_left_leaning",
-        "proportion_news",
-        "num_citations",
+        "news_proportion_right_leaning",
+        "news_proportion_center_leaning",
+        "news_proportion_high_quality",
+        "news_proportion_low_quality",
     ]
 
     for outcome in key_outcomes:
