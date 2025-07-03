@@ -57,7 +57,19 @@ This analysis aims to understand how different features of user questions relate
   - Handle missing data and create analysis-ready dataset
   - Output: `data/intermediate/question_analysis/integrated_analysis_data.parquet`
 
-### Phase 6: Regression Analysis
+### Phase 6: Clean and Code Features
+**Goal**: Prepare integrated data for regression modeling
+
+**Scripts to create**:
+- `scripts/clean_features.py`
+  - Convert categorical variables to dummy variables (country, model family, intent, etc.)
+  - Transform long-tail distributed variables (response/question length) using log transformation
+  - Standardize embedding dimensions for consistent scaling
+  - Handle missing values with appropriate imputation strategies
+  - Validate final dataset for modeling readiness
+  - Output: `data/intermediate/question_analysis/cleaned_regression_features.parquet`
+
+### Phase 7: Regression Analysis
 **Goal**: Analyze relationships between question features and citation patterns
 
 **Scripts to create**:
@@ -77,7 +89,7 @@ This analysis aims to understand how different features of user questions relate
     - Model diagnostics and fit statistics
   - Output: `data/output/question_analysis/regression_results.json`
 
-### Phase 7: Visualization and Reporting
+### Phase 8: Visualization and Reporting
 **Goal**: Generate comprehensive analysis report
 
 **Scripts to create**:

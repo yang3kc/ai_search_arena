@@ -29,9 +29,11 @@ rule all:
         f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
         # Phase 5: Data integration
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
-        # Phase 6: Regression analysis
+        # Phase 6: Feature cleaning
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet",
+        # Phase 7: Regression analysis
         f"{OUTPUT_DIR}/regression_results.json",
-        # Phase 7: Final report
+        # Phase 8: Final report
         f"{OUTPUT_DIR}/question_analysis_report.html"
 
 # Phase 1: Filter English Questions
@@ -87,19 +89,28 @@ rule integrate_analysis_data:
     script:
         "scripts/integrate_analysis_data.py"
 
-# Phase 6: Regression Analysis
-rule regression_analysis:
+# Phase 6: Clean Features
+rule clean_features:
     input:
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_regression_features.parquet"
+    script:
+        "scripts/clean_features.py"
+
+# Phase 7: Regression Analysis
+rule regression_analysis:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet"
     output:
         f"{OUTPUT_DIR}/regression_results.json"
     script:
         "scripts/regression_analysis.py"
 
-# Phase 7: Generate Analysis Report
+# Phase 8: Generate Analysis Report
 rule generate_report:
     input:
-        data=f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
+        data=f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet",
         results=f"{OUTPUT_DIR}/regression_results.json"
     output:
         f"{OUTPUT_DIR}/question_analysis_report.html"
