@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 # Configure logging
@@ -208,6 +209,46 @@ def standardize_embeddings(data):
     return standardized_data
 
 
+def apply_pca_to_embeddings(data, n_components=20):
+    """Apply PCA to embedding dimensions while keeping original embeddings."""
+    logger.info("Applying PCA to embedding dimensions...")
+
+    embedding_cols = [col for col in data.columns if col.startswith("embedding_dim_")]
+
+    if not embedding_cols:
+        logger.warning("No embedding columns found for PCA")
+        return data
+
+    if len(embedding_cols) <= n_components:
+        logger.warning(
+            f"Number of embedding dimensions ({len(embedding_cols)}) <= n_components ({n_components}), skipping PCA"
+        )
+        return data
+
+    pca_data = data.copy()
+
+    # Apply PCA to standardized embeddings
+    pca = PCA(n_components=n_components, random_state=42)
+    embedding_data = data[embedding_cols]
+    embedding_pca = pca.fit_transform(embedding_data)
+
+    # Create DataFrame with PCA components
+    pca_cols = [f"embedding_pc_{i}" for i in range(n_components)]
+    pca_df = pd.DataFrame(embedding_pca, columns=pca_cols, index=data.index)
+
+    # Add PCA components to the dataset (keeping original embeddings)
+    pca_data = pd.concat([pca_data, pca_df], axis=1)
+
+    logger.info(f"Applied PCA to {len(embedding_cols)} embedding dimensions")
+    logger.info(f"Created {n_components} PCA components")
+    logger.info(
+        f"PCA explained variance ratio (first 5): {pca.explained_variance_ratio_[:5]}"
+    )
+    logger.info(f"Total variance explained: {pca.explained_variance_ratio_.sum():.3f}")
+
+    return pca_data
+
+
 def handle_missing_values(data):
     """Handle remaining missing values in the dataset."""
     logger.info("Handling missing values...")
@@ -279,6 +320,7 @@ def validate_cleaned_data(data):
 
     # Feature categories
     embedding_cols = [col for col in data.columns if col.startswith("embedding_dim_")]
+    pca_cols = [col for col in data.columns if col.startswith("embedding_pc_")]
     dummy_cols = [
         col
         for col in data.columns
@@ -302,7 +344,8 @@ def validate_cleaned_data(data):
     ]
 
     logger.info("Feature summary:")
-    logger.info(f"  Embedding features: {len(embedding_cols)}")
+    logger.info(f"  Original embedding features: {len(embedding_cols)}")
+    logger.info(f"  PCA embedding features: {len(pca_cols)}")
     logger.info(f"  Dummy variables: {len(dummy_cols)}")
     logger.info(f"  Transformed length variables: {len(length_cols)}")
     logger.info(f"  Citation pattern features: {len(citation_cols)}")
@@ -347,10 +390,13 @@ def main():
     # Step 4: Standardize embeddings
     data_standardized = standardize_embeddings(data_transformed)
 
-    # Step 5: Handle missing values
-    data_cleaned = handle_missing_values(data_standardized)
+    # Step 5: Apply PCA to embeddings
+    data_with_pca = apply_pca_to_embeddings(data_standardized)
 
-    # Step 6: Validate cleaned data
+    # Step 6: Handle missing values
+    data_cleaned = handle_missing_values(data_with_pca)
+
+    # Step 7: Validate cleaned data
     final_data = validate_cleaned_data(data_cleaned)
 
     # Create output directory
