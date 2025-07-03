@@ -2,20 +2,16 @@
 """
 Filter English Questions Script for Question Analysis Pipeline.
 
-This script filters questions to include only English language questions
-with sufficient confidence scores for downstream analysis.
+This script filters questions to include only English-only questions based on
+the language information from threads metadata.
 """
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import logging
 import sys
-from langdetect import detect
-from langdetect.lang_detect_exception import LangDetectException
-import warnings
-
-# Suppress langdetect warnings
-warnings.filterwarnings("ignore")
+import ast
 
 # Configure logging
 logging.basicConfig(
@@ -24,159 +20,158 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def detect_language_batch(texts, min_confidence=0.8):
+def parse_language_list(lang_data):
     """
-    Detect language for a batch of texts with confidence scoring.
+    Parse language list data to Python list.
 
     Args:
-        texts: List of text strings
-        min_confidence: Minimum confidence threshold for language detection
+        lang_data: Language data (could be numpy array, list, or string)
 
     Returns:
-        List of tuples (is_english, confidence_score)
+        List of languages or None if parsing fails
     """
-    results = []
-
-    for text in texts:
-        try:
-            if pd.isna(text) or len(str(text).strip()) < 10:
-                # Too short for reliable detection
-                results.append((False, 0.0))
-                continue
-
-            # Clean text for detection
-            clean_text = str(text).strip()
-
-            # Use langdetect
-            detected_lang = detect(clean_text)
-
-            # Simple confidence estimation based on text characteristics
-            # (langdetect doesn't provide confidence directly)
-            confidence = estimate_confidence(clean_text, detected_lang)
-
-            is_english = (detected_lang == "en") and (confidence >= min_confidence)
-            results.append((is_english, confidence))
-
-        except (LangDetectException, Exception):
-            # Detection failed
-            results.append((False, 0.0))
-
-    return results
+    try:
+        # Handle numpy arrays
+        if hasattr(lang_data, "tolist"):
+            return lang_data.tolist()
+        # Handle regular lists
+        elif isinstance(lang_data, list):
+            return lang_data
+        # Handle string representation of lists
+        elif isinstance(lang_data, str):
+            return ast.literal_eval(lang_data)
+        else:
+            return None
+    except (ValueError, SyntaxError, AttributeError):
+        return None
 
 
-def estimate_confidence(text, detected_lang):
+def filter_english_only_threads(threads_df):
     """
-    Estimate confidence score for language detection.
-    This is a simple heuristic since langdetect doesn't provide confidence.
+    Filter threads to include only those with English as the only language.
+
+    Args:
+        threads_df: DataFrame with threads data including languages column
+
+    Returns:
+        Filtered DataFrame with English-only threads
     """
-    # Base confidence
-    confidence = 0.7
+    logger.info(f"Starting with {len(threads_df):,} threads")
 
-    # Longer texts generally more reliable
-    if len(text) > 50:
-        confidence += 0.1
-    if len(text) > 100:
-        confidence += 0.1
+    # Create working copy
+    df = threads_df.copy()
 
-    # Check for common English patterns
-    english_indicators = [
-        "the ",
-        "and ",
-        "is ",
-        "are ",
-        "was ",
-        "were ",
-        "what ",
-        "how ",
-        "why ",
-        "when ",
-        "where ",
-        "can ",
-        "could ",
-        "would ",
-        "should ",
-    ]
+    # Parse language lists
+    logger.info("Parsing language information...")
+    df["parsed_languages"] = df["languages"].apply(parse_language_list)
 
-    if detected_lang == "en":
-        english_count = sum(
-            1 for indicator in english_indicators if indicator in text.lower()
-        )
-        if english_count >= 2:
-            confidence += 0.1
-        if english_count >= 4:
-            confidence += 0.1
+    # Filter out threads where language parsing failed
+    initial_count = len(df)
+    df = df[df["parsed_languages"].notna()].copy()
+    logger.info(
+        f"Removed {initial_count - len(df):,} threads with unparseable languages"
+    )
 
-    return min(confidence, 1.0)
+    # Filter to English-only threads
+    def is_english_only(lang_list):
+        if lang_list is None:
+            return False
+        # Check if list contains only 'English'
+        return len(lang_list) == 1 and lang_list[0] == "English"
+
+    initial_count = len(df)
+    english_only_df = df[df["parsed_languages"].apply(is_english_only)].copy()
+    logger.info(
+        f"Filtered to {len(english_only_df):,} English-only threads ({initial_count - len(english_only_df):,} multilingual/non-English removed)"
+    )
+
+    # Remove temporary column
+    english_only_df = english_only_df.drop(columns=["parsed_languages"])
+
+    return english_only_df
 
 
-def filter_english_questions(questions_df, min_confidence=0.8, max_length=10000):
+def filter_questions_by_english_threads(questions_df, english_threads_df):
     """
-    Filter questions to include only English questions.
+    Filter questions to include only those from English-only threads.
 
     Args:
         questions_df: DataFrame with questions
-        min_confidence: Minimum language detection confidence
-        max_length: Maximum question length
+        english_threads_df: DataFrame with English-only threads
 
     Returns:
-        Filtered DataFrame with additional language metadata
+        Filtered questions DataFrame
     """
     logger.info(f"Starting with {len(questions_df):,} questions")
 
-    # Create working copy
-    df = questions_df.copy()
+    # Get English-only thread IDs
+    english_thread_ids = set(english_threads_df["thread_id"].unique())
+    logger.info(f"Found {len(english_thread_ids):,} English-only threads")
 
-    # Basic filtering
-    logger.info("Applying basic filters...")
-
-    # Remove null questions
-    initial_count = len(df)
-    df = df[df["user_query"].notna()].copy()
-    logger.info(f"Removed {initial_count - len(df):,} null questions")
-
-    # Remove too long questions
-    initial_count = len(df)
-    df["question_length"] = df["user_query"].str.len()
-    df = df[df["question_length"] <= max_length].copy()
-    logger.info(f"Removed {initial_count - len(df):,} overly long questions")
-
-    # Remove too short questions (less than 10 characters)
-    initial_count = len(df)
-    df = df[df["question_length"] >= 10].copy()
-    logger.info(f"Removed {initial_count - len(df):,} too short questions")
-
-    # Language detection
-    logger.info("Detecting languages...")
-    texts = df["user_query"].tolist()
-
-    # Process in batches for memory efficiency
-    batch_size = 1000
-    all_results = []
-
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i : i + batch_size]
-        batch_results = detect_language_batch(batch, min_confidence)
-        all_results.extend(batch_results)
-
-        if (i // batch_size + 1) % 10 == 0:
-            logger.info(f"Processed {i + len(batch):,} questions")
-
-    # Add language detection results
-    is_english_list, confidence_list = zip(*all_results)
-    df["is_english"] = is_english_list
-    df["language_confidence"] = confidence_list
-
-    # Filter to English questions
-    initial_count = len(df)
-    english_df = df[df["is_english"]].copy()
+    # Filter questions to English-only threads
+    initial_count = len(questions_df)
+    english_questions = questions_df[
+        questions_df["thread_id"].isin(english_thread_ids)
+    ].copy()
     logger.info(
-        f"Filtered to {len(english_df):,} English questions ({initial_count - len(english_df):,} non-English removed)"
+        f"Filtered to {len(english_questions):,} questions from English-only threads ({initial_count - len(english_questions):,} removed)"
     )
 
-    # Remove the temporary is_english column but keep confidence
-    english_df = english_df.drop(columns=["is_english"])
+    # Basic quality filters
+    logger.info("Applying basic quality filters...")
 
-    return english_df
+    # Remove null questions
+    initial_count = len(english_questions)
+    english_questions = english_questions[
+        english_questions["user_query"].notna()
+    ].copy()
+    logger.info(f"Removed {initial_count - len(english_questions):,} null questions")
+
+    # Add question length
+    english_questions["question_length"] = english_questions["user_query"].str.len()
+
+    # Remove too long questions (>1000 characters)
+    initial_count = len(english_questions)
+    english_questions = english_questions[
+        english_questions["question_length"] <= 1000
+    ].copy()
+    logger.info(
+        f"Removed {initial_count - len(english_questions):,} overly long questions"
+    )
+
+    return english_questions
+
+
+def analyze_language_distribution(threads_df):
+    """Analyze the distribution of languages in threads."""
+    logger.info("Analyzing language distribution...")
+
+    # Parse all language lists
+    threads_df["parsed_languages"] = threads_df["languages"].apply(parse_language_list)
+    valid_threads = threads_df[threads_df["parsed_languages"].notna()]
+
+    # Count by number of languages
+    lang_counts = valid_threads["parsed_languages"].apply(lambda x: len(x) if x else 0)
+    logger.info(
+        f"Language count distribution:\n{lang_counts.value_counts().sort_index()}"
+    )
+
+    # Most common language combinations
+    lang_combinations = valid_threads["parsed_languages"].apply(
+        lambda x: tuple(sorted(x)) if x else None
+    )
+    top_combinations = lang_combinations.value_counts().head(10)
+    logger.info(f"Top 10 language combinations:\n{top_combinations}")
+
+    # English-only vs others
+    english_only_count = (
+        valid_threads["parsed_languages"]
+        .apply(lambda x: len(x) == 1 and x[0] == "English" if x else False)
+        .sum()
+    )
+    logger.info(
+        f"English-only threads: {english_only_count:,} / {len(valid_threads):,} ({english_only_count / len(valid_threads) * 100:.1f}%)"
+    )
 
 
 def validate_filtered_questions(df):
@@ -200,13 +195,15 @@ def validate_filtered_questions(df):
     if duplicates > 0:
         logger.warning(f"Found {duplicates} duplicate question IDs")
 
-    # Language confidence statistics
-    conf_stats = df["language_confidence"].describe()
-    logger.info(f"Language confidence statistics:\n{conf_stats}")
-
     # Length statistics
     length_stats = df["question_length"].describe()
     logger.info(f"Question length statistics:\n{length_stats}")
+
+    # Thread distribution
+    thread_counts = df["thread_id"].value_counts()
+    logger.info(
+        f"Questions per thread - Mean: {thread_counts.mean():.1f}, Median: {thread_counts.median():.1f}"
+    )
 
     # Sample questions for manual review
     logger.info("Sample filtered questions:")
@@ -221,33 +218,42 @@ def main():
     """Main function for English question filtering."""
     try:
         # Get input/output paths from Snakemake
-        input_path = snakemake.input[0]
+        input_questions = snakemake.input.questions
+        input_threads = snakemake.input.threads
         output_path = snakemake.output[0]
-
-        # Get config parameters
-        config = snakemake.config
-        min_confidence = config.get("question_filtering", {}).get("min_confidence", 0.8)
-        max_length = config.get("question_filtering", {}).get("max_length", 10000)
 
     except NameError:
         # Fallback for running outside Snakemake (for testing)
         logger.info("Running outside Snakemake - using default paths")
         base_dir = Path(__file__).parent.parent.parent.parent.parent
-        input_path = base_dir / "data/intermediate/cleaned_arena_data/questions.parquet"
+        input_questions = (
+            base_dir / "data/intermediate/cleaned_arena_data/questions.parquet"
+        )
+        input_threads = (
+            base_dir / "data/intermediate/cleaned_arena_data/threads.parquet"
+        )
         output_path = (
             base_dir / "data/intermediate/question_analysis/english_questions.parquet"
         )
-        min_confidence = 0.8
-        max_length = 10000
 
-    # Load questions
-    logger.info(f"Loading questions from {input_path}")
-    questions_df = pd.read_parquet(input_path)
+    # Load data
+    logger.info(f"Loading questions from {input_questions}")
+    questions_df = pd.read_parquet(input_questions)
     logger.info(f"Loaded {len(questions_df):,} questions")
 
-    # Filter English questions
-    english_questions = filter_english_questions(
-        questions_df, min_confidence=min_confidence, max_length=max_length
+    logger.info(f"Loading threads from {input_threads}")
+    threads_df = pd.read_parquet(input_threads)
+    logger.info(f"Loaded {len(threads_df):,} threads")
+
+    # Analyze language distribution
+    analyze_language_distribution(threads_df)
+
+    # Filter to English-only threads
+    english_threads = filter_english_only_threads(threads_df)
+
+    # Filter questions to English-only threads
+    english_questions = filter_questions_by_english_threads(
+        questions_df, english_threads
     )
 
     # Validate results
@@ -264,15 +270,17 @@ def main():
     # Summary statistics
     logger.info("=== ENGLISH QUESTION FILTERING SUMMARY ===")
     logger.info(f"Original questions: {len(questions_df):,}")
+    logger.info(f"Original threads: {len(threads_df):,}")
+    logger.info(f"English-only threads: {len(english_threads):,}")
     logger.info(f"English questions: {len(english_questions):,}")
     logger.info(
-        f"Filtering rate: {len(english_questions) / len(questions_df) * 100:.1f}%"
+        f"Question filtering rate: {len(english_questions) / len(questions_df) * 100:.1f}%"
     )
     logger.info(
-        f"Average confidence: {english_questions['language_confidence'].mean():.3f}"
+        f"Thread filtering rate: {len(english_threads) / len(threads_df) * 100:.1f}%"
     )
     logger.info(
-        f"Average length: {english_questions['question_length'].mean():.1f} characters"
+        f"Average question length: {english_questions['question_length'].mean():.1f} characters"
     )
 
     logger.info("✅ English question filtering completed!")

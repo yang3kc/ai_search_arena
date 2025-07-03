@@ -35,7 +35,8 @@ rule all:
 # Phase 1: Filter English Questions
 rule filter_english_questions:
     input:
-        f"{CLEANED_DATA_DIR}/questions.parquet"
+        questions=f"{CLEANED_DATA_DIR}/questions.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet"
     output:
         f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
     script:
