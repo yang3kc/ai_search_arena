@@ -187,29 +187,6 @@ def transform_length_variables(data):
     return transformed_data, transformation_summary
 
 
-def create_interaction_terms(data):
-    """Create useful interaction terms."""
-    logger.info("Creating interaction terms...")
-
-    interaction_data = data.copy()
-
-    # Citation count × question length interactions
-    if all(col in data.columns for col in ["num_citations", "question_length_words"]):
-        interaction_data["citations_x_question_length"] = (
-            data["num_citations"] * data["question_length_words"]
-        )
-        logger.info("Created citations × question length interaction")
-
-    # Turn number × total turns interaction (conversation depth)
-    if all(col in data.columns for col in ["turn_number", "total_turns"]):
-        interaction_data["conversation_depth"] = (
-            data["turn_number"] / data["total_turns"]
-        )
-        logger.info("Created conversation depth feature (turn_number / total_turns)")
-
-    return interaction_data
-
-
 def standardize_embeddings(data):
     """Standardize embedding dimensions."""
     logger.info("Standardizing embedding dimensions...")
@@ -367,16 +344,13 @@ def main():
         data_with_dummies
     )
 
-    # Step 4: Create interaction terms
-    data_with_interactions = create_interaction_terms(data_transformed)
+    # Step 4: Standardize embeddings
+    data_standardized = standardize_embeddings(data_transformed)
 
-    # Step 5: Standardize embeddings
-    data_standardized = standardize_embeddings(data_with_interactions)
-
-    # Step 6: Handle missing values
+    # Step 5: Handle missing values
     data_cleaned = handle_missing_values(data_standardized)
 
-    # Step 7: Validate cleaned data
+    # Step 6: Validate cleaned data
     final_data = validate_cleaned_data(data_cleaned)
 
     # Create output directory
