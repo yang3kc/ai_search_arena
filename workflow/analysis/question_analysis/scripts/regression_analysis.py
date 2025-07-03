@@ -60,7 +60,7 @@ def identify_variable_groups(data):
 
     # Question features - explicitly listed
     question_features = [
-        "question_length_chars_log",
+        # "question_length_chars_log", # removed because of high VIF
         "question_length_words_log",
         "turn_number",
         "total_turns",
@@ -68,51 +68,65 @@ def identify_variable_groups(data):
 
     # Response features - explicitly listed
     response_features = [
-        "response_length_log",
+        # "response_length_log", # removed because of high VIF
         "response_word_count_log",
     ]
 
     # Categorical dummy variables - explicitly listed by group
     dummy_vars = []
-    
+
     # Client country dummies (based on actual data)
     client_country_dummies = [
-        "client_country_US", "client_country_GB", "client_country_CA", 
-        "client_country_DE", "client_country_CN", "client_country_HK",
-        "client_country_IN", "client_country_MX", "client_country_RU",
-        "client_country_Other", "client_country_nan"
+        "client_country_BR",
+        # "client_country_US", # as reference
+        "client_country_GB",
+        "client_country_CA",
+        "client_country_DE",
+        "client_country_CN",
+        "client_country_HK",
+        "client_country_IN",
+        "client_country_MX",
+        "client_country_RU",
+        "client_country_Other",
+        "client_country_nan",
     ]
     dummy_vars.extend([col for col in client_country_dummies if col in data.columns])
-    
+
     # Model family dummies (based on actual data)
     model_family_dummies = [
-        "model_family_openai", "model_family_perplexity", "model_family_nan"
+        "model_family_openai",
+        "model_family_perplexity",
+        # "model_family_google", # as reference
     ]
     dummy_vars.extend([col for col in model_family_dummies if col in data.columns])
-    
+
     # Primary intent dummies (based on actual data)
     primary_intent_dummies = [
-        "primary_intent_Creative Generation", "primary_intent_Explanation", 
-        "primary_intent_Factual Lookup", "primary_intent_Guidance",
-        "primary_intent_Info Synthesis", "primary_intent_Other",
-        "primary_intent_Recommendation", "primary_intent_Text Processing", 
-        "primary_intent_nan"
+        "primary_intent_Creative Generation",
+        "primary_intent_Explanation",
+        "primary_intent_Factual Lookup",
+        "primary_intent_Guidance",
+        "primary_intent_Info Synthesis",
+        "primary_intent_Other",
+        # "primary_intent_Recommendation", # as reference
+        "primary_intent_Text Processing",
+        "primary_intent_Analysis",
+        "primary_intent_nan",
     ]
     dummy_vars.extend([col for col in primary_intent_dummies if col in data.columns])
 
     # Source composition variables - explicitly listed
     source_composition = [
-        "proportion_academic",
-        "proportion_community_blog", 
-        "proportion_gov_edu",
-        "proportion_other",
-        "proportion_search_engine",
-        "proportion_social_media",
-        "proportion_tech",
-        "proportion_unclassified",
-        "proportion_unknown_leaning",
-        "proportion_unknown_quality",
-        "proportion_wiki",
+        "proportion_news",
+        # "proportion_academic",
+        # "proportion_community_blog",
+        # "proportion_gov_edu",
+        # "proportion_other",
+        # "proportion_search_engine",
+        # "proportion_social_media",
+        # "proportion_tech",
+        # "proportion_unclassified",
+        # "proportion_wiki",
     ]
 
     # Validate which variables actually exist in the data
@@ -165,43 +179,12 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
         )
         embedding_features = variable_groups["embeddings"]
 
-    # Handle dummy variables - exclude one from each group as reference
-    dummy_vars_filtered = []
-    
-    # Define dummy variable groups with explicit reference categories
-    dummy_groups = {
-        "client_country_": "client_country_BR",  # Reference: Brazil (excluded from our list)
-        "model_family_": "model_family_google",   # Reference: Google (excluded from our list)
-        "primary_intent_": "primary_intent_Analysis"  # Reference: Analysis (excluded from our list)
-    }
-
-    for group_prefix, reference_var in dummy_groups.items():
-        group_vars = [
-            col for col in variable_groups["dummy_vars"] if col.startswith(group_prefix)
-        ]
-        if group_vars:
-            # Sort to ensure consistent ordering
-            group_vars.sort()
-            
-            # If the intended reference is in the data, exclude it; otherwise exclude the first
-            if reference_var in group_vars:
-                excluded_var = reference_var
-                included_vars = [var for var in group_vars if var != reference_var]
-            else:
-                excluded_var = group_vars[0]
-                included_vars = group_vars[1:]
-
-            logger.info(
-                f"Dummy group '{group_prefix}': excluding '{excluded_var}' as reference, including {len(included_vars)} variables"
-            )
-            dummy_vars_filtered.extend(included_vars)
-
     # Combine all predictor variables
     all_predictors = (
         embedding_features
         + variable_groups["question_features"]
         + variable_groups["response_features"]
-        + dummy_vars_filtered
+        + variable_groups["dummy_vars"]
         + variable_groups["source_composition"]
     )
 
@@ -213,9 +196,6 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
 
     logger.info(f"Final feature matrix: {feature_data.shape}")
     logger.info(f"Using {'PCA' if use_pca else 'original'} embedding features")
-    logger.info(
-        f"Excluded {len(variable_groups['dummy_vars']) - len(dummy_vars_filtered)} dummy variables as reference categories"
-    )
 
     return feature_data, all_predictors
 
@@ -225,23 +205,19 @@ def calculate_vif(X):
     try:
         # Add constant for VIF calculation
         X_with_const = sm.add_constant(X)
-        
+
         # Calculate VIF for each feature
         vif_data = []
         for i in range(1, X_with_const.shape[1]):  # Skip constant term
             try:
                 vif_value = variance_inflation_factor(X_with_const.values, i)
-                vif_data.append({
-                    'feature': X_with_const.columns[i],
-                    'vif': float(vif_value)
-                })
+                vif_data.append(
+                    {"feature": X_with_const.columns[i], "vif": float(vif_value)}
+                )
             except:
                 # Handle cases where VIF calculation fails
-                vif_data.append({
-                    'feature': X_with_const.columns[i],
-                    'vif': np.nan
-                })
-        
+                vif_data.append({"feature": X_with_const.columns[i], "vif": np.nan})
+
         return vif_data
     except Exception as e:
         logger.warning(f"VIF calculation failed: {e}")
@@ -269,7 +245,7 @@ def run_regression_analysis(X, y, outcome_name):
     # Calculate multicollinearity diagnostics
     logger.info(f"Calculating multicollinearity diagnostics for {outcome_name}")
     vif_data = calculate_vif(X_clean)
-    
+
     # Add intercept term
     X_with_const = sm.add_constant(X_clean)
 
@@ -346,9 +322,15 @@ def run_regression_analysis(X, y, outcome_name):
             dw_stat = np.nan
 
         # Multicollinearity analysis
-        high_vif_features = [vif for vif in vif_data if not np.isnan(vif["vif"]) and vif["vif"] > 10]
-        moderate_vif_features = [vif for vif in vif_data if not np.isnan(vif["vif"]) and 5 <= vif["vif"] <= 10]
-        
+        high_vif_features = [
+            vif for vif in vif_data if not np.isnan(vif["vif"]) and vif["vif"] > 10
+        ]
+        moderate_vif_features = [
+            vif
+            for vif in vif_data
+            if not np.isnan(vif["vif"]) and 5 <= vif["vif"] <= 10
+        ]
+
         results["diagnostics"] = {
             "condition_number": float(np.linalg.cond(X_with_const)),
             "jarque_bera_stat": float(jb_stat),
@@ -361,8 +343,16 @@ def run_regression_analysis(X, y, outcome_name):
                 "vif_data": vif_data,
                 "high_vif_count": len(high_vif_features),
                 "moderate_vif_count": len(moderate_vif_features),
-                "max_vif": max([vif["vif"] for vif in vif_data if not np.isnan(vif["vif"])]) if vif_data else np.nan,
-                "mean_vif": np.mean([vif["vif"] for vif in vif_data if not np.isnan(vif["vif"])]) if vif_data else np.nan,
+                "max_vif": max(
+                    [vif["vif"] for vif in vif_data if not np.isnan(vif["vif"])]
+                )
+                if vif_data
+                else np.nan,
+                "mean_vif": np.mean(
+                    [vif["vif"] for vif in vif_data if not np.isnan(vif["vif"])]
+                )
+                if vif_data
+                else np.nan,
             },
         }
 
