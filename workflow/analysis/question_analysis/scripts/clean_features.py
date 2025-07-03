@@ -157,14 +157,26 @@ def transform_length_variables(data):
 
         if abs(skewness) > 1.0:  # Threshold for considering transformation
             # Apply log(1+x) transformation to handle zeros and reduce skewness
-            transformed_data[f"{var}_log"] = np.log1p(data[var])
-            new_skewness = transformed_data[f"{var}_log"].skew()
+            log_transformed = np.log1p(data[var])
 
-            logger.info(f"  -> Log-transformed '{var}' skewness: {new_skewness:.3f}")
+            # Standardize to z-scores (mean=0, std=1)
+            transformed_data[f"{var}_log"] = (
+                log_transformed - log_transformed.mean()
+            ) / log_transformed.std()
+
+            new_skewness = transformed_data[f"{var}_log"].skew()
+            final_mean = transformed_data[f"{var}_log"].mean()
+            final_std = transformed_data[f"{var}_log"].std()
+
+            logger.info(
+                f"  -> Log-transformed and standardized '{var}' skewness: {new_skewness:.3f}, mean: {final_mean:.3f}, std: {final_std:.3f}"
+            )
             transformation_summary[var] = {
                 "original_skewness": skewness,
                 "transformed_skewness": new_skewness,
-                "transformation": "log1p",
+                "transformation": "log1p + z-score",
+                "final_mean": final_mean,
+                "final_std": final_std,
             }
 
             # Optionally remove original variable
@@ -388,11 +400,20 @@ def main():
     if transformation_summary:
         logger.info("Length variable transformations:")
         for var, summary in transformation_summary.items():
-            logger.info(
-                f"  {var}: {summary['transformation']} "
-                f"(skewness: {summary['original_skewness']:.3f} → "
-                f"{summary['transformed_skewness']:.3f})"
-            )
+            if "final_mean" in summary:
+                logger.info(
+                    f"  {var}: {summary['transformation']} "
+                    f"(skewness: {summary['original_skewness']:.3f} → "
+                    f"{summary['transformed_skewness']:.3f}, "
+                    f"mean: {summary['final_mean']:.3f}, "
+                    f"std: {summary['final_std']:.3f})"
+                )
+            else:
+                logger.info(
+                    f"  {var}: {summary['transformation']} "
+                    f"(skewness: {summary['original_skewness']:.3f} → "
+                    f"{summary['transformed_skewness']:.3f})"
+                )
 
     logger.info("✅ Feature cleaning completed!")
     return 0
