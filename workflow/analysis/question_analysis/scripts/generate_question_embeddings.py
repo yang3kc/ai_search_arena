@@ -6,15 +6,16 @@ This script generates semantic embeddings for English questions using
 sentence transformers for downstream analysis.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import logging
 import sys
+import warnings
+from pathlib import Path
 from typing import List
+
+import numpy as np
+import pandas as pd
 import torch
 from sentence_transformers import SentenceTransformer
-import warnings
 
 # Suppress sentence transformers warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
