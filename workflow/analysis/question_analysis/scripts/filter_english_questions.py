@@ -6,12 +6,12 @@ This script filters questions to include only English-only questions based on
 the language information from threads metadata.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
+import ast
 import logging
 import sys
-import ast
+from pathlib import Path
+
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(
