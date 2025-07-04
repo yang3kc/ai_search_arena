@@ -225,10 +225,23 @@ def create_regression_coefficient_plots(results):
             and not f["feature"].startswith("embedding_pc_")
         ]
 
-        # Sort features by name for consistent ordering
-        features_to_plot = sorted(features_to_plot, key=lambda x: x["feature"])
+        # Add intercept to the beginning of the list
+        intercept = result["coefficients"]["intercept"]
+        intercept_dict = {
+            "feature": "Intercept",
+            "coefficient": intercept["coefficient"],
+            "conf_int_lower": intercept["conf_int_lower"],
+            "conf_int_upper": intercept["conf_int_upper"],
+            "p_value": intercept["p_value"]
+        }
+        features_to_plot = [intercept_dict] + features_to_plot
 
-        if not features_to_plot:
+        # Sort features by name for consistent ordering (but keep intercept first)
+        intercept_item = features_to_plot[0]
+        other_features = sorted(features_to_plot[1:], key=lambda x: x["feature"])
+        features_to_plot = [intercept_item] + other_features
+
+        if len(features_to_plot) <= 1:  # Only intercept
             continue
 
         # Prepare data for plotting
@@ -260,8 +273,21 @@ def create_regression_coefficient_plots(results):
             markersize=8,
         )
 
-        # Color the markers by significance
-        for i, (coef, p_val) in enumerate(zip(coefficients, p_values)):
+        # Color the markers by significance and highlight intercept
+        for i, (coef, p_val, feature_name) in enumerate(zip(coefficients, p_values, feature_names)):
+            # Special styling for intercept
+            if feature_name == "Intercept":
+                marker_style = "s"  # square marker
+                marker_size = 120
+                edge_color = "black"
+                edge_width = 2
+            else:
+                marker_style = "o"  # circle marker
+                marker_size = 100
+                edge_color = None
+                edge_width = 0
+            
+            # Color by significance
             if p_val < 0.001:
                 color = "red"
             elif p_val < 0.01:
@@ -270,7 +296,9 @@ def create_regression_coefficient_plots(results):
                 color = "blue"
             else:
                 color = "gray"
-            ax.scatter(coef, i, c=color, s=100, zorder=5)
+            
+            ax.scatter(coef, i, c=color, s=marker_size, zorder=5, 
+                      marker=marker_style, edgecolors=edge_color, linewidth=edge_width)
 
         # Add vertical line at zero
         ax.axvline(x=0, color="black", linestyle="--", alpha=0.7)
@@ -283,13 +311,16 @@ def create_regression_coefficient_plots(results):
         ax.set_title(f"Regression Coefficients: {outcome}")
         ax.grid(True, alpha=0.3)
 
-        # Add legend for significance levels
+        # Add legend for significance levels and intercept
         from matplotlib.patches import Patch
+        from matplotlib.lines import Line2D
 
         legend_elements = [
             Patch(facecolor="red", label="p < 0.001"),
             Patch(facecolor="orange", label="p < 0.01"),
             Patch(facecolor="blue", label="p < 0.05"),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
+                   markeredgecolor='black', markersize=10, label="Intercept"),
         ]
         ax.legend(handles=legend_elements, loc="best")
 
@@ -519,9 +550,20 @@ def create_performance_summary_table(results):
         diag = result["diagnostics"]
         multicollinearity = diag.get("multicollinearity", {})
 
+        # Get intercept information
+        intercept = result["coefficients"]["intercept"]
+        intercept_str = f"{intercept['coefficient']:.4f}"
+        if intercept['p_value'] < 0.001:
+            intercept_str += "***"
+        elif intercept['p_value'] < 0.01:
+            intercept_str += "**"
+        elif intercept['p_value'] < 0.05:
+            intercept_str += "*"
+
         performance_data.append(
             {
                 "Outcome": result["outcome"],
+                "Intercept": intercept_str,
                 "R²": f"{perf['r2']:.4f}",
                 "Adj. R²": f"{perf['adj_r2']:.4f}",
                 "F-statistic": f"{perf['f_statistic']:.2f}",
