@@ -281,32 +281,59 @@ def apply_pca_to_embeddings(data, n_components=20):
     return pca_data
 
 
+def convert_to_z_scores(data, columns):
+    """Convert specified columns to z-scores (mean=0, std=1)."""
+    z_scored_data = data.copy()
+    conversion_summary = {}
+
+    for col in columns:
+        if col not in data.columns:
+            continue
+
+        # Calculate z-scores
+        mean_val = data[col].mean()
+        std_val = data[col].std()
+
+        if std_val == 0:
+            logger.warning(f"Column '{col}' has zero standard deviation, setting to 0")
+            z_scored_data[col] = 0
+        else:
+            z_scored_data[col] = (data[col] - mean_val) / std_val
+
+        # Verify z-score properties
+        new_mean = z_scored_data[col].mean()
+        new_std = z_scored_data[col].std()
+
+        conversion_summary[col] = {
+            "original_mean": mean_val,
+            "original_std": std_val,
+            "new_mean": new_mean,
+            "new_std": new_std,
+        }
+
+        logger.info(
+            f"  {col}: z-scored (mean: {mean_val:.3f} → {new_mean:.3f}, std: {std_val:.3f} → {new_std:.3f})"
+        )
+
+    return z_scored_data, conversion_summary
+
+
 def convert_proportions_to_percentages(data):
     """Convert proportion features from decimals (0-1) to percentages (0-100)."""
     logger.info("Converting proportion features to percentages...")
 
     converted_data = data.copy()
 
-    # Find all proportion columns
+    # Find all proportion columns (excluding topic probabilities)
     proportion_cols = [col for col in data.columns if "proportion_" in col]
 
-    # Find topic probability columns
-    topic_prob_cols = [
-        col
-        for col in data.columns
-        if col.startswith("topic_") and col.endswith("_prob")
-    ]
-
-    # Combine all columns that need percentage conversion
-    all_percent_cols = proportion_cols + topic_prob_cols
-
-    if not all_percent_cols:
-        logger.warning("No proportion or topic probability columns found")
+    if not proportion_cols:
+        logger.warning("No proportion columns found")
         return converted_data
 
     # Convert each column from decimal to percentage
     conversion_summary = {}
-    for col in all_percent_cols:
+    for col in proportion_cols:
         original_range = (data[col].min(), data[col].max())
         converted_data[col] = data[col] * 100.0
         new_range = (converted_data[col].min(), converted_data[col].max())
@@ -321,10 +348,30 @@ def convert_proportions_to_percentages(data):
         )
 
     logger.info(f"Converted {len(proportion_cols)} proportion columns to percentages")
-    if topic_prob_cols:
-        logger.info(
-            f"Converted {len(topic_prob_cols)} topic probability columns to percentages"
-        )
+    return converted_data
+
+
+def convert_topic_probabilities_to_z_scores(data):
+    """Convert topic probability features to z-scores."""
+    logger.info("Converting topic probability features to z-scores...")
+
+    # Find topic probability columns
+    topic_prob_cols = [
+        col
+        for col in data.columns
+        if col.startswith("topic_") and col.endswith("_prob")
+    ]
+
+    if not topic_prob_cols:
+        logger.warning("No topic probability columns found")
+        return data
+
+    # Convert topic probability columns to z-scores
+    converted_data, z_score_summary = convert_to_z_scores(data, topic_prob_cols)
+    logger.info(
+        f"Converted {len(topic_prob_cols)} topic probability columns to z-scores"
+    )
+
     return converted_data
 
 
@@ -356,7 +403,7 @@ def handle_missing_values(data):
                 # Fill proportion columns with 0 (now in percentage scale)
                 cleaned_data[col] = cleaned_data[col].fillna(0)
             elif col.startswith("topic_") and col.endswith("_prob"):
-                # Fill topic probability columns with 0 (now in percentage scale)
+                # Fill topic probability columns with 0 (now in z-score scale)
                 cleaned_data[col] = cleaned_data[col].fillna(0)
             elif col == "num_citations":
                 # Fill citation count with 0
@@ -493,10 +540,13 @@ def main():
     # Step 6: Convert proportions to percentages
     data_with_percentages = convert_proportions_to_percentages(data_with_pca)
 
-    # Step 7: Handle missing values
-    data_cleaned = handle_missing_values(data_with_percentages)
+    # Step 7: Convert topic probabilities to z-scores
+    data_with_z_scores = convert_topic_probabilities_to_z_scores(data_with_percentages)
 
-    # Step 8: Validate cleaned data
+    # Step 8: Handle missing values
+    data_cleaned = handle_missing_values(data_with_z_scores)
+
+    # Step 9: Validate cleaned data
     final_data = validate_cleaned_data(data_cleaned)
 
     # Create output directory
