@@ -25,7 +25,20 @@ This analysis aims to understand how different features of user questions relate
   - **Embedding validation**: Ensure embedding quality and consistency
   - Output: `data/intermediate/question_analysis/question_embeddings.parquet`
 
-### Phase 3: Question Feature Extraction
+### Phase 3: Question Topic Modeling ✅ **COMPLETED**
+**Goal**: Extract topics from questions
+
+**Scripts created**:
+- `scripts/generate_question_topics.py` ✅
+  - **Topic modeling**: Use BERTopic to extract topics and topic probabilities from questions
+  - **Outlier reduction**: Minimize outliers using embedding-based strategy
+  - **Topic distributions**: Generate probability distributions for each question
+  - Output:
+    - `data/intermediate/question_analysis/question_topics.parquet` (topic assignments)
+    - `data/intermediate/question_analysis/question_topic_probabilities.parquet` (topic probabilities)
+    - `data/intermediate/question_analysis/topic_info.json` (topic metadata and keywords)
+
+### Phase 4: Question Feature Extraction
 **Goal**: Extract features from questions
 
 **Scripts to create**:
@@ -35,7 +48,7 @@ This analysis aims to understand how different features of user questions relate
   - **Question characteristics**: Length (characters, words)
   - Output: `data/intermediate/question_analysis/question_features.parquet`
 
-### Phase 4: News Citation Pattern Variables
+### Phase 5: News Citation Pattern Variables
 **Goal**: Compute response-level citation metrics (reuse from preference analysis)
 
 **Scripts to adapt**:
@@ -46,7 +59,7 @@ This analysis aims to understand how different features of user questions relate
     - Proportion of high/low quality sources
   - Output: `data/intermediate/question_analysis/citation_patterns.parquet`
 
-### Phase 5: Data Integration
+### Phase 6: Data Integration
 **Goal**: Merge question features with citation patterns and model metadata
 
 **Scripts to create**:
@@ -57,7 +70,7 @@ This analysis aims to understand how different features of user questions relate
   - Handle missing data and create analysis-ready dataset
   - Output: `data/intermediate/question_analysis/integrated_analysis_data.parquet`
 
-### Phase 6: Clean and Code Features
+### Phase 7: Clean and Code Features
 **Goal**: Prepare integrated data for regression modeling
 
 **Scripts to create**:
@@ -69,7 +82,7 @@ This analysis aims to understand how different features of user questions relate
   - Validate final dataset for modeling readiness
   - Output: `data/intermediate/question_analysis/cleaned_regression_features.parquet`
 
-### Phase 7: Regression Analysis
+### Phase 8: Regression Analysis
 **Goal**: Analyze relationships between question features and citation patterns
 
 **Scripts to create**:
@@ -86,7 +99,7 @@ This analysis aims to understand how different features of user questions relate
     - Model diagnostics and fit statistics
   - Output: `data/output/question_analysis/regression_results.json`
 
-### Phase 8: Visualization and Reporting
+### Phase 9: Visualization and Reporting
 **Goal**: Generate comprehensive analysis report
 
 **Scripts to create**:
