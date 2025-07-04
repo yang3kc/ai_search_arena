@@ -216,19 +216,27 @@ def create_regression_coefficient_plots(results):
     for result in results["regression_results"]:
         outcome = result["outcome"]
 
-        # Get top 15 most significant features
+        # Get all significant features except embedding features
         features = result["coefficients"]["features"]
-        significant_features = [f for f in features if f["significant"]][:15]
+        features_to_plot = [
+            f
+            for f in features
+            if not f["feature"].startswith("embedding_dim_")
+            and not f["feature"].startswith("embedding_pc_")
+        ]
 
-        if not significant_features:
+        # Sort features by name for consistent ordering
+        features_to_plot = sorted(features_to_plot, key=lambda x: x["feature"])
+
+        if not features_to_plot:
             continue
 
         # Prepare data for plotting
-        feature_names = [f["feature"] for f in significant_features]
-        coefficients = [f["coefficient"] for f in significant_features]
-        conf_lower = [f["conf_int_lower"] for f in significant_features]
-        conf_upper = [f["conf_int_upper"] for f in significant_features]
-        p_values = [f["p_value"] for f in significant_features]
+        feature_names = [f["feature"] for f in features_to_plot]
+        coefficients = [f["coefficient"] for f in features_to_plot]
+        conf_lower = [f["conf_int_lower"] for f in features_to_plot]
+        conf_upper = [f["conf_int_upper"] for f in features_to_plot]
+        p_values = [f["p_value"] for f in features_to_plot]
 
         # Create coefficient plot
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -238,11 +246,6 @@ def create_regression_coefficient_plots(results):
         errors = [
             [c - l for c, l in zip(coefficients, conf_lower)],
             [u - c for c, u in zip(coefficients, conf_upper)],
-        ]
-
-        # Color by p-value significance
-        colors = [
-            "red" if p < 0.001 else "orange" if p < 0.01 else "blue" for p in p_values
         ]
 
         # Create horizontal error bar plot
@@ -259,7 +262,14 @@ def create_regression_coefficient_plots(results):
 
         # Color the markers by significance
         for i, (coef, p_val) in enumerate(zip(coefficients, p_values)):
-            color = "red" if p_val < 0.001 else "orange" if p_val < 0.01 else "blue"
+            if p_val < 0.001:
+                color = "red"
+            elif p_val < 0.01:
+                color = "orange"
+            elif p_val < 0.05:
+                color = "blue"
+            else:
+                color = "gray"
             ax.scatter(coef, i, c=color, s=100, zorder=5)
 
         # Add vertical line at zero
@@ -290,7 +300,7 @@ def create_regression_coefficient_plots(results):
                 "outcome": outcome,
                 "figure": fig,
                 "r2": result["model_performance"]["r2"],
-                "n_significant": len(significant_features),
+                "n_features": len(features_to_plot),
             }
         )
 
@@ -434,57 +444,67 @@ def create_multicollinearity_plots(results):
         outcome = result["outcome"]
         multicollinearity = result["diagnostics"].get("multicollinearity", {})
         vif_data = multicollinearity.get("vif_data", [])
-        
+
         if not vif_data:
             continue
-            
+
         # Filter out NaN values and sort by VIF
         valid_vif = [vif for vif in vif_data if not np.isnan(vif["vif"])]
         if not valid_vif:
             continue
-            
+
         # Sort by VIF value and take top 20
         valid_vif.sort(key=lambda x: x["vif"], reverse=True)
         top_vif = valid_vif[:20]
-        
+
         # Create VIF plot
         feature_names = [vif["feature"] for vif in top_vif]
         vif_values = [vif["vif"] for vif in top_vif]
-        
+
         fig, ax = plt.subplots(figsize=(12, 8))
-        
+
         # Color bars by VIF level
-        colors = ['red' if vif >= 10 else 'orange' if vif >= 5 else 'blue' for vif in vif_values]
-        
+        colors = [
+            "red" if vif >= 10 else "orange" if vif >= 5 else "blue"
+            for vif in vif_values
+        ]
+
         y_pos = range(len(feature_names))
         bars = ax.barh(y_pos, vif_values, color=colors)
-        
+
         # Add reference lines
-        ax.axvline(x=5, color='orange', linestyle='--', alpha=0.7, label='VIF = 5 (moderate)')
-        ax.axvline(x=10, color='red', linestyle='--', alpha=0.7, label='VIF = 10 (high)')
-        
+        ax.axvline(
+            x=5, color="orange", linestyle="--", alpha=0.7, label="VIF = 5 (moderate)"
+        )
+        ax.axvline(
+            x=10, color="red", linestyle="--", alpha=0.7, label="VIF = 10 (high)"
+        )
+
         ax.set_yticks(y_pos)
         ax.set_yticklabels(feature_names)
-        ax.set_xlabel('Variance Inflation Factor (VIF)')
-        ax.set_ylabel('Features')
-        ax.set_title(f'Multicollinearity Diagnosis (VIF): {outcome}')
+        ax.set_xlabel("Variance Inflation Factor (VIF)")
+        ax.set_ylabel("Features")
+        ax.set_title(f"Multicollinearity Diagnosis (VIF): {outcome}")
         ax.legend()
-        ax.grid(True, axis='x', alpha=0.3)
-        
+        ax.grid(True, axis="x", alpha=0.3)
+
         # Add value labels on bars
         for i, (bar, vif) in enumerate(zip(bars, vif_values)):
-            ax.text(vif + max(vif_values) * 0.01, i, f'{vif:.1f}', 
-                   va='center', fontsize=8)
-        
+            ax.text(
+                vif + max(vif_values) * 0.01, i, f"{vif:.1f}", va="center", fontsize=8
+            )
+
         plt.tight_layout()
-        
-        plots.append({
-            "outcome": outcome,
-            "figure": fig,
-            "high_vif_count": multicollinearity.get("high_vif_count", 0),
-            "mean_vif": multicollinearity.get("mean_vif", 0)
-        })
-    
+
+        plots.append(
+            {
+                "outcome": outcome,
+                "figure": fig,
+                "high_vif_count": multicollinearity.get("high_vif_count", 0),
+                "mean_vif": multicollinearity.get("mean_vif", 0),
+            }
+        )
+
     return plots
 
 
@@ -610,7 +630,7 @@ def generate_html_report(data, results, output_path):
     for i, plot_data in enumerate(coefficient_plots):
         coeff_img = fig_to_base64(plot_data["figure"])
         html_content += f"""
-            <h3>{plot_data["outcome"]} (R² = {plot_data["r2"]:.3f}, {plot_data["n_significant"]} significant features)</h3>
+            <h3>{plot_data["outcome"]} (R² = {plot_data["r2"]:.3f}, {plot_data["n_features"]} features)</h3>
             <div class="plot-container">
                 <img src="{coeff_img}" style="max-width: 100%; height: auto;">
             </div>

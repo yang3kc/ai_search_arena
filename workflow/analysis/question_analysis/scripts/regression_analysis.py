@@ -95,8 +95,8 @@ def identify_variable_groups(data):
     # Model family dummies (based on actual data)
     model_family_dummies = [
         "model_family_openai",
-        "model_family_perplexity",
-        # "model_family_google", # as reference
+        # "model_family_perplexity", # as reference
+        "model_family_google",
     ]
     dummy_vars.extend([col for col in model_family_dummies if col in data.columns])
 
