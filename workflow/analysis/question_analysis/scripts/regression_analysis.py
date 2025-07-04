@@ -59,7 +59,6 @@ def identify_variable_groups(data):
         "news_proportion_high_quality",
         "news_proportion_low_quality",
         "proportion_news",
-        "num_citations",
     ]
 
     # Question features - explicitly listed
@@ -74,6 +73,7 @@ def identify_variable_groups(data):
     response_features = [
         # "response_length_log", # removed because of high VIF
         "response_word_count_log",
+        "num_citations",
     ]
 
     # Categorical dummy variables - explicitly listed by group
@@ -482,16 +482,13 @@ def main():
 
     # Focus on most important outcomes
     key_outcomes = [
-        "proportion_left_leaning",
-        "proportion_right_leaning",
-        "proportion_center_leaning",
-        "proportion_high_quality",
-        "proportion_low_quality",
         "news_proportion_left_leaning",
         "news_proportion_right_leaning",
         "news_proportion_center_leaning",
+        "news_proportion_unknown_leaning",
         "news_proportion_high_quality",
         "news_proportion_low_quality",
+        "news_proportion_unknown_quality",
     ]
 
     for outcome in key_outcomes:
