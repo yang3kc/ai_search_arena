@@ -1,0 +1,69 @@
+\begin{table}[htbp]
+\centering
+\caption{Regression Coefficients for News Source Citation Patterns. Coefficients show the relationship between features and news source citation patterns. Statistical significance: *** p < 0.001, ** p < 0.01, * p < 0.05. Sample size: 9,098 observations. Only statistically significant features are shown.}
+\label{tab:regression_coefficients}
+\begin{tabular}{p{4cm}cccc}
+\toprule
+Feature & Left-Leaning & Right-Leaning & High Quality & Low Quality \\
+\midrule
+Intercept & 18.531*** & 2.463*** & 69.930*** & 5.689*** \\
+Client country: BR & -0.079 & 2.299* & -6.885* & -1.031 \\
+Client country: CA & 3.362* & -1.072 & 3.709* & -1.023 \\
+Client country: CN & 7.535* & 1.607 & -0.288 & 3.288* \\
+Client country: DE & 3.055 & -0.275 & 4.250* & -0.623 \\
+Client country: GB & 0.119 & -0.041 & 1.957 & -0.184 \\
+Client country: HK & -4.251 & -1.020 & 7.079* & -0.249 \\
+Client country: IN & 1.402 & -0.565 & -6.653*** & 9.777*** \\
+Client country: MX & 10.287*** & 5.538*** & 5.582* & 1.052 \\
+Client country: other & 1.726 & -0.524 & -0.110 & -0.286 \\
+Client country: RU & 10.210*** & -0.887 & -0.455 & 0.271 \\
+Client country: unknown & 6.154*** & 0.324 & -2.373* & -0.432 \\
+Embedding PC 0 & -5.691*** & -0.697*** & 2.248*** & -0.901*** \\
+Embedding PC 1 & 0.802 & 0.098 & 4.912*** & 0.833*** \\
+Embedding PC 10 & 1.072** & -0.406*** & -3.601*** & 0.402* \\
+Embedding PC 11 & -0.080 & -0.113 & 1.811*** & -0.133 \\
+Embedding PC 12 & 0.077 & 0.396** & 0.824* & 0.142 \\
+Embedding PC 13 & -0.611 & 0.299* & -0.887* & 0.498** \\
+Embedding PC 14 & 2.605*** & 0.122 & 0.555 & -0.044 \\
+Embedding PC 15 & 0.998** & -0.078 & 0.407 & -0.631*** \\
+Embedding PC 16 & 0.261 & 0.339** & 0.360 & -0.079 \\
+Embedding PC 17 & 0.065 & 0.583*** & -2.090*** & -0.821*** \\
+Embedding PC 18 & 0.018 & 0.196 & 0.238 & -0.349* \\
+Embedding PC 19 & 0.726* & -1.400*** & 1.711*** & -0.606*** \\
+Embedding PC 2 & -1.892*** & -0.016 & -2.372*** & -0.068 \\
+Embedding PC 3 & -5.162*** & -0.541*** & -2.536*** & 0.103 \\
+Embedding PC 4 & -0.743 & -0.093 & -3.454*** & -0.811*** \\
+Embedding PC 5 & 1.054** & -0.247* & 0.935* & -0.021 \\
+Embedding PC 6 & 0.797* & 0.324** & -4.051*** & 0.012 \\
+Embedding PC 7 & -0.760* & -0.310* & 0.672 & -0.718*** \\
+Embedding PC 8 & -0.472 & 0.206 & -1.114** & -0.543** \\
+Embedding PC 9 & -1.681*** & -0.395** & 0.497 & 0.236 \\
+Model family: Google & 3.952*** & -0.918** & -4.971*** & 2.265*** \\
+Model family: Openai & -2.761** & -0.369 & 2.311* & -0.732 \\
+Number of citations & -0.193* & -0.042 & 0.045 & -0.079 \\
+Intent: analysis & -1.987 & 0.575 & -1.077 & -0.393 \\
+Intent: creative generation & -0.019 & -2.255*** & -1.747 & -1.797 \\
+Intent: explanation & -0.267 & -0.354 & -1.389 & 0.163 \\
+Intent: factual lookup & 0.694 & 0.196 & -2.849 & -0.606 \\
+Intent: guidance & -6.491*** & -1.069 & -6.424** & -1.296 \\
+Intent: info synthesis & -1.697 & 0.887 & -2.374 & -1.410 \\
+Intent: other & -1.242 & 0.223 & 2.838 & -1.166 \\
+Intent: text processing & -0.771 & 3.682** & -0.562 & -2.126 \\
+News sources percentage & -0.061*** & -0.020*** & 0.160*** & -0.029*** \\
+Question length (words, log Z-score) & -0.420 & 0.233 & -0.101 & 0.320 \\
+Response length (words, log Z-score) & -0.233 & 0.748*** & 1.410 & 0.129 \\
+Topic: AI models and technology & -0.577 & 0.017 & 2.415*** & -0.339 \\
+Topic: stock prices and market & 0.368 & 0.112 & -1.210*** & 0.155 \\
+Topic: diet, nutrients, and health & 0.110 & 0.043 & 0.897* & -0.090 \\
+Topic: news updates & -0.434 & -0.142 & -0.061 & -0.159 \\
+Topic: sports and entertainment & -0.297 & 0.173 & -0.050 & 0.257 \\
+Topic: biography and personal stories & 0.143 & 0.225* & 0.010 & 0.244 \\
+Topic: fictional character battle analysis & 0.234 & -0.117 & -2.172*** & 0.003 \\
+Topic: online content and book & 0.379 & -0.781*** & 1.643*** & -0.418 \\
+Topic: music and lyrics & 0.046 & 0.270 & -1.822*** & 0.018 \\
+Topic: comics and games & 0.035 & -0.202 & -0.467 & 0.202 \\
+Total turns & -0.072 & -0.024 & -0.183 & 0.096 \\
+Turn number & 0.980** & -0.046 & 0.469 & -0.110 \\
+\bottomrule
+\end{tabular}
+\end{table}
