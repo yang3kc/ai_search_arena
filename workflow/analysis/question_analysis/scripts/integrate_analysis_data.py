@@ -6,6 +6,7 @@ This script merges question features, embeddings, and citation patterns
 with response and thread metadata to create an analysis-ready dataset.
 """
 
+import json
 import logging
 import sys
 from pathlib import Path
@@ -25,6 +26,9 @@ def load_input_data(
     citation_patterns_path,
     threads_path,
     responses_path,
+    question_topics_path,
+    question_topic_probabilities_path,
+    topic_info_path,
 ):
     """Load all input data files for integration."""
     logger.info("Loading input data files...")
@@ -49,7 +53,29 @@ def load_input_data(
     threads_df = pd.read_parquet(threads_path)
     logger.info(f"Loaded {len(threads_df):,} threads")
 
-    return embeddings_df, features_df, patterns_df, responses_df, threads_df
+    # Load question topics
+    topics_df = pd.read_parquet(question_topics_path)
+    logger.info(f"Loaded {len(topics_df):,} question topics")
+
+    # Load question topic probabilities
+    topic_probs_df = pd.read_parquet(question_topic_probabilities_path)
+    logger.info(f"Loaded {len(topic_probs_df):,} question topic probabilities")
+
+    # Load topic info
+    with open(topic_info_path, "r") as f:
+        topic_info = json.load(f)
+    logger.info(f"Loaded topic info with {len(topic_info['topics'])} topics")
+
+    return (
+        embeddings_df,
+        features_df,
+        patterns_df,
+        responses_df,
+        threads_df,
+        topics_df,
+        topic_probs_df,
+        topic_info,
+    )
 
 
 def merge_question_data(embeddings_df, features_df):
@@ -68,6 +94,45 @@ def merge_question_data(embeddings_df, features_df):
         )
 
     return question_data
+
+
+def merge_topic_data(question_data, topics_df, topic_probs_df, topic_info):
+    """Merge question data with topic modeling results."""
+    logger.info("Merging question data with topic modeling results...")
+
+    # Create topic label mapping
+    topic_labels = {}
+    for topic_data in topic_info["topics"]:
+        topic_id = topic_data["topic"]
+        topic_labels[topic_id] = topic_data.get("openai_label", f"Topic {topic_id}")
+
+    # Merge topics with probabilities
+    topics_with_probs = topics_df.merge(topic_probs_df, on="question_id", how="inner")
+
+    # Add topic labels
+    topics_with_probs["topic_label"] = topics_with_probs["topic"].map(topic_labels)
+
+    logger.info(
+        f"Merged {len(topics_with_probs):,} topic assignments with probabilities"
+    )
+
+    # Merge with question data (left join to preserve all questions)
+    question_data_with_topics = question_data.merge(
+        topics_with_probs, on="question_id", how="left"
+    )
+
+    logger.info(
+        f"Merged question data with topics: {len(question_data_with_topics):,} rows"
+    )
+
+    # Check coverage
+    questions_with_topics = (~question_data_with_topics["topic"].isna()).sum()
+    coverage_pct = (questions_with_topics / len(question_data_with_topics)) * 100
+    logger.info(
+        f"Topic coverage: {questions_with_topics:,}/{len(question_data_with_topics):,} ({coverage_pct:.1f}%)"
+    )
+
+    return question_data_with_topics
 
 
 def add_response_metadata(patterns_df, responses_df):
@@ -209,6 +274,39 @@ def handle_missing_data(integrated_data):
                 integrated_data[col] = integrated_data[col].fillna(0)
                 logger.info(f"Filled {missing_count:,} missing values in {col} with 0")
 
+    # Handle topic data nulls (questions without topic assignments)
+    topic_cols = [
+        col
+        for col in integrated_data.columns
+        if col.startswith("topic_") and col.endswith("_prob")
+    ]
+
+    if topic_cols:
+        # Fill NaN topic probabilities with 0 (no topic assignment)
+        integrated_data[topic_cols] = integrated_data[topic_cols].fillna(0)
+        logger.info(
+            f"Filled {len(topic_cols)} topic probability columns with 0 for missing values"
+        )
+
+    # Handle topic and topic_label nulls
+    if "topic" in integrated_data.columns:
+        topic_missing = integrated_data["topic"].isna().sum()
+        if topic_missing > 0:
+            integrated_data["topic"] = integrated_data["topic"].fillna(
+                -2
+            )  # Use -2 to distinguish from outliers (-1)
+            logger.info(f"Filled {topic_missing:,} missing topic assignments with -2")
+
+    if "topic_label" in integrated_data.columns:
+        topic_label_missing = integrated_data["topic_label"].isna().sum()
+        if topic_label_missing > 0:
+            integrated_data["topic_label"] = integrated_data["topic_label"].fillna(
+                "No Topic Assignment"
+            )
+            logger.info(
+                f"Filled {topic_label_missing:,} missing topic labels with 'No Topic Assignment'"
+            )
+
     return integrated_data
 
 
@@ -260,6 +358,26 @@ def validate_integrated_data(integrated_data):
     ]
     logger.info(f"Dataset includes {len(citation_cols)} citation pattern features")
 
+    # Check topic coverage
+    topic_cols = [
+        col
+        for col in integrated_data.columns
+        if col.startswith("topic_") and col.endswith("_prob")
+    ]
+    if topic_cols:
+        logger.info(f"Dataset includes {len(topic_cols)} topic probability features")
+
+    if "topic" in integrated_data.columns:
+        topic_stats = integrated_data["topic"].value_counts()
+        logger.info(f"Topic distribution: {len(topic_stats)} unique topics")
+        logger.info(
+            f"Most common topic: {topic_stats.index[0]} ({topic_stats.iloc[0]:,} questions)"
+        )
+        if -2 in topic_stats.index:
+            logger.info(f"Questions without topic assignment: {topic_stats[-2]:,}")
+        if -1 in topic_stats.index:
+            logger.info(f"Topic outliers: {topic_stats[-1]:,}")
+
     # Data quality checks
     if "num_citations" in integrated_data.columns:
         citation_stats = integrated_data["num_citations"].describe()
@@ -267,7 +385,14 @@ def validate_integrated_data(integrated_data):
 
     # Sample output
     logger.info("Sample integrated data:")
-    sample_cols = ["question_id", "client_country", "num_citations", "response_length"]
+    sample_cols = [
+        "question_id",
+        "client_country",
+        "num_citations",
+        "response_length",
+        "topic",
+        "topic_label",
+    ]
     available_sample_cols = [
         col for col in sample_cols if col in integrated_data.columns
     ]
@@ -312,6 +437,15 @@ def analyze_data_coverage(integrated_data):
             f"Primary intent coverage: {intent_coverage:,}/{total_rows:,} ({intent_coverage / total_rows * 100:.1f}%)"
         )
 
+    # Topic coverage
+    if "topic" in integrated_data.columns:
+        topic_coverage = (
+            integrated_data["topic"] >= 0
+        ).sum()  # Topics >= 0 (exclude -1 outliers and -2 missing)
+        logger.info(
+            f"Topic coverage: {topic_coverage:,}/{total_rows:,} ({topic_coverage / total_rows * 100:.1f}%)"
+        )
+
 
 def main():
     """Main function for data integration."""
@@ -322,6 +456,9 @@ def main():
         citation_patterns_path = snakemake.input.citation_patterns  # type: ignore
         threads_path = snakemake.input.threads  # type: ignore
         responses_path = snakemake.input.responses  # type: ignore
+        question_topics_path = snakemake.input.question_topics  # type: ignore
+        question_topic_probabilities_path = snakemake.input.question_topic_probabilities  # type: ignore
+        topic_info_path = snakemake.input.topic_info  # type: ignore
         output_path = snakemake.output[0]  # type: ignore
 
     except NameError:
@@ -342,29 +479,56 @@ def main():
         responses_path = (
             base_dir / "data/intermediate/cleaned_arena_data/responses.parquet"
         )
+        question_topics_path = (
+            base_dir / "data/intermediate/question_analysis/question_topics.parquet"
+        )
+        question_topic_probabilities_path = (
+            base_dir
+            / "data/intermediate/question_analysis/question_topic_probabilities.parquet"
+        )
+        topic_info_path = (
+            base_dir / "data/intermediate/question_analysis/topic_info.json"
+        )
         output_path = (
             base_dir
             / "data/intermediate/question_analysis/integrated_analysis_data.parquet"
         )
 
     # Load input data
-    embeddings_df, features_df, patterns_df, responses_df, threads_df = load_input_data(
+    (
+        embeddings_df,
+        features_df,
+        patterns_df,
+        responses_df,
+        threads_df,
+        topics_df,
+        topic_probs_df,
+        topic_info,
+    ) = load_input_data(
         question_embeddings_path,
         question_features_path,
         citation_patterns_path,
         threads_path,
         responses_path,
+        question_topics_path,
+        question_topic_probabilities_path,
+        topic_info_path,
     )
 
     # Step 1: Merge question embeddings with features
     question_data = merge_question_data(embeddings_df, features_df)
+
+    # Step 1.5: Merge question data with topic modeling results
+    question_data_with_topics = merge_topic_data(
+        question_data, topics_df, topic_probs_df, topic_info
+    )
 
     # Step 2: Add response metadata to citation patterns
     patterns_with_metadata = add_response_metadata(patterns_df, responses_df)
 
     # Step 3: Merge question data with citation patterns
     integrated_data = merge_with_citation_patterns(
-        question_data, patterns_with_metadata
+        question_data_with_topics, patterns_with_metadata
     )
 
     # Step 4: Add thread metadata
@@ -395,6 +559,9 @@ def main():
     logger.info(f"Input question features: {len(features_df):,}")
     logger.info(f"Input citation patterns: {len(patterns_df):,}")
     logger.info(f"Input threads: {len(threads_df):,}")
+    logger.info(f"Input topic assignments: {len(topics_df):,}")
+    logger.info(f"Input topic probabilities: {len(topic_probs_df):,}")
+    logger.info(f"Topic metadata: {len(topic_info['topics'])} topics")
     logger.info(
         f"Final integrated dataset: {len(analysis_ready_data):,} rows, {len(analysis_ready_data.columns)} columns"
     )
@@ -421,11 +588,21 @@ def main():
         for col in analysis_ready_data.columns
         if col.startswith(("proportion_", "news_proportion_", "num_citations"))
     ]
+    topic_cols = [
+        col
+        for col in analysis_ready_data.columns
+        if col.startswith("topic_") and col.endswith("_prob")
+    ]
+    topic_metadata_cols = [
+        col for col in analysis_ready_data.columns if col in ["topic", "topic_label"]
+    ]
 
     logger.info("Features included:")
     logger.info(f"  - {len(embedding_cols)} embedding dimensions")
     logger.info(f"  - {len(feature_cols)} question features")
     logger.info(f"  - {len(citation_cols)} citation pattern features")
+    logger.info(f"  - {len(topic_cols)} topic probability features")
+    logger.info(f"  - {len(topic_metadata_cols)} topic metadata features")
 
     logger.info("✅ Data integration completed!")
     return 0

@@ -98,7 +98,10 @@ rule integrate_analysis_data:
         question_features=f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
         citation_patterns=f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
         threads=f"{CLEANED_DATA_DIR}/threads.parquet",
-        responses=f"{CLEANED_DATA_DIR}/responses.parquet"
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet",
+        question_topics=f"{QUESTION_ANALYSIS_DIR}/question_topics.parquet",
+        question_topic_probabilities=f"{QUESTION_ANALYSIS_DIR}/question_topic_probabilities.parquet",
+        topic_info=f"{QUESTION_ANALYSIS_DIR}/topic_info.json"
     output:
         f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
     script:
