@@ -133,6 +133,33 @@ def identify_variable_groups(data):
         # "proportion_wiki",
     ]
 
+    # Topic variables - include both probabilities and dummy variables
+    topic_probabilities = [
+        "topic_0_prob",
+        "topic_1_prob",
+        "topic_2_prob",
+        "topic_3_prob",
+        "topic_4_prob",
+        "topic_5_prob",
+        "topic_6_prob",
+        "topic_7_prob",
+        "topic_8_prob",
+        "topic_9_prob",
+    ]
+    topic_dummies = [
+        # "topic_0", # as reference
+        "topic_1",
+        "topic_2",
+        "topic_3",
+        "topic_4",
+        "topic_5",
+        "topic_6",
+        "topic_7",
+        "topic_8",
+        "topic_9",
+        "topic_-1",
+    ]
+
     # Validate which variables actually exist in the data
     def filter_existing_vars(var_list, var_type):
         existing = [var for var in var_list if var in data.columns]
@@ -147,6 +174,8 @@ def identify_variable_groups(data):
     response_features = filter_existing_vars(response_features, "response feature")
     dummy_vars = filter_existing_vars(dummy_vars, "dummy variable")
     source_composition = filter_existing_vars(source_composition, "source composition")
+    topic_probabilities = filter_existing_vars(topic_probabilities, "topic probability")
+    topic_dummies = filter_existing_vars(topic_dummies, "topic dummy")
 
     logger.info(f"Original embedding dimensions: {len(embedding_cols)}")
     logger.info(f"PCA embedding dimensions: {len(pca_cols)}")
@@ -155,6 +184,8 @@ def identify_variable_groups(data):
     logger.info(f"Response features: {len(response_features)}")
     logger.info(f"Dummy variables: {len(dummy_vars)}")
     logger.info(f"Source composition: {len(source_composition)}")
+    logger.info(f"Topic probabilities: {len(topic_probabilities)}")
+    logger.info(f"Topic dummies: {len(topic_dummies)}")
 
     return {
         "embeddings": embedding_cols,
@@ -164,6 +195,8 @@ def identify_variable_groups(data):
         "response_features": response_features,
         "dummy_vars": dummy_vars,
         "source_composition": source_composition,
+        "topic_probabilities": topic_probabilities,
+        "topic_dummies": topic_dummies,
     }
 
 
@@ -184,13 +217,14 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
         embedding_features = variable_groups["embeddings"]
 
     # Combine all predictor variables
-    all_predictors = (
-        embedding_features
-        + variable_groups["question_features"]
-        + variable_groups["response_features"]
-        + variable_groups["dummy_vars"]
-        + variable_groups["source_composition"]
-    )
+    all_predictors = []
+    all_predictors.extend(embedding_features)
+    all_predictors.extend(variable_groups["question_features"])
+    all_predictors.extend(variable_groups["response_features"])
+    all_predictors.extend(variable_groups["dummy_vars"])
+    all_predictors.extend(variable_groups["source_composition"])
+    # all_predictors.extend(variable_groups["topic_probabilities"])
+    all_predictors.extend(variable_groups["topic_dummies"])
 
     # Create final feature matrix
     feature_data = data[all_predictors].copy()
