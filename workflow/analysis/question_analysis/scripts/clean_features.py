@@ -232,15 +232,25 @@ def apply_pca_to_embeddings(data, n_components=20):
     embedding_data = data[embedding_cols]
     embedding_pca = pca.fit_transform(embedding_data)
 
-    # Create DataFrame with PCA components
+    # Create DataFrame with PCA components and standardize to z-scores
     pca_cols = [f"embedding_pc_{i}" for i in range(n_components)]
     pca_df = pd.DataFrame(embedding_pca, columns=pca_cols, index=data.index)
 
-    # Add PCA components to the dataset (keeping original embeddings)
-    pca_data = pd.concat([pca_data, pca_df], axis=1)
+    # Standardize PCA components to z-scores (mean=0, std=1)
+    from sklearn.preprocessing import StandardScaler
+
+    scaler = StandardScaler()
+    pca_standardized = scaler.fit_transform(pca_df)
+    pca_df_standardized = pd.DataFrame(
+        pca_standardized, columns=pca_cols, index=data.index
+    )
+
+    # Add standardized PCA components to the dataset (keeping original embeddings)
+    pca_data = pd.concat([pca_data, pca_df_standardized], axis=1)
 
     logger.info(f"Applied PCA to {len(embedding_cols)} embedding dimensions")
     logger.info(f"Created {n_components} PCA components")
+    logger.info("Standardized PCA components to z-scores (mean=0, std=1)")
     logger.info(
         f"PCA explained variance ratio (first 5): {pca.explained_variance_ratio_[:5]}"
     )
@@ -252,30 +262,32 @@ def apply_pca_to_embeddings(data, n_components=20):
 def convert_proportions_to_percentages(data):
     """Convert proportion features from decimals (0-1) to percentages (0-100)."""
     logger.info("Converting proportion features to percentages...")
-    
+
     converted_data = data.copy()
-    
+
     # Find all proportion columns
-    proportion_cols = [col for col in data.columns if 'proportion_' in col]
-    
+    proportion_cols = [col for col in data.columns if "proportion_" in col]
+
     if not proportion_cols:
         logger.warning("No proportion columns found")
         return converted_data
-        
+
     # Convert each proportion column from decimal to percentage
     conversion_summary = {}
     for col in proportion_cols:
         original_range = (data[col].min(), data[col].max())
         converted_data[col] = data[col] * 100.0
         new_range = (converted_data[col].min(), converted_data[col].max())
-        
+
         conversion_summary[col] = {
-            'original_range': original_range,
-            'new_range': new_range
+            "original_range": original_range,
+            "new_range": new_range,
         }
-        
-        logger.info(f"  {col}: {original_range[0]:.3f}-{original_range[1]:.3f} → {new_range[0]:.1f}-{new_range[1]:.1f}%")
-    
+
+        logger.info(
+            f"  {col}: {original_range[0]:.3f}-{original_range[1]:.3f} → {new_range[0]:.1f}-{new_range[1]:.1f}%"
+        )
+
     logger.info(f"Converted {len(proportion_cols)} proportion columns to percentages")
     return converted_data
 
