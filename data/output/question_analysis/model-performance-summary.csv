@@ -1,0 +1,5 @@
+Outcome,R²,Adj. R²,F-statistic,p-value,N Significant Features,Sample Size
+News Proportion Left Leaning,0.121,0.115,21.8,5.71e-207,11,"9,098"
+News Proportion Right Leaning,0.063,0.057,10.6,5.02e-89,9,"9,098"
+News Proportion High Quality,0.126,0.121,23.0,6.30e-219,17,"9,098"
+News Proportion Low Quality,0.047,0.041,7.9,1.78e-60,4,"9,098"
