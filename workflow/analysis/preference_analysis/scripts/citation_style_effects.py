@@ -7,16 +7,17 @@ different models with different features, allowing observation of changes
 in effects as features are added or modified.
 """
 
-import pandas as pd
+import json
 import sys
 from pathlib import Path
-import json
+
+import pandas as pd
 
 # Import utility functions
 from bt_utils import (
-    load_battle_data,
-    filter_battle_data,
     compute_style_coefficients,
+    filter_battle_data,
+    load_battle_data,
 )
 
 
@@ -95,6 +96,21 @@ def create_default_model_specifications():
             "proportion_center_leaning",
             "proportion_high_quality",
             "proportion_low_quality",
+        ],
+        "Political and quality among all citations.",
+    )
+
+    # Bias + quality among news citations
+    spec.add_model(
+        "no_control_variables",
+        [
+            "response_word_count",
+            "num_citations",
+            "news_proportion_left_leaning",
+            "news_proportion_right_leaning",
+            "news_proportion_center_leaning",
+            "news_proportion_high_quality",
+            "news_proportion_low_quality",
         ],
         "Political and quality among news citations.",
     )
