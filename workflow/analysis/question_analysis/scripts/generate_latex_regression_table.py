@@ -137,11 +137,11 @@ def create_latex_regression_table(results, outcomes_to_include):
     # Format outcome names for column headers
     def format_outcome_name(outcome):
         if outcome == "news_proportion_left_leaning":
-            return "\% left-Leaning news"
+            return "\% left-leaning news"
         elif outcome == "news_proportion_right_leaning":
-            return "\% right-Leaning news"
+            return "\% right-leaning news"
         elif outcome == "news_proportion_center_leaning":
-            return "\% center-Leaning news"
+            return "\% center-leaning news"
         elif outcome == "news_proportion_high_quality":
             return "\% high quality news"
         elif outcome == "news_proportion_low_quality":
