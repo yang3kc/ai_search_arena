@@ -55,14 +55,14 @@ def format_feature_name(feature_name):
     # Handle other feature formatting
     if feature_name.startswith("embedding_pc_"):
         pc_num = feature_name.split("_")[-1]
-        return f"Embedding PC {pc_num}"
+        return f"Embedding: PC {pc_num}"
     elif feature_name.startswith("client_country_"):
         country = feature_name.replace("client_country_", "")
         if country == "nan":
-            return "Client country: unknown"
+            return "Client country/region: unknown"
         if country == "Other":
-            return "Client country: other"
-        return f"Client country: {country}"
+            return "Client country/region: other"
+        return f"Client country/region: {country}"
     elif feature_name.startswith("model_family_"):
         family = feature_name.replace("model_family_", "")
         return f"Model family: {family.title()}"
@@ -137,17 +137,17 @@ def create_latex_regression_table(results, outcomes_to_include):
     # Format outcome names for column headers
     def format_outcome_name(outcome):
         if outcome == "news_proportion_left_leaning":
-            return "Left-Leaning"
+            return "\% left-Leaning news"
         elif outcome == "news_proportion_right_leaning":
-            return "Right-Leaning"
+            return "\% right-Leaning news"
         elif outcome == "news_proportion_center_leaning":
-            return "Center-Leaning"
+            return "\% center-Leaning news"
         elif outcome == "news_proportion_high_quality":
-            return "High Quality"
+            return "\% high quality news"
         elif outcome == "news_proportion_low_quality":
-            return "Low Quality"
+            return "\% low quality news"
         elif outcome == "news_proportion_unknown_quality":
-            return "Unknown Quality"
+            return "\% unknown quality news"
         else:
             return outcome.replace("_", " ").title()
 
@@ -180,7 +180,7 @@ def create_latex_regression_table(results, outcomes_to_include):
 
     latex_content.append("\\toprule")
 
-    # Header row
+    # Header row with outcome names
     header_row = "Feature"
     for outcome in outcomes_to_include:
         if outcome in outcome_data:
@@ -228,13 +228,25 @@ def create_latex_regression_table(results, outcomes_to_include):
                         stars = ""
 
                     # Format coefficient value
-                    coef_str = f"{coef_val:.3f}{stars}"
+                    coef_str = f"{coef_val:.2f}{stars}"
                     row += f" & {coef_str}"
                 else:
                     row += " & "  # Empty cell if feature not in this outcome
 
             row += " \\\\"
             latex_content.append(row)
+
+    # Add R-squared row at the bottom
+    latex_content.append("\\midrule")
+    r2_row = "R-squared"
+    for outcome in outcomes_to_include:
+        if outcome in outcome_data:
+            r2_value = outcome_data[outcome]["model_performance"]["r2"]
+            r2_row += f" & {r2_value:.2f}"
+        else:
+            r2_row += " & "
+    r2_row += " \\\\"
+    latex_content.append(r2_row)
 
     # Table footer
     latex_content.append("\\bottomrule")
