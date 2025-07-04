@@ -1,7 +1,7 @@
 {
   "metadata": {
     "analysis_type": "question_citation_regression",
-    "timestamp": "2025-07-04T00:44:35.765564",
+    "timestamp": "2025-07-04T00:51:18.183208",
     "n_outcomes_analyzed": 7,
     "feature_engineering": {
       "pca_precomputed": true,

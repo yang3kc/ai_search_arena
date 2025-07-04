@@ -133,31 +133,42 @@ def identify_variable_groups(data):
         # "proportion_wiki",
     ]
 
-    # Topic variables - include both probabilities and dummy variables
+    # Topic variables with OpenAI labels - include both probabilities and dummy variables
+    # Topic 0: Guide to Selecting and Using AI Models (reference category)
+    # Topic 1: Stock Prices and Market Volatility Today  
+    # Topic 2: Diet, Nutrients, and Health-Related Medical Claims
+    # Topic 3: Latest News Updates Around the World
+    # Topic 4: FIFA World Cup Europe vs South America Finals
+    # Topic 5: Biographical Details of Internet Creators and Engineers
+    # Topic 6: Fictional Character Battle Analysis and Comparisons
+    # Topic 7: Cross Creek book summary and analysis
+    # Topic 8: Identifying and Sharing Song Lyrics from Quotes
+    # Topic 9: Dark Alternate Tails as Villain in Sonic
+    
     topic_probabilities = [
-        "topic_0_prob",
-        "topic_1_prob",
-        "topic_2_prob",
-        "topic_3_prob",
-        "topic_4_prob",
-        "topic_5_prob",
-        "topic_6_prob",
-        "topic_7_prob",
-        "topic_8_prob",
-        "topic_9_prob",
+        "topic_0_prob",  # guide_to_selecting_and_using_ai_models
+        "topic_1_prob",  # stock_prices_and_market_volatility_today
+        "topic_2_prob",  # diet_nutrients_and_health_related_medical_claims
+        "topic_3_prob",  # latest_news_updates_around_the_world
+        "topic_4_prob",  # fifa_world_cup_europe_vs_south_america_finals
+        "topic_5_prob",  # biographical_details_of_internet_creators_and_engineers
+        "topic_6_prob",  # fictional_character_battle_analysis_and_comparisons
+        "topic_7_prob",  # cross_creek_book_summary_and_analysis
+        "topic_8_prob",  # identifying_and_sharing_song_lyrics_from_quotes
+        "topic_9_prob",  # dark_alternate_tails_as_villain_in_sonic
     ]
     topic_dummies = [
-        # "topic_0", # as reference
-        "topic_1",
-        "topic_2",
-        "topic_3",
-        "topic_4",
-        "topic_5",
-        "topic_6",
-        "topic_7",
-        "topic_8",
-        "topic_9",
-        "topic_-1",
+        # "topic_0",  # guide_to_selecting_and_using_ai_models (reference category)
+        "topic_1",    # stock_prices_and_market_volatility_today
+        "topic_2",    # diet_nutrients_and_health_related_medical_claims
+        "topic_3",    # latest_news_updates_around_the_world
+        "topic_4",    # fifa_world_cup_europe_vs_south_america_finals
+        "topic_5",    # biographical_details_of_internet_creators_and_engineers
+        "topic_6",    # fictional_character_battle_analysis_and_comparisons
+        "topic_7",    # cross_creek_book_summary_and_analysis
+        "topic_8",    # identifying_and_sharing_song_lyrics_from_quotes
+        "topic_9",    # dark_alternate_tails_as_villain_in_sonic
+        "topic_-1",   # outlier/noise topic
     ]
 
     # Validate which variables actually exist in the data
@@ -197,6 +208,33 @@ def identify_variable_groups(data):
         "source_composition": source_composition,
         "topic_probabilities": topic_probabilities,
         "topic_dummies": topic_dummies,
+    }
+
+
+def get_topic_label_mapping():
+    """Get mapping from topic variable names to human-readable labels."""
+    return {
+        "topic_0": "Guide to Selecting and Using AI Models",
+        "topic_1": "Stock Prices and Market Volatility Today",
+        "topic_2": "Diet, Nutrients, and Health-Related Medical Claims", 
+        "topic_3": "Latest News Updates Around the World",
+        "topic_4": "FIFA World Cup Europe vs South America Finals",
+        "topic_5": "Biographical Details of Internet Creators and Engineers",
+        "topic_6": "Fictional Character Battle Analysis and Comparisons",
+        "topic_7": "Cross Creek book summary and analysis",
+        "topic_8": "Identifying and Sharing Song Lyrics from Quotes",
+        "topic_9": "Dark Alternate Tails as Villain in Sonic",
+        "topic_-1": "Outlier/Noise Topic",
+        "topic_0_prob": "AI Models Guide (probability)",
+        "topic_1_prob": "Stock Market (probability)",
+        "topic_2_prob": "Diet & Health (probability)",
+        "topic_3_prob": "News Updates (probability)",
+        "topic_4_prob": "FIFA World Cup (probability)",
+        "topic_5_prob": "Internet Creators (probability)",
+        "topic_6_prob": "Character Battles (probability)",
+        "topic_7_prob": "Cross Creek Book (probability)",
+        "topic_8_prob": "Song Lyrics (probability)",
+        "topic_9_prob": "Sonic Villain (probability)",
     }
 
 
