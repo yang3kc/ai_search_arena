@@ -105,19 +105,19 @@ def identify_variable_groups(data):
     dummy_vars.extend([col for col in model_family_dummies if col in data.columns])
 
     # Primary intent dummies (based on actual data)
-    primary_intent_dummies = [
-        "primary_intent_Creative Generation",
-        "primary_intent_Explanation",
-        "primary_intent_Factual Lookup",
-        "primary_intent_Guidance",
-        "primary_intent_Info Synthesis",
-        "primary_intent_Other",
-        # "primary_intent_Recommendation", # as reference
-        "primary_intent_Text Processing",
-        "primary_intent_Analysis",
-        "primary_intent_nan",
-    ]
-    dummy_vars.extend([col for col in primary_intent_dummies if col in data.columns])
+    # primary_intent_dummies = [
+    #     "primary_intent_Creative Generation",
+    #     "primary_intent_Explanation",
+    #     "primary_intent_Factual Lookup",
+    #     "primary_intent_Guidance",
+    #     "primary_intent_Info Synthesis",
+    #     "primary_intent_Other",
+    #     # "primary_intent_Recommendation", # as reference
+    #     "primary_intent_Text Processing",
+    #     "primary_intent_Analysis",
+    #     "primary_intent_nan",
+    # ]
+    # dummy_vars.extend([col for col in primary_intent_dummies if col in data.columns])
 
     # Source composition variables - explicitly listed
     source_composition = [
@@ -135,7 +135,7 @@ def identify_variable_groups(data):
 
     # Topic variables with OpenAI labels - include both probabilities and dummy variables
     # Topic 0: Guide to Selecting and Using AI Models (reference category)
-    # Topic 1: Stock Prices and Market Volatility Today  
+    # Topic 1: Stock Prices and Market Volatility Today
     # Topic 2: Diet, Nutrients, and Health-Related Medical Claims
     # Topic 3: Latest News Updates Around the World
     # Topic 4: FIFA World Cup Europe vs South America Finals
@@ -144,7 +144,7 @@ def identify_variable_groups(data):
     # Topic 7: Cross Creek book summary and analysis
     # Topic 8: Identifying and Sharing Song Lyrics from Quotes
     # Topic 9: Dark Alternate Tails as Villain in Sonic
-    
+
     topic_probabilities = [
         "topic_0_prob",  # guide_to_selecting_and_using_ai_models
         "topic_1_prob",  # stock_prices_and_market_volatility_today
@@ -159,16 +159,16 @@ def identify_variable_groups(data):
     ]
     topic_dummies = [
         # "topic_0",  # guide_to_selecting_and_using_ai_models (reference category)
-        "topic_1",    # stock_prices_and_market_volatility_today
-        "topic_2",    # diet_nutrients_and_health_related_medical_claims
-        "topic_3",    # latest_news_updates_around_the_world
-        "topic_4",    # fifa_world_cup_europe_vs_south_america_finals
-        "topic_5",    # biographical_details_of_internet_creators_and_engineers
-        "topic_6",    # fictional_character_battle_analysis_and_comparisons
-        "topic_7",    # cross_creek_book_summary_and_analysis
-        "topic_8",    # identifying_and_sharing_song_lyrics_from_quotes
-        "topic_9",    # dark_alternate_tails_as_villain_in_sonic
-        "topic_-1",   # outlier/noise topic
+        "topic_1",  # stock_prices_and_market_volatility_today
+        "topic_2",  # diet_nutrients_and_health_related_medical_claims
+        "topic_3",  # latest_news_updates_around_the_world
+        "topic_4",  # fifa_world_cup_europe_vs_south_america_finals
+        "topic_5",  # biographical_details_of_internet_creators_and_engineers
+        "topic_6",  # fictional_character_battle_analysis_and_comparisons
+        "topic_7",  # cross_creek_book_summary_and_analysis
+        "topic_8",  # identifying_and_sharing_song_lyrics_from_quotes
+        "topic_9",  # dark_alternate_tails_as_villain_in_sonic
+        "topic_-1",  # outlier/noise topic
     ]
 
     # Validate which variables actually exist in the data

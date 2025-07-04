@@ -37,37 +37,37 @@ sns.set_palette("husl")
 def get_topic_label_mapping():
     """Get mapping from topic variable names to human-readable labels."""
     return {
-        "topic_0": "Guide to Selecting and Using AI Models",
-        "topic_1": "Stock Prices and Market Volatility Today",
-        "topic_2": "Diet, Nutrients, and Health-Related Medical Claims", 
-        "topic_3": "Latest News Updates Around the World",
-        "topic_4": "FIFA World Cup Europe vs South America Finals",
-        "topic_5": "Biographical Details of Internet Creators and Engineers",
-        "topic_6": "Fictional Character Battle Analysis and Comparisons",
-        "topic_7": "Cross Creek book summary and analysis",
-        "topic_8": "Identifying and Sharing Song Lyrics from Quotes",
-        "topic_9": "Dark Alternate Tails as Villain in Sonic",
-        "topic_-1": "Outlier/Noise Topic",
-        "topic_0_prob": "AI Models Guide (probability)",
-        "topic_1_prob": "Stock Market (probability)",
-        "topic_2_prob": "Diet & Health (probability)",
-        "topic_3_prob": "News Updates (probability)",
-        "topic_4_prob": "FIFA World Cup (probability)",
-        "topic_5_prob": "Internet Creators (probability)",
-        "topic_6_prob": "Character Battles (probability)",
-        "topic_7_prob": "Cross Creek Book (probability)",
-        "topic_8_prob": "Song Lyrics (probability)",
-        "topic_9_prob": "Sonic Villain (probability)",
+        "topic_0": "Topic: Guide to Selecting and Using AI Models",
+        "topic_1": "Topic: Stock Prices and Market Volatility Today",
+        "topic_2": "Topic: Diet, Nutrients, and Health-Related Medical Claims",
+        "topic_3": "Topic: Latest News Updates Around the World",
+        "topic_4": "Topic: FIFA World Cup Europe vs South America Finals",
+        "topic_5": "Topic: Biographical Details of Internet Creators and Engineers",
+        "topic_6": "Topic: Fictional Character Battle Analysis and Comparisons",
+        "topic_7": "Topic: Cross Creek book summary and analysis",
+        "topic_8": "Topic: Identifying and Sharing Song Lyrics from Quotes",
+        "topic_9": "Topic: Dark Alternate Tails as Villain in Sonic",
+        "topic_-1": "Topic: Outlier/Noise",
+        "topic_0_prob": "Topic probability: AI Models Guide",
+        "topic_1_prob": "Topic probability: Stock Market",
+        "topic_2_prob": "Topic probability: Diet & Health",
+        "topic_3_prob": "Topic probability: News Updates",
+        "topic_4_prob": "Topic probability: FIFA World Cup",
+        "topic_5_prob": "Topic probability: Internet Creators",
+        "topic_6_prob": "Topic probability: Character Battles",
+        "topic_7_prob": "Topic probability: Cross Creek Book",
+        "topic_8_prob": "Topic probability: Song Lyrics",
+        "topic_9_prob": "Topic probability: Sonic Villain",
     }
 
 
 def format_feature_name(feature_name):
     """Format feature names for display, using topic labels where applicable."""
     topic_mapping = get_topic_label_mapping()
-    
+
     if feature_name in topic_mapping:
         return topic_mapping[feature_name]
-    
+
     # Handle other feature formatting
     if feature_name.startswith("embedding_pc_"):
         pc_num = feature_name.split("_")[-1]
@@ -84,9 +84,9 @@ def format_feature_name(feature_name):
         intent = feature_name.replace("primary_intent_", "")
         return f"Primary Intent: {intent}"
     elif feature_name == "question_length_words_log":
-        return "Question Length (words, log)"
+        return "Question Length (words, log Z-score)"
     elif feature_name == "response_word_count_log":
-        return "Response Length (words, log)"
+        return "Response Length (words, log Z-score)"
     elif feature_name == "turn_number":
         return "Turn Number"
     elif feature_name == "total_turns":
@@ -94,7 +94,7 @@ def format_feature_name(feature_name):
     elif feature_name == "num_citations":
         return "Number of Citations"
     elif feature_name == "proportion_news":
-        return "Proportion News Sources"
+        return "News Sources Percentage"
     else:
         # Default formatting: replace underscores with spaces and title case
         return feature_name.replace("_", " ").title()
@@ -452,7 +452,7 @@ def create_feature_importance_plot(results):
         return None
 
     feature_names, importance_scores = zip(*top_features)
-    
+
     # Format feature names for display
     formatted_names = [format_feature_name(name) for name in feature_names]
 
