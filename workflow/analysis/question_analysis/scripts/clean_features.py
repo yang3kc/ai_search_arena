@@ -46,6 +46,7 @@ def identify_categorical_variables(data):
         "model_side",
         "winner",
         "primary_intent",
+        "topic",
     ]
 
     for var in explicit_categoricals:
@@ -120,6 +121,27 @@ def create_dummy_variables(data, categorical_vars, max_categories=10):
 
                 # Drop original columns
                 dummy_data = dummy_data.drop(columns=[var, "model_family"])
+
+            elif var == "topic":
+                # Handle topic variable - create standard dummies for all topic values
+                dummies = pd.get_dummies(data[var], prefix=var, dummy_na=True)
+
+                # Clean up column names to remove decimal points (topic_0.0 -> topic_0)
+                clean_columns = {}
+                for col in dummies.columns:
+                    if col.endswith(".0"):
+                        clean_columns[col] = col[:-2]  # Remove '.0'
+                    elif col == f"{var}_nan":
+                        clean_columns[col] = col  # Keep _nan as is
+                    else:
+                        clean_columns[col] = col  # Keep other names as is
+
+                dummies = dummies.rename(columns=clean_columns)
+                dummy_data = pd.concat([dummy_data, dummies], axis=1)
+                dummy_columns_created.extend(dummies.columns.tolist())
+
+                # Drop original column
+                dummy_data = dummy_data.drop(columns=[var])
 
         else:
             # Standard dummy encoding for low cardinality variables
@@ -268,13 +290,23 @@ def convert_proportions_to_percentages(data):
     # Find all proportion columns
     proportion_cols = [col for col in data.columns if "proportion_" in col]
 
-    if not proportion_cols:
-        logger.warning("No proportion columns found")
+    # Find topic probability columns
+    topic_prob_cols = [
+        col
+        for col in data.columns
+        if col.startswith("topic_") and col.endswith("_prob")
+    ]
+
+    # Combine all columns that need percentage conversion
+    all_percent_cols = proportion_cols + topic_prob_cols
+
+    if not all_percent_cols:
+        logger.warning("No proportion or topic probability columns found")
         return converted_data
 
-    # Convert each proportion column from decimal to percentage
+    # Convert each column from decimal to percentage
     conversion_summary = {}
-    for col in proportion_cols:
+    for col in all_percent_cols:
         original_range = (data[col].min(), data[col].max())
         converted_data[col] = data[col] * 100.0
         new_range = (converted_data[col].min(), converted_data[col].max())
@@ -289,6 +321,10 @@ def convert_proportions_to_percentages(data):
         )
 
     logger.info(f"Converted {len(proportion_cols)} proportion columns to percentages")
+    if topic_prob_cols:
+        logger.info(
+            f"Converted {len(topic_prob_cols)} topic probability columns to percentages"
+        )
     return converted_data
 
 
@@ -318,6 +354,9 @@ def handle_missing_values(data):
                 cleaned_data[col] = cleaned_data[col].fillna(1)
             elif "proportion_" in col or "news_proportion_" in col:
                 # Fill proportion columns with 0 (now in percentage scale)
+                cleaned_data[col] = cleaned_data[col].fillna(0)
+            elif col.startswith("topic_") and col.endswith("_prob"):
+                # Fill topic probability columns with 0 (now in percentage scale)
                 cleaned_data[col] = cleaned_data[col].fillna(0)
             elif col == "num_citations":
                 # Fill citation count with 0
@@ -376,8 +415,15 @@ def validate_cleaned_data(data):
                 "winner_",
                 "primary_intent_",
                 "secondary_intent_",
+                "topic_",
             ]
         )
+    ]
+    # Remove topic probability columns from dummy columns (they're numeric)
+    dummy_cols = [
+        col
+        for col in dummy_cols
+        if not (col.startswith("topic_") and col.endswith("_prob"))
     ]
     length_cols = [col for col in data.columns if col.endswith("_log")]
     citation_cols = [
@@ -385,6 +431,12 @@ def validate_cleaned_data(data):
         for col in data.columns
         if col.startswith(("proportion_", "news_proportion_", "num_citations"))
     ]
+    topic_prob_cols = [
+        col
+        for col in data.columns
+        if col.startswith("topic_") and col.endswith("_prob")
+    ]
+    topic_metadata_cols = [col for col in data.columns if col in ["topic_label"]]
 
     logger.info("Feature summary:")
     logger.info(f"  Original embedding features: {len(embedding_cols)}")
@@ -392,6 +444,8 @@ def validate_cleaned_data(data):
     logger.info(f"  Dummy variables: {len(dummy_cols)}")
     logger.info(f"  Transformed length variables: {len(length_cols)}")
     logger.info(f"  Citation pattern features: {len(citation_cols)}")
+    logger.info(f"  Topic probability features: {len(topic_prob_cols)}")
+    logger.info(f"  Topic metadata features: {len(topic_metadata_cols)}")
 
     return data
 
