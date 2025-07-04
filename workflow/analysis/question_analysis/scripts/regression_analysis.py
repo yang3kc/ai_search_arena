@@ -31,6 +31,10 @@ def load_cleaned_data(input_path):
     logger.info(f"Loading cleaned data from {input_path}")
     data = pd.read_parquet(input_path)
     logger.info(f"Loaded {len(data):,} rows with {len(data.columns)} columns")
+
+    data = data[data.proportion_news > 0]
+    logger.info(f"Filtered to {len(data):,} rows with news proportion > 0")
+
     return data
 
 
