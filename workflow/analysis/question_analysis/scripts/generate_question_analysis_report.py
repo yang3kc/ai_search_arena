@@ -218,12 +218,13 @@ def create_regression_coefficient_plots(results):
 
         # Get all significant features except embedding features
         features = result["coefficients"]["features"]
-        features_to_plot = [
-            f
-            for f in features
-            if not f["feature"].startswith("embedding_dim_")
-            and not f["feature"].startswith("embedding_pc_")
-        ]
+        features_to_plot = features
+        # features_to_plot = [
+        #     f
+        #     for f in features
+        #     if not f["feature"].startswith("embedding_dim_")
+        #     and not f["feature"].startswith("embedding_pc_")
+        # ]
 
         # Add intercept to the beginning of the list
         intercept = result["coefficients"]["intercept"]
@@ -232,7 +233,7 @@ def create_regression_coefficient_plots(results):
             "coefficient": intercept["coefficient"],
             "conf_int_lower": intercept["conf_int_lower"],
             "conf_int_upper": intercept["conf_int_upper"],
-            "p_value": intercept["p_value"]
+            "p_value": intercept["p_value"],
         }
         features_to_plot = [intercept_dict] + features_to_plot
 
@@ -274,7 +275,9 @@ def create_regression_coefficient_plots(results):
         )
 
         # Color the markers by significance and highlight intercept
-        for i, (coef, p_val, feature_name) in enumerate(zip(coefficients, p_values, feature_names)):
+        for i, (coef, p_val, feature_name) in enumerate(
+            zip(coefficients, p_values, feature_names)
+        ):
             # Special styling for intercept
             if feature_name == "Intercept":
                 marker_style = "s"  # square marker
@@ -286,7 +289,7 @@ def create_regression_coefficient_plots(results):
                 marker_size = 100
                 edge_color = None
                 edge_width = 0
-            
+
             # Color by significance
             if p_val < 0.001:
                 color = "red"
@@ -296,9 +299,17 @@ def create_regression_coefficient_plots(results):
                 color = "blue"
             else:
                 color = "gray"
-            
-            ax.scatter(coef, i, c=color, s=marker_size, zorder=5, 
-                      marker=marker_style, edgecolors=edge_color, linewidth=edge_width)
+
+            ax.scatter(
+                coef,
+                i,
+                c=color,
+                s=marker_size,
+                zorder=5,
+                marker=marker_style,
+                edgecolors=edge_color,
+                linewidth=edge_width,
+            )
 
         # Add vertical line at zero
         ax.axvline(x=0, color="black", linestyle="--", alpha=0.7)
@@ -312,15 +323,23 @@ def create_regression_coefficient_plots(results):
         ax.grid(True, alpha=0.3)
 
         # Add legend for significance levels and intercept
-        from matplotlib.patches import Patch
         from matplotlib.lines import Line2D
+        from matplotlib.patches import Patch
 
         legend_elements = [
             Patch(facecolor="red", label="p < 0.001"),
             Patch(facecolor="orange", label="p < 0.01"),
             Patch(facecolor="blue", label="p < 0.05"),
-            Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
-                   markeredgecolor='black', markersize=10, label="Intercept"),
+            Line2D(
+                [0],
+                [0],
+                marker="s",
+                color="w",
+                markerfacecolor="gray",
+                markeredgecolor="black",
+                markersize=10,
+                label="Intercept",
+            ),
         ]
         ax.legend(handles=legend_elements, loc="best")
 
@@ -553,11 +572,11 @@ def create_performance_summary_table(results):
         # Get intercept information
         intercept = result["coefficients"]["intercept"]
         intercept_str = f"{intercept['coefficient']:.4f}"
-        if intercept['p_value'] < 0.001:
+        if intercept["p_value"] < 0.001:
             intercept_str += "***"
-        elif intercept['p_value'] < 0.01:
+        elif intercept["p_value"] < 0.01:
             intercept_str += "**"
-        elif intercept['p_value'] < 0.05:
+        elif intercept["p_value"] < 0.05:
             intercept_str += "*"
 
         performance_data.append(
