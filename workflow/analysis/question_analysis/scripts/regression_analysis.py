@@ -211,33 +211,6 @@ def identify_variable_groups(data):
     }
 
 
-def get_topic_label_mapping():
-    """Get mapping from topic variable names to human-readable labels."""
-    return {
-        "topic_0": "Guide to Selecting and Using AI Models",
-        "topic_1": "Stock Prices and Market Volatility Today",
-        "topic_2": "Diet, Nutrients, and Health-Related Medical Claims", 
-        "topic_3": "Latest News Updates Around the World",
-        "topic_4": "FIFA World Cup Europe vs South America Finals",
-        "topic_5": "Biographical Details of Internet Creators and Engineers",
-        "topic_6": "Fictional Character Battle Analysis and Comparisons",
-        "topic_7": "Cross Creek book summary and analysis",
-        "topic_8": "Identifying and Sharing Song Lyrics from Quotes",
-        "topic_9": "Dark Alternate Tails as Villain in Sonic",
-        "topic_-1": "Outlier/Noise Topic",
-        "topic_0_prob": "AI Models Guide (probability)",
-        "topic_1_prob": "Stock Market (probability)",
-        "topic_2_prob": "Diet & Health (probability)",
-        "topic_3_prob": "News Updates (probability)",
-        "topic_4_prob": "FIFA World Cup (probability)",
-        "topic_5_prob": "Internet Creators (probability)",
-        "topic_6_prob": "Character Battles (probability)",
-        "topic_7_prob": "Cross Creek Book (probability)",
-        "topic_8_prob": "Song Lyrics (probability)",
-        "topic_9_prob": "Sonic Villain (probability)",
-    }
-
-
 def prepare_features_for_regression(data, variable_groups, use_pca=True):
     """Prepare feature sets for regression analysis."""
     logger.info("Preparing features for regression...")
