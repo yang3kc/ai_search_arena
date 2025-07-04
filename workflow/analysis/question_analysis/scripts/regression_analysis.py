@@ -105,19 +105,19 @@ def identify_variable_groups(data):
     dummy_vars.extend([col for col in model_family_dummies if col in data.columns])
 
     # Primary intent dummies (based on actual data)
-    # primary_intent_dummies = [
-    #     "primary_intent_Creative Generation",
-    #     "primary_intent_Explanation",
-    #     "primary_intent_Factual Lookup",
-    #     "primary_intent_Guidance",
-    #     "primary_intent_Info Synthesis",
-    #     "primary_intent_Other",
-    #     # "primary_intent_Recommendation", # as reference
-    #     "primary_intent_Text Processing",
-    #     "primary_intent_Analysis",
-    #     "primary_intent_nan",
-    # ]
-    # dummy_vars.extend([col for col in primary_intent_dummies if col in data.columns])
+    primary_intent_dummies = [
+        "primary_intent_Creative Generation",
+        "primary_intent_Explanation",
+        "primary_intent_Factual Lookup",
+        "primary_intent_Guidance",
+        "primary_intent_Info Synthesis",
+        "primary_intent_Other",
+        # "primary_intent_Recommendation", # as reference
+        "primary_intent_Text Processing",
+        "primary_intent_Analysis",
+        # "primary_intent_nan",
+    ]
+    dummy_vars.extend([col for col in primary_intent_dummies if col in data.columns])
 
     # Source composition variables - explicitly listed
     source_composition = [
@@ -234,8 +234,8 @@ def prepare_features_for_regression(data, variable_groups, use_pca=True):
     all_predictors.extend(variable_groups["response_features"])
     all_predictors.extend(variable_groups["dummy_vars"])
     all_predictors.extend(variable_groups["source_composition"])
-    # all_predictors.extend(variable_groups["topic_probabilities"])
-    all_predictors.extend(variable_groups["topic_dummies"])
+    all_predictors.extend(variable_groups["topic_probabilities"])
+    # all_predictors.extend(variable_groups["topic_dummies"])
 
     # Create final feature matrix
     feature_data = data[all_predictors].copy()
