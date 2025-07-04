@@ -48,16 +48,16 @@ def get_topic_label_mapping():
         "topic_8": "Topic: Identifying and Sharing Song Lyrics from Quotes",
         "topic_9": "Topic: Dark Alternate Tails as Villain in Sonic",
         "topic_-1": "Topic: Outlier/Noise",
-        "topic_0_prob": "Topic probability: AI Models Guide",
-        "topic_1_prob": "Topic probability: Stock Market",
-        "topic_2_prob": "Topic probability: Diet & Health",
-        "topic_3_prob": "Topic probability: News Updates",
-        "topic_4_prob": "Topic probability: FIFA World Cup",
-        "topic_5_prob": "Topic probability: Internet Creators",
-        "topic_6_prob": "Topic probability: Character Battles",
-        "topic_7_prob": "Topic probability: Cross Creek Book",
-        "topic_8_prob": "Topic probability: Song Lyrics",
-        "topic_9_prob": "Topic probability: Sonic Villain",
+        "topic_0_prob": "Topic: AI models and technology",
+        "topic_1_prob": "Topic: stock prices and market",
+        "topic_2_prob": "Topic: diet, nutrients, and health",
+        "topic_3_prob": "Topic: news updates",
+        "topic_4_prob": "Topic: sports and entertainment",
+        "topic_5_prob": "Topic: biography and personal stories",
+        "topic_6_prob": "Topic: fictional character battle analysis",
+        "topic_7_prob": "Topic: online content and book",
+        "topic_8_prob": "Topic: music and lyrics",
+        "topic_9_prob": "Topic: comics and games",
     }
 
 
@@ -75,26 +75,28 @@ def format_feature_name(feature_name):
     elif feature_name.startswith("client_country_"):
         country = feature_name.replace("client_country_", "")
         if country == "nan":
-            return "Client Country: Unknown"
-        return f"Client Country: {country.upper()}"
+            return "Client country: unknown"
+        if country == "Other":
+            return "Client country: other"
+        return f"Client country: {country}"
     elif feature_name.startswith("model_family_"):
         family = feature_name.replace("model_family_", "")
-        return f"Model Family: {family.title()}"
+        return f"Model family: {family.title()}"
     elif feature_name.startswith("primary_intent_"):
         intent = feature_name.replace("primary_intent_", "")
-        return f"Primary Intent: {intent}"
+        return f"Intent: {intent.lower()}"
     elif feature_name == "question_length_words_log":
-        return "Question Length (words, log Z-score)"
+        return "Question length (words, log Z-score)"
     elif feature_name == "response_word_count_log":
-        return "Response Length (words, log Z-score)"
+        return "Response length (words, log Z-score)"
     elif feature_name == "turn_number":
-        return "Turn Number"
+        return "Turn number"
     elif feature_name == "total_turns":
-        return "Total Turns"
+        return "Total turns"
     elif feature_name == "num_citations":
-        return "Number of Citations"
+        return "Number of citations"
     elif feature_name == "proportion_news":
-        return "News Sources Percentage"
+        return "News sources percentage"
     else:
         # Default formatting: replace underscores with spaces and title case
         return feature_name.replace("_", " ").title()
