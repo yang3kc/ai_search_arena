@@ -34,6 +34,72 @@ plt.style.use("default")
 sns.set_palette("husl")
 
 
+def get_topic_label_mapping():
+    """Get mapping from topic variable names to human-readable labels."""
+    return {
+        "topic_0": "Guide to Selecting and Using AI Models",
+        "topic_1": "Stock Prices and Market Volatility Today",
+        "topic_2": "Diet, Nutrients, and Health-Related Medical Claims", 
+        "topic_3": "Latest News Updates Around the World",
+        "topic_4": "FIFA World Cup Europe vs South America Finals",
+        "topic_5": "Biographical Details of Internet Creators and Engineers",
+        "topic_6": "Fictional Character Battle Analysis and Comparisons",
+        "topic_7": "Cross Creek book summary and analysis",
+        "topic_8": "Identifying and Sharing Song Lyrics from Quotes",
+        "topic_9": "Dark Alternate Tails as Villain in Sonic",
+        "topic_-1": "Outlier/Noise Topic",
+        "topic_0_prob": "AI Models Guide (probability)",
+        "topic_1_prob": "Stock Market (probability)",
+        "topic_2_prob": "Diet & Health (probability)",
+        "topic_3_prob": "News Updates (probability)",
+        "topic_4_prob": "FIFA World Cup (probability)",
+        "topic_5_prob": "Internet Creators (probability)",
+        "topic_6_prob": "Character Battles (probability)",
+        "topic_7_prob": "Cross Creek Book (probability)",
+        "topic_8_prob": "Song Lyrics (probability)",
+        "topic_9_prob": "Sonic Villain (probability)",
+    }
+
+
+def format_feature_name(feature_name):
+    """Format feature names for display, using topic labels where applicable."""
+    topic_mapping = get_topic_label_mapping()
+    
+    if feature_name in topic_mapping:
+        return topic_mapping[feature_name]
+    
+    # Handle other feature formatting
+    if feature_name.startswith("embedding_pc_"):
+        pc_num = feature_name.split("_")[-1]
+        return f"Embedding PC {pc_num}"
+    elif feature_name.startswith("client_country_"):
+        country = feature_name.replace("client_country_", "")
+        if country == "nan":
+            return "Client Country: Unknown"
+        return f"Client Country: {country.upper()}"
+    elif feature_name.startswith("model_family_"):
+        family = feature_name.replace("model_family_", "")
+        return f"Model Family: {family.title()}"
+    elif feature_name.startswith("primary_intent_"):
+        intent = feature_name.replace("primary_intent_", "")
+        return f"Primary Intent: {intent}"
+    elif feature_name == "question_length_words_log":
+        return "Question Length (words, log)"
+    elif feature_name == "response_word_count_log":
+        return "Response Length (words, log)"
+    elif feature_name == "turn_number":
+        return "Turn Number"
+    elif feature_name == "total_turns":
+        return "Total Turns"
+    elif feature_name == "num_citations":
+        return "Number of Citations"
+    elif feature_name == "proportion_news":
+        return "Proportion News Sources"
+    else:
+        # Default formatting: replace underscores with spaces and title case
+        return feature_name.replace("_", " ").title()
+
+
 def fig_to_base64(fig):
     """Convert matplotlib figure to base64 string for HTML embedding."""
     buffer = BytesIO()
@@ -218,13 +284,13 @@ def create_regression_coefficient_plots(results):
 
         # Get all significant features except embedding features
         features = result["coefficients"]["features"]
-        features_to_plot = features
-        # features_to_plot = [
-        #     f
-        #     for f in features
-        #     if not f["feature"].startswith("embedding_dim_")
-        #     and not f["feature"].startswith("embedding_pc_")
-        # ]
+        # features_to_plot = features
+        features_to_plot = [
+            f
+            for f in features
+            if not f["feature"].startswith("embedding_dim_")
+            and not f["feature"].startswith("embedding_pc_")
+        ]
 
         # Add intercept to the beginning of the list
         intercept = result["coefficients"]["intercept"]
@@ -246,7 +312,7 @@ def create_regression_coefficient_plots(results):
             continue
 
         # Prepare data for plotting
-        feature_names = [f["feature"] for f in features_to_plot]
+        feature_names = [format_feature_name(f["feature"]) for f in features_to_plot]
         coefficients = [f["coefficient"] for f in features_to_plot]
         conf_lower = [f["conf_int_lower"] for f in features_to_plot]
         conf_upper = [f["conf_int_upper"] for f in features_to_plot]
@@ -386,11 +452,14 @@ def create_feature_importance_plot(results):
         return None
 
     feature_names, importance_scores = zip(*top_features)
+    
+    # Format feature names for display
+    formatted_names = [format_feature_name(name) for name in feature_names]
 
     # Create horizontal bar plot
     fig, ax = plt.subplots(figsize=(12, 10))
 
-    y_pos = range(len(feature_names))
+    y_pos = range(len(formatted_names))
     bars = ax.barh(
         y_pos,
         importance_scores,
@@ -398,7 +467,7 @@ def create_feature_importance_plot(results):
     )
 
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(feature_names)
+    ax.set_yticklabels(formatted_names)
     ax.set_xlabel("Average |t-statistic|")
     ax.set_ylabel("Features")
     ax.set_title("Top 20 Most Important Features (Average |t-statistic| Across Models)")
@@ -509,6 +578,7 @@ def create_multicollinearity_plots(results):
 
         # Create VIF plot
         feature_names = [vif["feature"] for vif in top_vif]
+        formatted_names = [format_feature_name(name) for name in feature_names]
         vif_values = [vif["vif"] for vif in top_vif]
 
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -519,7 +589,7 @@ def create_multicollinearity_plots(results):
             for vif in vif_values
         ]
 
-        y_pos = range(len(feature_names))
+        y_pos = range(len(formatted_names))
         bars = ax.barh(y_pos, vif_values, color=colors)
 
         # Add reference lines
@@ -531,7 +601,7 @@ def create_multicollinearity_plots(results):
         )
 
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(feature_names)
+        ax.set_yticklabels(formatted_names)
         ax.set_xlabel("Variance Inflation Factor (VIF)")
         ax.set_ylabel("Features")
         ax.set_title(f"Multicollinearity Diagnosis (VIF): {outcome}")
