@@ -117,6 +117,22 @@ def calculate_overrepresented_sources(df, top_n=20):
             frequency = family_counters[target_family][domain]
             total_family_citations = sum(family_counters[target_family].values())
             percentage = (frequency / total_family_citations) * 100
+            
+            # Get political leaning and quality info for this domain
+            family_data = df[df["model_family"] == target_family]
+            domain_data = family_data[family_data["domain"] == domain]
+            
+            # Get most common political leaning and quality for this domain
+            political_leaning = (
+                domain_data["political_leaning"].mode().iloc[0]
+                if len(domain_data["political_leaning"].mode()) > 0
+                else "unknown_leaning"
+            )
+            domain_quality = (
+                domain_data["domain_quality"].mode().iloc[0]
+                if len(domain_data["domain_quality"].mode()) > 0
+                else "unknown_quality"
+            )
 
             all_results.append(
                 {
@@ -126,6 +142,8 @@ def calculate_overrepresented_sources(df, top_n=20):
                     "logodds_score": logodds_score,
                     "frequency": frequency,
                     "percentage": percentage,
+                    "political_leaning": political_leaning,
+                    "domain_quality": domain_quality,
                 }
             )
 
@@ -133,6 +151,23 @@ def calculate_overrepresented_sources(df, top_n=20):
     logger.info(f"Generated results for {len(results_df)} entries")
 
     return results_df
+
+
+def format_political_leaning_code(political_leaning):
+    """Format political leaning as single letter code."""
+    return {
+        "left_leaning": "L",
+        "center_leaning": "C",
+        "right_leaning": "R",
+        "unknown_leaning": "U",
+    }.get(political_leaning, "U")
+
+
+def format_quality_code(domain_quality):
+    """Format domain quality as single letter code."""
+    return {"high_quality": "H", "low_quality": "L", "unknown_quality": "U"}.get(
+        domain_quality, "U"
+    )
 
 
 def format_latex_table_sidebyside(df):
@@ -146,15 +181,20 @@ def format_latex_table_sidebyside(df):
     family_data = {}
     for family in top_families:
         family_df = df[df["model_family"] == family].head(20)  # Top 20 for each
-        family_data[family] = family_df[["domain", "logodds_score"]].values.tolist()
+        # Include domain, log-odds score, and political/quality info
+        family_data[family] = family_df[
+            ["domain", "logodds_score", "political_leaning", "domain_quality"]
+        ].values.tolist()
 
     # Start LaTeX table
     latex_lines = [
         "\\begin{table*}[htbp]",
         "\\centering",
-        "\\caption{Top 20 Overrepresented News Sources by Model Family (Log-Odds Ratios)}",
+        "\\caption{Top 20 Overrepresented News Sources by Model Family (Log-Odds Ratios) with Political Leaning and Quality. "
+        "Political leaning: L=Left, C=Center, R=Right, U=Unknown. "
+        "Quality: H=High, L=Low, U=Unknown.}",
         "\\label{tab:overrepresented_news_sources}",
-        "\\begin{tabular}{lr|lr|lr}",
+        "\\begin{tabular}{lrcc|lrcc|lrcc}",
         "\\toprule",
     ]
 
@@ -162,7 +202,7 @@ def format_latex_table_sidebyside(df):
     family_header_parts = []
     for family in top_families:
         family_header_parts.extend(
-            [f"\\multicolumn{{2}}{{c|}}{{\\textbf{{{family}}}}}"]
+            [f"\\multicolumn{{4}}{{c|}}{{\\textbf{{{family}}}}}"]
         )
     # Remove the last | from the last column
     family_header_parts[-1] = family_header_parts[-1].replace("c|", "c")
@@ -173,7 +213,7 @@ def format_latex_table_sidebyside(df):
     # Column headers
     header_parts = []
     for i, family in enumerate(top_families):
-        header_parts.extend(["Domain", "Log-Odds"])
+        header_parts.extend(["Domain", "Log-Odds", "L", "Q"])
 
     latex_lines.append(" & ".join(header_parts) + " \\\\")
     latex_lines.append("\\midrule")
@@ -185,14 +225,19 @@ def format_latex_table_sidebyside(df):
         row_parts = []
         for family in top_families:
             if i < len(family_data[family]):
-                domain, logodds_score = family_data[family][i]
+                domain, logodds_score, political_leaning, domain_quality = family_data[family][i]
                 # Escape special LaTeX characters and truncate long domains
                 domain_escaped = domain.replace("_", "\\_").replace("&", "\\&")
-                if len(domain_escaped) > 25:
-                    domain_escaped = domain_escaped[:22] + "..."
-                row_parts.extend([domain_escaped, f"{logodds_score:.2f}"])
+                if len(domain_escaped) > 18:  # Reduced to make room for new columns
+                    domain_escaped = domain_escaped[:15] + "..."
+                
+                # Generate separate political leaning and quality codes
+                leaning_code = format_political_leaning_code(political_leaning)
+                quality_code = format_quality_code(domain_quality)
+                
+                row_parts.extend([domain_escaped, f"{logodds_score:.2f}", leaning_code, quality_code])
             else:
-                row_parts.extend(["", ""])
+                row_parts.extend(["", "", "", ""])
 
         latex_lines.append(" & ".join(row_parts) + " \\\\")
 
