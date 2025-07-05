@@ -89,20 +89,7 @@ def create_default_model_specifications():
 
     # Bias + quality among news citations
     spec.add_model(
-        "no_control_variables",
-        [
-            "proportion_left_leaning",
-            "proportion_right_leaning",
-            "proportion_center_leaning",
-            "proportion_high_quality",
-            "proportion_low_quality",
-        ],
-        "Political and quality among all citations.",
-    )
-
-    # Bias + quality among news citations
-    spec.add_model(
-        "no_control_variables",
+        "bias_and_quality_news_citations",
         [
             "response_word_count",
             "num_citations",
