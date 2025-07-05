@@ -38,8 +38,10 @@ rule all:
         f"{OUTPUT_DIR}/regression_results.json",
         # Phase 9: Final report
         f"{OUTPUT_DIR}/question_analysis_report.html",
-        # Phase 10: LaTeX table
-        f"{OUTPUT_DIR}/regression_coefficients_table.tex"
+        # Phase 10: LaTeX regression coefficients table
+        f"{OUTPUT_DIR}/regression_coefficients_table.tex",
+        # Phase 11: LaTeX topics table
+        f"{OUTPUT_DIR}/topics_table.tex"
 
 # Phase 1: Filter English Questions
 rule filter_english_questions:
@@ -145,3 +147,12 @@ rule generate_latex_table:
         f"{OUTPUT_DIR}/regression_coefficients_table.tex"
     script:
         "scripts/generate_latex_regression_table.py"
+
+# Phase 11: Generate LaTeX topics table
+rule generate_latex_topics_table:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/topic_info.json"
+    output:
+        f"{OUTPUT_DIR}/topics_table.tex"
+    script:
+        "scripts/generate_latex_topics_table.py"
