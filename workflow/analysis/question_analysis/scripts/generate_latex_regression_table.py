@@ -143,11 +143,11 @@ def create_latex_regression_table(results, outcomes_to_include):
         elif outcome == "news_proportion_center_leaning":
             return "\% center-leaning news"
         elif outcome == "news_proportion_high_quality":
-            return "\% high quality news"
+            return "\% high-quality news"
         elif outcome == "news_proportion_low_quality":
-            return "\% low quality news"
+            return "\% low-quality news"
         elif outcome == "news_proportion_unknown_quality":
-            return "\% unknown quality news"
+            return "\% unknown-quality news"
         else:
             return outcome.replace("_", " ").title()
 
