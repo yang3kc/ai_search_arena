@@ -10,11 +10,11 @@ import sys
 
 # Import utility functions
 from bt_utils import (
-    load_battle_data,
-    filter_battle_data,
     compute_bradley_terry_ratings,
-    save_results,
+    filter_battle_data,
+    load_battle_data,
     print_summary,
+    save_results,
 )
 
 

@@ -5,10 +5,11 @@ Extracts web search citations from system metadata web_search_trace and creates 
 according to the defined schema.
 """
 
-import pandas as pd
 import logging
 import re
 from urllib.parse import urlparse
+
+import pandas as pd
 import tldextract
 
 # Set up logging

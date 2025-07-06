@@ -1,7 +1,6 @@
 # Configuration for Question Analysis Pipeline
 
 # Base directories
-base_dir: "/Users/yangkc/working/llm/ai_search_arena"
 cleaned_data_dir: "../../../data/intermediate/cleaned_arena_data"
 citation_analysis_dir: "../../../data/intermediate/citation_analysis"
 question_analysis_dir: "../../../data/intermediate/question_analysis"

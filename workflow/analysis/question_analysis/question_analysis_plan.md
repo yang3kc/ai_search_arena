@@ -1,26 +1,28 @@
 # Question-News Citation Pattern Analysis Plan
 
 ## Overview
-This analysis aims to understand how different features of user questions relate to AI models' news citation patterns. The workflow involves filtering target questions, generating question features, computing news citation patterns, and performing regression analysis.
+**Status**: ✅ **PRODUCTION-READY** - Complete question analysis pipeline with topic modeling, regression analysis, and publication-ready outputs.
+
+This analysis understands how different features of user questions relate to AI models' news citation patterns. The workflow involves filtering target questions, generating question features, computing news citation patterns, and performing regression analysis.
 
 ## Data Pipeline Architecture
 
-### Phase 1: Data Preparation and Question Filtering
+### Phase 1: Data Preparation and Question Filtering ✅ **COMPLETED**
 **Goal**: Filter and prepare English questions for analysis
 
-**Scripts to create**:
-- `scripts/filter_english_questions.py`
+**Scripts completed**:
+- `scripts/filter_english_questions.py` ✅
   - Load questions from `data/intermediate/cleaned_arena_data/questions.parquet`
   - Detect English language using `langdetect` library
   - Filter out non-English questions
   - Output: `data/intermediate/question_analysis/english_questions.parquet`
 
-### Phase 2: Question Embeddings Generation
+### Phase 2: Question Embeddings Generation ✅ **COMPLETED**
 **Goal**: Generate semantic embeddings for questions
 
-**Scripts to create**:
-- `scripts/generate_question_embeddings.py`
-  - **Text embeddings**: Use sentence transformers (e.g., `all-MiniLM-L6-v2`) to generate semantic embeddings
+**Scripts completed**:
+- `scripts/generate_question_embeddings.py` ✅
+  - **Text embeddings**: Use sentence transformers (`all-MiniLM-L6-v2`) to generate semantic embeddings
   - **Batch processing**: Efficient processing of large question datasets
   - **Embedding validation**: Ensure embedding quality and consistency
   - Output: `data/intermediate/question_analysis/question_embeddings.parquet`
@@ -38,58 +40,58 @@ This analysis aims to understand how different features of user questions relate
     - `data/intermediate/question_analysis/question_topic_probabilities.parquet` (topic probabilities)
     - `data/intermediate/question_analysis/topic_info.json` (topic metadata and keywords)
 
-### Phase 4: Question Feature Extraction
+### Phase 4: Question Feature Extraction ✅ **COMPLETED**
 **Goal**: Extract features from questions
 
-**Scripts to create**:
-- `scripts/extract_question_features.py`
+**Scripts completed**:
+- `scripts/extract_question_features.py` ✅
   - **Question intent**: The primary intent of the question, from the thread metadata
   - **Client country**: The country of the client, from the thread metadata
   - **Question characteristics**: Length (characters, words)
   - Output: `data/intermediate/question_analysis/question_features.parquet`
 
-### Phase 5: News Citation Pattern Variables
+### Phase 5: News Citation Pattern Variables ✅ **COMPLETED**
 **Goal**: Compute response-level citation metrics (reuse from preference analysis)
 
-**Scripts to adapt**:
-- `scripts/compute_citation_patterns.py` (adapted from `preference_analysis/compute_response_signals.py`)
+**Scripts completed**:
+- `scripts/compute_citation_patterns.py` ✅ (adapted from `preference_analysis/compute_response_signals.py`)
   - Reuse existing citation pattern computation logic
   - Key metrics to include:
     - Proportion of left/right/center-leaning sources
     - Proportion of high/low quality sources
   - Output: `data/intermediate/question_analysis/citation_patterns.parquet`
 
-### Phase 6: Data Integration
+### Phase 6: Data Integration ✅ **COMPLETED**
 **Goal**: Merge question features with citation patterns and model metadata
 
-**Scripts to create**:
-- `scripts/integrate_analysis_data.py`
+**Scripts completed**:
+- `scripts/integrate_analysis_data.py` ✅
   - Join questions with responses, citations, and threads
-  - Merge question embeddings and features with citation patterns
+  - Merge question embeddings, features, and topic data with citation patterns
   - Add model family and model-specific variables
   - Handle missing data and create analysis-ready dataset
   - Output: `data/intermediate/question_analysis/integrated_analysis_data.parquet`
 
-### Phase 7: Clean and Code Features
+### Phase 7: Clean and Code Features ✅ **COMPLETED**
 **Goal**: Prepare integrated data for regression modeling
 
-**Scripts to create**:
-- `scripts/clean_features.py`
+**Scripts completed**:
+- `scripts/clean_features.py` ✅
   - Convert categorical variables to dummy variables (country, model family, intent, etc.)
   - Transform long-tail distributed variables (response/question length) using log transformation
   - Standardize embedding dimensions for consistent scaling
   - Handle missing values with appropriate imputation strategies
   - Validate final dataset for modeling readiness
-  - Output: `data/intermediate/question_analysis/cleaned_regression_features.parquet`
+  - Output: `data/intermediate/question_analysis/cleaned_features.parquet`
 
-### Phase 8: Regression Analysis
+### Phase 8: Regression Analysis ✅ **COMPLETED**
 **Goal**: Analyze relationships between question features and citation patterns
 
-**Scripts to create**:
-- `scripts/regression_analysis.py`
+**Scripts completed**:
+- `scripts/regression_analysis.py` ✅
   - **Dependent variables**: News citation patterns (% left-leaning, % high-quality, etc.)
   - **Independent variables**:
-    - Question features (embeddings, political classification, length, etc.)
+    - Question features (embeddings, topic probabilities, length, etc.)
     - Model variables (model family, model side)
     - Control variables (turn number, thread characteristics)
   - **Models to fit**:
@@ -99,17 +101,35 @@ This analysis aims to understand how different features of user questions relate
     - Model diagnostics and fit statistics
   - Output: `data/output/question_analysis/regression_results.json`
 
-### Phase 9: Visualization and Reporting
+### Phase 9: Visualization and Reporting ✅ **COMPLETED**
 **Goal**: Generate comprehensive analysis report
 
-**Scripts to create**:
-- `scripts/generate_question_analysis_report.py`
+**Scripts completed**:
+- `scripts/generate_question_analysis_report.py` ✅
   - Summary statistics for question features
   - Correlation matrices between features and outcomes
   - Regression coefficient plots
   - Feature importance visualizations
   - Subgroup analyses (by model family, question type)
   - Output: `data/output/question_analysis/question_analysis_report.html`
+
+### Phase 10: LaTeX Regression Table ✅ **COMPLETED**
+**Goal**: Generate publication-ready regression tables
+
+**Scripts completed**:
+- `scripts/generate_latex_regression_table.py` ✅
+  - Format regression coefficients for academic papers
+  - Include confidence intervals and significance indicators
+  - Output: `data/output/question_analysis/regression_coefficients_table.tex`
+
+### Phase 11: LaTeX Topics Table ✅ **COMPLETED**
+**Goal**: Generate publication-ready topic modeling tables
+
+**Scripts completed**:
+- `scripts/generate_latex_topics_table.py` ✅
+  - Format topic modeling results for academic papers
+  - Include topic keywords and distributions
+  - Output: `data/output/question_analysis/topics_table.tex`
 
 ## Technical Implementation Details
 
@@ -144,63 +164,67 @@ This analysis aims to understand how different features of user questions relate
 - domain_diversity_score (float)
 ```
 
-### Snakemake Workflow Structure
+### Implemented Snakemake Workflow ✅ **COMPLETED**
+**11-Phase Pipeline**: Complete workflow with all scripts implemented and tested
+
 ```python
 rule all:
     input:
+        # Core analysis outputs
         "data/output/question_analysis/question_analysis_report.html",
-        "data/output/question_analysis/regression_results.json"
+        "data/output/question_analysis/regression_results.json",
+        # Publication-ready LaTeX tables
+        "data/output/question_analysis/regression_coefficients_table.tex",
+        "data/output/question_analysis/topics_table.tex",
+        # All intermediate datasets
+        "data/intermediate/question_analysis/english_questions.parquet",
+        "data/intermediate/question_analysis/question_embeddings.parquet",
+        "data/intermediate/question_analysis/question_topics.parquet",
+        "data/intermediate/question_analysis/cleaned_features.parquet"
 
-rule filter_english_questions:
-    input:
-        questions="data/intermediate/cleaned_arena_data/questions.parquet",
-        threads="data/intermediate/cleaned_arena_data/threads.parquet"
-    output: "data/intermediate/question_analysis/english_questions.parquet"
+# Phase 1: English question filtering
+rule filter_english_questions: # ✅ IMPLEMENTED
 
-rule generate_question_embeddings:
-    input: "data/intermediate/question_analysis/english_questions.parquet"
-    output: "data/intermediate/question_analysis/question_embeddings.parquet"
+# Phase 2: Question embeddings generation
+rule generate_question_embeddings: # ✅ IMPLEMENTED
 
-rule extract_question_features:
-    input:
-        questions="data/intermediate/question_analysis/english_questions.parquet",
-        threads="data/intermediate/cleaned_arena_data/threads.parquet"
-    output: "data/intermediate/question_analysis/question_features.parquet"
+# Phase 3: Topic modeling with BERTopic
+rule generate_question_topics: # ✅ IMPLEMENTED
 
-rule compute_citation_patterns:
-    input:
-        questions="data/intermediate/question_analysis/english_questions.parquet",
-        citations="data/intermediate/citation_analysis/integrated_citations.parquet",
-        responses="data/intermediate/cleaned_arena_data/responses.parquet"
-    output: "data/intermediate/question_analysis/citation_patterns.parquet"
+# Phase 4: Question feature extraction
+rule extract_question_features: # ✅ IMPLEMENTED
 
-rule integrate_analysis_data:
-    input:
-        question_embeddings="data/intermediate/question_analysis/question_embeddings.parquet",
-        question_features="data/intermediate/question_analysis/question_features.parquet",
-        citation_patterns="data/intermediate/question_analysis/citation_patterns.parquet",
-        threads="data/intermediate/cleaned_arena_data/threads.parquet",
-        responses="data/intermediate/cleaned_arena_data/responses.parquet"
-    output: "data/intermediate/question_analysis/integrated_analysis_data.parquet"
+# Phase 5: Citation patterns computation
+rule compute_citation_patterns: # ✅ IMPLEMENTED
 
-rule regression_analysis:
-    input: "data/intermediate/question_analysis/integrated_analysis_data.parquet"
-    output: "data/output/question_analysis/regression_results.json"
+# Phase 6: Data integration
+rule integrate_analysis_data: # ✅ IMPLEMENTED
 
-rule generate_report:
-    input:
-        data="data/intermediate/question_analysis/integrated_analysis_data.parquet",
-        results="data/output/question_analysis/regression_results.json"
-    output: "data/output/question_analysis/question_analysis_report.html"
+# Phase 7: Feature cleaning and preparation
+rule clean_features: # ✅ IMPLEMENTED
+
+# Phase 8: Regression analysis
+rule regression_analysis: # ✅ IMPLEMENTED
+
+# Phase 9: HTML report generation
+rule generate_report: # ✅ IMPLEMENTED
+
+# Phase 10: LaTeX regression table
+rule generate_latex_table: # ✅ IMPLEMENTED
+
+# Phase 11: LaTeX topics table
+rule generate_latex_topics_table: # ✅ IMPLEMENTED
 ```
 
-## Expected Research Questions
+## Research Questions Addressed ✅ COMPLETED
 
 1. **Political Questions**: Do political questions lead to more politically biased news citations?
 2. **Question Complexity**: Do more complex questions result in higher-quality or more diverse news sources?
 3. **Model Differences**: Do different model families respond differently to question characteristics?
 4. **Topic Effects**: How do different question topics influence citation patterns?
-5. **Temporal Effects**: Do questions about current events lead to different citation behaviors?
+5. **Semantic Clustering**: What semantic topics emerge from user questions and how do they relate to citation behavior?
+6. **Embedding Analysis**: How do semantic embeddings predict citation pattern variations?
+7. **Statistical Significance**: Which question features have statistically significant effects on citation bias and quality?
 
 ## Validation Strategy
 
@@ -210,10 +234,43 @@ rule generate_report:
 4. **Model Diagnostics**: Residual analysis, multicollinearity checks, cross-validation
 5. **Robustness Tests**: Analysis across different subsets and alternative specifications
 
-## Output Deliverables
+## Implementation Status: ✅ COMPLETED
+
+### Production-Ready Pipeline Achievements
+1. ✅ **Complete 11-phase question analysis pipeline**
+2. ✅ **Topic modeling integration** with BERTopic for semantic analysis
+3. ✅ **Semantic embeddings** using sentence transformers (all-MiniLM-L6-v2)
+4. ✅ **Comprehensive regression analysis** with multiple dependent variables
+5. ✅ **Publication-ready outputs** including LaTeX tables and HTML reports
+6. ✅ **Cross-validation and model diagnostics** for robust statistical inference
+7. ✅ **Configurable parameters** for filtering, embeddings, and analysis
+
+### Ready for Question-Citation Pattern Analysis
+The pipeline produces comprehensive analysis of:
+- **Question characteristics effects** on news citation patterns
+- **Topic modeling results** with semantic clustering of questions
+- **Regression analysis** linking question features to citation bias and quality
+- **Model comparison** across different AI systems and question types
+- **Publication-ready tables** for academic papers
+
+### Running the Complete Pipeline
+```bash
+# Run full question analysis pipeline
+cd workflow/analysis/question_analysis
+snakemake --cores 1
+
+# Or target specific outputs
+snakemake generate_question_topics --cores 1    # Topic modeling
+snakemake regression_analysis --cores 1         # Statistical analysis
+snakemake generate_latex_table --cores 1        # Publication tables
+```
+
+### Output Deliverables ✅ COMPLETED
 
 1. **Analysis Dataset**: Clean, integrated dataset ready for modeling
-2. **Regression Results**: Comprehensive statistical analysis results
-3. **HTML Report**: Interactive report with visualizations and interpretations
-4. **LaTeX Tables**: Regression tables formatted for paper inclusion
-5. **Feature Importance Rankings**: Ranked lists of most predictive question features
+2. **Topic Modeling Results**: BERTopic analysis with semantic clusters
+3. **Regression Results**: Comprehensive statistical analysis results
+4. **HTML Report**: Interactive report with visualizations and interpretations
+5. **LaTeX Tables**: Regression and topic tables formatted for paper inclusion
+6. **Feature Importance Rankings**: Ranked lists of most predictive question features
+7. **Embedding Datasets**: Question embeddings for downstream analysis

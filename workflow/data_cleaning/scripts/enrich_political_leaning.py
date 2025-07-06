@@ -8,15 +8,13 @@ This script adds political leaning metrics to citations data:
 """
 
 import pandas as pd
-import gzip
 
 
 def load_political_leaning_data(filepath):
     """Load and process political leaning data."""
     print(f"Loading political leaning data from {filepath}")
 
-    with gzip.open(filepath, "rt") as f:
-        df = pd.read_csv(f)
+    df = pd.read_csv(filepath)
 
     print(f"Loaded {len(df)} domains with political leaning scores")
     print(f"Columns: {list(df.columns)}")

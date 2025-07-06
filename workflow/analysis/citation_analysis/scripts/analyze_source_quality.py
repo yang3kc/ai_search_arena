@@ -6,13 +6,14 @@ This script analyzes the quality and credibility patterns of sources cited by AI
 using domain credibility ratings and quality metrics.
 """
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
-from scipy.stats import mannwhitneyu
 import warnings
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.stats import mannwhitneyu
 
 warnings.filterwarnings("ignore")
 

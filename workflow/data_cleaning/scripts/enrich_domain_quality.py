@@ -8,15 +8,13 @@ This script adds domain quality metrics to citations data:
 """
 
 import pandas as pd
-import gzip
 
 
 def load_domain_quality_data(filepath):
     """Load and process domain quality ratings."""
     print(f"Loading domain ratings from {filepath}")
 
-    with gzip.open(filepath, "rt") as f:
-        df = pd.read_csv(f)
+    df = pd.read_csv(filepath)
 
     print(f"Loaded {len(df)} domains with quality ratings")
     print(f"Columns: {list(df.columns)}")

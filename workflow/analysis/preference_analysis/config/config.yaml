@@ -20,14 +20,6 @@ filtering:
   exclude_ties: true
   valid_winners: ["model_a", "model_b"]
 
-# Response signal features to compute
-response_signals:
-  primary_features:
-    - "response_length"           # Character count of response
-    - "num_citations"            # Total citation count
-    - "proportion_low_quality"   # Fraction of low-quality news sources
-    - "proportion_right_leaning" # Fraction of right-leaning sources
-
 # Output settings
 output:
   preserve_intermediate_files: true

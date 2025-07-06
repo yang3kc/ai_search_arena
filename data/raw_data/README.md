@@ -26,11 +26,16 @@ We downloaded it in order to replicate the leaderboard and make sure the impleme
 The `domain` contains the domain name.
 The `leaning_score_users` contains the political leaning of the domain.
 
+Please refer to the paper [DomainDemo: a dataset of domain-sharing activities among different demographic groups on Twitter](https://arxiv.org/abs/2501.09035) for more details.
+The dataset can be downloaded from [here](https://github.com/LazerLab/DomainDemo).
+
 ## Domain credibility data
 
 `lin_domain_ratings.csv.gz` contains the credibility ratings of the domains.
 The `domain` contains the domain name.
 The `pc1` contains the domain credibility score.
+
+Please refer to the paper [High level of correspondence across different news domain quality rating sets](https://academic.oup.com/pnasnexus/article/2/9/pgad286/7258994) for more details.
 
 ## Domain classification data
 
@@ -52,3 +57,5 @@ The classifications include:
 ### List of news sources
 
 `list_of_news_domains.txt` contains a list of news domains.
+
+The dataset was downloaded from https://github.com/yang3kc/list_of_news_domains.

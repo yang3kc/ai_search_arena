@@ -5,9 +5,10 @@ Validates data quality, referential integrity, and extraction completeness
 across all extracted tables.
 """
 
-import pandas as pd
 import logging
 from datetime import datetime
+
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(

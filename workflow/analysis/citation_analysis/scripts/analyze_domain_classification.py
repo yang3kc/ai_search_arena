@@ -6,10 +6,11 @@ This script analyzes citation patterns across different domain classifications,
 examining how AI models cite different source types and identifying specialization patterns.
 """
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 
 def load_integrated_data(data_path):

@@ -7,17 +7,18 @@ with all available signals for efficiency. The enriched domains can then
 be merged back with citations as needed.
 """
 
-import pandas as pd
-import sys
 import os
+import sys
+
+import pandas as pd
 
 # Add current directory to path for local imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import individual signal enrichment modules
-import enrich_political_leaning
-import enrich_domain_quality
 import enrich_domain_classification
+import enrich_domain_quality
+import enrich_political_leaning
 
 
 def generate_domains_summary_stats(enriched_domains):

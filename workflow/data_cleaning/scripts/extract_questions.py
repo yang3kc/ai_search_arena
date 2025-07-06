@@ -5,8 +5,9 @@ Extracts user questions from multi-turn conversations and creates the questions 
 according to the defined schema.
 """
 
-import pandas as pd
 import logging
+
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(

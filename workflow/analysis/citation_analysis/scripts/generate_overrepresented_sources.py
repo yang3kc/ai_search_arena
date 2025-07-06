@@ -7,11 +7,12 @@ overrepresented in each model family compared to all others using log-odds
 ratios. The output is formatted as a LaTeX table for inclusion in research papers.
 """
 
-import pandas as pd
+import logging
 from collections import Counter
 from math import log, sqrt
 from pathlib import Path
-import logging
+
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(
@@ -117,11 +118,11 @@ def calculate_overrepresented_sources(df, top_n=20):
             frequency = family_counters[target_family][domain]
             total_family_citations = sum(family_counters[target_family].values())
             percentage = (frequency / total_family_citations) * 100
-            
+
             # Get political leaning and quality info for this domain
             family_data = df[df["model_family"] == target_family]
             domain_data = family_data[family_data["domain"] == domain]
-            
+
             # Get most common political leaning and quality for this domain
             political_leaning = (
                 domain_data["political_leaning"].mode().iloc[0]
@@ -225,17 +226,21 @@ def format_latex_table_sidebyside(df):
         row_parts = []
         for family in top_families:
             if i < len(family_data[family]):
-                domain, logodds_score, political_leaning, domain_quality = family_data[family][i]
+                domain, logodds_score, political_leaning, domain_quality = family_data[
+                    family
+                ][i]
                 # Escape special LaTeX characters and truncate long domains
                 domain_escaped = domain.replace("_", "\\_").replace("&", "\\&")
                 if len(domain_escaped) > 18:  # Reduced to make room for new columns
                     domain_escaped = domain_escaped[:15] + "..."
-                
+
                 # Generate separate political leaning and quality codes
                 leaning_code = format_political_leaning_code(political_leaning)
                 quality_code = format_quality_code(domain_quality)
-                
-                row_parts.extend([domain_escaped, f"{logodds_score:.2f}", leaning_code, quality_code])
+
+                row_parts.extend(
+                    [domain_escaped, f"{logodds_score:.2f}", leaning_code, quality_code]
+                )
             else:
                 row_parts.extend(["", "", "", ""])
 
