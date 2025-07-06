@@ -180,7 +180,6 @@ or set `--lang` appropriately, and avoid falling back to text-only tools like `r
 ### Pipeline Dependencies
 - **Always run `data_cleaning` pipeline first** before any analysis pipelines
 - Analysis pipelines can be run independently after data cleaning is complete
-- Use `./run_full_analysis.sh` for full reproduction from scratch
 
 ### Development Best Practices
 - **Follow existing code patterns** and naming conventions
