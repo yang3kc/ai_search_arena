@@ -9,9 +9,10 @@ This script creates a table showing:
 - Number of news citations (count and percentage)
 """
 
-import pandas as pd
-import sys
 import os
+import sys
+
+import pandas as pd
 
 
 def load_data(responses_path, citations_path):

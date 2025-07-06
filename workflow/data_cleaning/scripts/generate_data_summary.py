@@ -7,10 +7,11 @@ that can be included in academic papers, including dataset size, coverage
 metrics, and data quality indicators.
 """
 
-import pandas as pd
-from pathlib import Path
-from datetime import datetime
 import logging
+from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(

@@ -5,8 +5,9 @@ This script analyzes turn distribution and validates our understanding
 of the nested data structure before extraction.
 """
 
-import pandas as pd
 import logging
+
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(

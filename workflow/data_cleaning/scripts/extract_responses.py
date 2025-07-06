@@ -5,8 +5,9 @@ Extracts AI model responses from multi-turn conversations and creates the respon
 according to the defined schema.
 """
 
-import pandas as pd
 import logging
+
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(

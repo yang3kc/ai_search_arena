@@ -5,8 +5,9 @@ Extracts thread-level metadata and creates the threads table
 according to the defined schema.
 """
 
-import pandas as pd
 import logging
+
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(
