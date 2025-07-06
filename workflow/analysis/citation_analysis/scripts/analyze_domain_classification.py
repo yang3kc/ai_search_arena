@@ -155,7 +155,7 @@ def analyze_model_comparison(data):
         if not side_a_pcts.empty and not side_b_pcts.empty:
             differences = side_b_pcts - side_a_pcts
 
-            print(f"\nDifferences (Model B - Model A):")
+            print("\nDifferences (Model B - Model A):")
             for domain_type, diff in differences.items():
                 direction = "↑" if diff > 0 else "↓" if diff < 0 else "="
                 print(f"  {domain_type}: {diff:+.1f}pp {direction}")
@@ -517,7 +517,7 @@ def main():
     with open(report_output_path, "w") as f:
         f.write(html_content)
 
-    print(f"\n✅ Domain classification analysis completed!")
+    print("\n✅ Domain classification analysis completed!")
     print(f"Analysis results: {analysis_output_path}")
     print(f"HTML report: {report_output_path}")
     print(f"Generated {len(visualization_paths)} visualization files:")

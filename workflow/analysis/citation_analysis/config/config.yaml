@@ -3,6 +3,7 @@
 # Data paths
 cleaned_data_dir: "../../../data/intermediate/cleaned_arena_data"
 analysis_dir: "../../../data/intermediate/citation_analysis"
+output_dir: "../../../data/output/citation_analysis"
 
 # Analysis parameters
 min_citations_per_model: 100  # Minimum citations required for model comparison

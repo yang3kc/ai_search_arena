@@ -186,7 +186,7 @@ def generate_integration_summary(integrated):
     print(f"Unique domains: {unique_domains:,}")
 
     # Data completeness
-    print(f"\nData completeness:")
+    print("\nData completeness:")
     for col in [
         "model_name_llm",
         "winner",
@@ -201,7 +201,7 @@ def generate_integration_summary(integrated):
 
     # Domain classification distribution
     if "domain_classification" in integrated.columns:
-        print(f"\nDomain classification distribution:")
+        print("\nDomain classification distribution:")
         domain_dist = integrated["domain_classification"].value_counts()
         for domain_type, count in domain_dist.items():
             pct = count / total_citations * 100
@@ -209,7 +209,7 @@ def generate_integration_summary(integrated):
 
     # Model distribution
     if "model_name_llm" in integrated.columns:
-        print(f"\nTop 5 models by citation count:")
+        print("\nTop 5 models by citation count:")
         model_dist = integrated["model_name_llm"].value_counts().head(5)
         for model, count in model_dist.items():
             pct = count / total_citations * 100
@@ -246,7 +246,7 @@ def main():
     print(f"\nSaving integrated citations to {output_path}")
     integrated.to_parquet(output_path, index=False)
 
-    print(f"\n✅ Data integration completed successfully!")
+    print("\n✅ Data integration completed successfully!")
     print(
         f"Output: {len(integrated):,} citations with {len(integrated.columns)} columns"
     )

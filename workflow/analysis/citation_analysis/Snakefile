@@ -9,6 +9,7 @@ configfile: "config/config.yaml"
 # Define paths
 CLEANED_DATA_DIR = config["cleaned_data_dir"]
 ANALYSIS_DIR = config["analysis_dir"]
+OUTPUT_DIR = config["output_dir"]
 
 # Target rule - what we want to produce
 rule all:
@@ -26,7 +27,21 @@ rule all:
         f"{ANALYSIS_DIR}/political_bias_report.html",
         # Phase 5: Source quality analysis
         f"{ANALYSIS_DIR}/quality_integrated_citations.parquet",
-        f"{ANALYSIS_DIR}/source_quality_analysis_report.html"
+        f"{ANALYSIS_DIR}/source_quality_analysis_report.html",
+        # Phase 6: News citation statistics report
+        f"{OUTPUT_DIR}/news_citation_statistics_report.md",
+        # Phase 7: News citation similarity analysis
+        f"{ANALYSIS_DIR}/news_similarities_jaccard.parquet",
+        f"{ANALYSIS_DIR}/news_similarities_cosine.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_matrix_jaccard.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_matrix_cosine.parquet",
+        f"{ANALYSIS_DIR}/news_similarity_summary.json",
+        # Phase 8: Top news sources by model family
+        f"{OUTPUT_DIR}/top_news_sources_by_family.csv",
+        f"{OUTPUT_DIR}/top_news_sources_latex_table.tex",
+        # Phase 9: Overrepresented news sources by model family
+        f"{OUTPUT_DIR}/overrepresented_sources_by_family.csv",
+        f"{OUTPUT_DIR}/overrepresented_sources_latex_table.tex"
 
 # Phase 1: Data Integration Pipeline
 rule integrate_citation_data:
@@ -79,3 +94,49 @@ rule analyze_source_quality:
         quality_report=f"{ANALYSIS_DIR}/source_quality_analysis_report.html"
     script:
         "scripts/analyze_source_quality.py"
+
+# Phase 6: News Citation Statistics Report
+rule generate_news_statistics:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet",
+        questions=f"{CLEANED_DATA_DIR}/questions.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet"
+    output:
+        f"{OUTPUT_DIR}/news_citation_statistics_report.md"
+    script:
+        "scripts/generate_news_statistics.py"
+
+# Phase 7: News Citation Similarity Analysis
+rule calculate_news_similarity:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        similarities_jaccard=f"{ANALYSIS_DIR}/news_similarities_jaccard.parquet",
+        similarities_cosine=f"{ANALYSIS_DIR}/news_similarities_cosine.parquet",
+        similarity_matrix_jaccard=f"{ANALYSIS_DIR}/news_similarity_matrix_jaccard.parquet",
+        similarity_matrix_cosine=f"{ANALYSIS_DIR}/news_similarity_matrix_cosine.parquet",
+        analysis_summary=f"{ANALYSIS_DIR}/news_similarity_summary.json"
+    script:
+        "scripts/calculate_news_similarity.py"
+
+
+# Phase 8: Most Frequent News Sources for Each Family
+rule generate_top_news_sources:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        csv=f"{OUTPUT_DIR}/top_news_sources_by_family.csv",
+        latex=f"{OUTPUT_DIR}/top_news_sources_latex_table.tex"
+    script:
+        "scripts/generate_top_news_sources.py"
+
+# Phase 9: Identify overrepresented news sources using log-odds ratio
+rule generate_overrepresented_sources:
+    input:
+        news_citations=f"{ANALYSIS_DIR}/news_citations.parquet"
+    output:
+        csv=f"{OUTPUT_DIR}/overrepresented_sources_by_family.csv",
+        latex=f"{OUTPUT_DIR}/overrepresented_sources_latex_table.tex"
+    script:
+        "scripts/generate_overrepresented_sources.py"

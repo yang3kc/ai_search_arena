@@ -33,7 +33,7 @@ def integrate_quality_data(citations_df, quality_df):
     # Check if quality data is already integrated
     if "domain_quality_score" in citations_df.columns:
         print("Quality data already integrated in news citations.")
-        print(f"Using existing 'domain_quality_score' column as reliability metric.")
+        print("Using existing 'domain_quality_score' column as reliability metric.")
 
         # Add reliability column for consistency with analysis functions
         citations_df["reliability"] = citations_df["domain_quality_score"]
@@ -75,7 +75,7 @@ def analyze_model_quality_patterns(data):
     # Focus on citations with quality scores
     quality_data = data[data["reliability"].notna()].copy()
 
-    print(f"Quality Analysis Coverage:")
+    print("Quality Analysis Coverage:")
     print(f"- Total news citations: {len(data):,}")
     print(f"- Citations with quality scores: {len(quality_data):,}")
     print(f"- Coverage rate: {len(quality_data) / len(data) * 100:.1f}%\n")
@@ -170,7 +170,7 @@ def analyze_model_family_quality_patterns(data):
     # Filter for citations with quality scores
     quality_data = data[data["reliability"].notna()].copy()
 
-    print(f"Quality Analysis Coverage by Family:")
+    print("Quality Analysis Coverage by Family:")
     family_coverage = (
         data.groupby("model_family")
         .agg({"reliability": ["count", lambda x: x.notna().sum()]})
@@ -312,7 +312,7 @@ def analyze_winner_loser_quality(data):
     # Use 'model_won' column instead of 'is_winner'
     winner_loser_data = quality_data[quality_data["model_won"].notna()].copy()
 
-    print(f"Winner/Loser Quality Analysis Coverage:")
+    print("Winner/Loser Quality Analysis Coverage:")
     print(f"- Citations with quality scores: {len(quality_data):,}")
     print(f"- Citations with win/loss status: {len(winner_loser_data):,}")
     print(
@@ -339,7 +339,7 @@ def analyze_winner_loser_quality(data):
         mean_diff = winners.mean() - losers.mean()
         effect_size = abs(mean_diff) / ((winners.std() + losers.std()) / 2)
 
-        print(f"Statistical Test Results:")
+        print("Statistical Test Results:")
         print(f"- Winners mean quality: {winners.mean():.3f}")
         print(f"- Losers mean quality: {losers.mean():.3f}")
         print(f"- Mean difference: {mean_diff:+.3f}")
@@ -745,7 +745,7 @@ def main():
         output_path_for_report,
     )
 
-    print(f"\n✅ Source Quality Analysis Complete!")
+    print("\n✅ Source Quality Analysis Complete!")
     print(f"📁 Results saved to: {output_dir}")
     print(f"📊 View the complete report: {report_path}")
 

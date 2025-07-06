@@ -6,10 +6,10 @@ This script creates battle-style data from response signals, transforming indivi
 responses into model_a vs model_b comparisons for statistical preference analysis.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pandas as pd
 
 
 def load_data(threads_path, signals_path):

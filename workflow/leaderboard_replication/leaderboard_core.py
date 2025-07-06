@@ -155,7 +155,7 @@ def preprocess_for_elo(df):
 
 def preprocess_for_style(df, style_elements, add_one=True):
     """Preprocess data for style control."""
-    apply_ratio = list(np.ones(len(style_elements)//2))
+    apply_ratio = list(np.ones(len(style_elements) // 2))
     matchups, outcomes, models = preprocess_for_elo(df)
 
     n = matchups.shape[0]
@@ -218,7 +218,7 @@ def contextual_bt_loss_and_grad(
     context_logits = np.dot(features, feature_params)
     probs = expit(bt_logits + context_logits)
     loss = (
-        -((np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes))).sum()
+        -(np.log(probs) * outcomes + np.log(1.0 - probs) * (1.0 - outcomes)).sum()
         + reg_loss
     )
 
@@ -274,7 +274,9 @@ def compute_style_control(
     anchor_model_and_rating=None,
 ):
     """Compute style-controlled Bradley-Terry ratings."""
-    matchups, features, outcomes, models = preprocess_for_style(df, style_elements=style_elements)
+    matchups, features, outcomes, models = preprocess_for_style(
+        df, style_elements=style_elements
+    )
     ratings_params = fit_contextual_bt(
         matchups,
         features,
@@ -309,7 +311,9 @@ def compute_bootstrap_style_control(
     anchor_model_and_rating=None,
 ):
     """Compute bootstrap style-controlled Bradley-Terry ratings."""
-    matchups, features, outcomes, models = preprocess_for_style(df, style_elements=style_elements)
+    matchups, features, outcomes, models = preprocess_for_style(
+        df, style_elements=style_elements
+    )
 
     contextual_bt_fn = partial(
         fit_contextual_bt,
@@ -351,19 +355,23 @@ def run_leaderboard(
     """Run leaderboard computation."""
     if style_elements is None:
         bt_ratings = compute_bt(battle_data)
-        offset_score = (anchor_rating - bt_ratings[anchor_model])
+        offset_score = anchor_rating - bt_ratings[anchor_model]
         bt_ratings += offset_score
-        bt_ratings_bootstrap = compute_bootstrap_bt(battle_data, num_round=num_bootstrap_samples, offset=offset_score)
+        bt_ratings_bootstrap = compute_bootstrap_bt(
+            battle_data, num_round=num_bootstrap_samples, offset=offset_score
+        )
         style_coef_bootstrap = None
     else:
-        bt_ratings, _ = compute_style_control(battle_data, style_elements=style_elements)
-        offset_score = (anchor_rating - bt_ratings[anchor_model])
+        bt_ratings, _ = compute_style_control(
+            battle_data, style_elements=style_elements
+        )
+        offset_score = anchor_rating - bt_ratings[anchor_model]
         bt_ratings += offset_score
         bt_ratings_bootstrap, style_coef_bootstrap = compute_bootstrap_style_control(
-            battle_data, 
-            style_elements=style_elements, 
-            num_round=num_bootstrap_samples, 
-            offset=offset_score
+            battle_data,
+            style_elements=style_elements,
+            num_round=num_bootstrap_samples,
+            offset=offset_score,
         )
 
     model_order = list(bt_ratings.keys())
@@ -386,10 +394,12 @@ def run_leaderboard(
             "variance": bt_ratings_bootstrap.var(),
             "rating_q975": bt_ratings_bootstrap.quantile(0.975),
             "rating_q025": bt_ratings_bootstrap.quantile(0.025),
-            "num_battles": battle_data["model_a"].value_counts().add(battle_data["model_b"].value_counts(), fill_value=0),
+            "num_battles": battle_data["model_a"]
+            .value_counts()
+            .add(battle_data["model_b"].value_counts(), fill_value=0),
             "final_ranking": pd.Series(ranking),
         }
     )
-    leaderboard_table = leaderboard_table.sort_values(by='rating', ascending=False)
-    
+    leaderboard_table = leaderboard_table.sort_values(by="rating", ascending=False)
+
     return leaderboard_table, bt_ratings_bootstrap, style_coef_bootstrap

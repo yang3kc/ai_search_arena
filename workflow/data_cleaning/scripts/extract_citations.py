@@ -24,7 +24,7 @@ def extract_domain_full(url):
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
         # Remove www. prefix if present
-        if domain.startswith('www.'):
+        if domain.startswith("www."):
             domain = domain[4:]
         return domain
     except Exception:
@@ -57,7 +57,7 @@ def is_valid_url(url):
 def extract_citation_number(citation_ref):
     """Extract citation number from reference like '[1]', '[2]', etc."""
     try:
-        match = re.search(r'\[(\d+)\]', str(citation_ref))
+        match = re.search(r"\[(\d+)\]", str(citation_ref))
         if match:
             return int(match.group(1))
         return None
@@ -99,8 +99,8 @@ def extract_citations():
     for idx, row in df.iterrows():
         # Get thread_id and corresponding responses for this thread
         thread_id = f"{config['thread_id_prefix']}{idx:08d}"
-        thread_responses = responses_df[responses_df['thread_id'] == thread_id]
-        
+        thread_responses = responses_df[responses_df["thread_id"] == thread_id]
+
         if len(thread_responses) == 0:
             logger.warning(f"No responses found for thread {thread_id}, skipping")
             continue
@@ -109,7 +109,9 @@ def extract_citations():
         system_a_metadata = row.get("system_a_metadata", {})
         system_b_metadata = row.get("system_b_metadata", {})
 
-        if not isinstance(system_a_metadata, dict) or not isinstance(system_b_metadata, dict):
+        if not isinstance(system_a_metadata, dict) or not isinstance(
+            system_b_metadata, dict
+        ):
             missing_trace_count += 1
             continue
 
@@ -118,26 +120,26 @@ def extract_citations():
         web_search_trace_b = system_b_metadata.get("web_search_trace", [])
 
         # Process citations for model A responses
-        model_a_responses = thread_responses[thread_responses['model_side'] == 'a']
+        model_a_responses = thread_responses[thread_responses["model_side"] == "a"]
         if len(web_search_trace_a) > 0 and len(model_a_responses) > 0:
             citations_extracted_a = process_web_search_trace(
                 web_search_trace_a, model_a_responses, config, total_citations
             )
-            citations_data.extend(citations_extracted_a['citations'])
-            total_citations = citations_extracted_a['total_count']
-            invalid_url_count += citations_extracted_a['invalid_urls']
-            citation_parsing_errors += citations_extracted_a['parsing_errors']
+            citations_data.extend(citations_extracted_a["citations"])
+            total_citations = citations_extracted_a["total_count"]
+            invalid_url_count += citations_extracted_a["invalid_urls"]
+            citation_parsing_errors += citations_extracted_a["parsing_errors"]
 
-        # Process citations for model B responses  
-        model_b_responses = thread_responses[thread_responses['model_side'] == 'b']
+        # Process citations for model B responses
+        model_b_responses = thread_responses[thread_responses["model_side"] == "b"]
         if len(web_search_trace_b) > 0 and len(model_b_responses) > 0:
             citations_extracted_b = process_web_search_trace(
                 web_search_trace_b, model_b_responses, config, total_citations
             )
-            citations_data.extend(citations_extracted_b['citations'])
-            total_citations = citations_extracted_b['total_count']
-            invalid_url_count += citations_extracted_b['invalid_urls']
-            citation_parsing_errors += citations_extracted_b['parsing_errors']
+            citations_data.extend(citations_extracted_b["citations"])
+            total_citations = citations_extracted_b["total_count"]
+            invalid_url_count += citations_extracted_b["invalid_urls"]
+            citation_parsing_errors += citations_extracted_b["parsing_errors"]
 
         # Log progress every 1000 rows
         if (idx + 1) % 1000 == 0:
@@ -152,9 +154,18 @@ def extract_citations():
     if len(citations_df) == 0:
         logger.warning("No citations extracted!")
         # Create empty DataFrame with correct schema
-        citations_df = pd.DataFrame(columns=[
-            "citation_id", "response_id", "citation_number", "url", "domain_full", "domain", "url_valid", "citation_order"
-        ])
+        citations_df = pd.DataFrame(
+            columns=[
+                "citation_id",
+                "response_id",
+                "citation_number",
+                "url",
+                "domain_full",
+                "domain",
+                "url_valid",
+                "citation_order",
+            ]
+        )
     else:
         # Check for required fields
         required_fields = ["citation_id", "response_id", "url"]
@@ -176,42 +187,60 @@ def extract_citations():
         valid_response_ids = set(responses_df["response_id"])
         invalid_response_ids = set(citations_df["response_id"]) - valid_response_ids
         if invalid_response_ids:
-            logger.error(f"Invalid response_id references found: {len(invalid_response_ids)}")
+            logger.error(
+                f"Invalid response_id references found: {len(invalid_response_ids)}"
+            )
             return
 
     # Log statistics
-    logger.info(f"\n=== CITATION EXTRACTION STATISTICS ===")
+    logger.info("\n=== CITATION EXTRACTION STATISTICS ===")
     logger.info(f"Total citations extracted: {len(citations_df)}")
     if len(citations_df) > 0:
-        logger.info(f"Total responses with citations: {citations_df['response_id'].nunique()}")
-        logger.info(f"Average citations per response: {len(citations_df) / citations_df['response_id'].nunique():.2f}")
-        logger.info(f"Missing web search traces: {missing_trace_count}/{len(df)} ({missing_trace_count/len(df)*100:.1f}%)")
-        logger.info(f"Invalid URLs found: {invalid_url_count}/{len(citations_df)} ({invalid_url_count/len(citations_df)*100:.1f}%)")
+        logger.info(
+            f"Total responses with citations: {citations_df['response_id'].nunique()}"
+        )
+        logger.info(
+            f"Average citations per response: {len(citations_df) / citations_df['response_id'].nunique():.2f}"
+        )
+        logger.info(
+            f"Missing web search traces: {missing_trace_count}/{len(df)} ({missing_trace_count / len(df) * 100:.1f}%)"
+        )
+        logger.info(
+            f"Invalid URLs found: {invalid_url_count}/{len(citations_df)} ({invalid_url_count / len(citations_df) * 100:.1f}%)"
+        )
         logger.info(f"Citation parsing errors: {citation_parsing_errors}")
 
         # Citation number distribution
         citation_num_dist = citations_df["citation_number"].value_counts().sort_index()
-        logger.info(f"Citation number distribution (top 10):")
+        logger.info("Citation number distribution (top 10):")
         for num, count in citation_num_dist.head(10).items():
-            logger.info(f"  [{num}]: {count} citations ({count/len(citations_df)*100:.1f}%)")
+            logger.info(
+                f"  [{num}]: {count} citations ({count / len(citations_df) * 100:.1f}%)"
+            )
 
         # Top domains (full with subdomains)
         domain_full_counts = citations_df["domain_full"].value_counts()
-        logger.info(f"Top cited domains (full with subdomains) (top 10):")
+        logger.info("Top cited domains (full with subdomains) (top 10):")
         for domain, count in domain_full_counts.head(10).items():
             if domain:  # Skip None domains
-                logger.info(f"  {domain}: {count} citations ({count/len(citations_df)*100:.1f}%)")
-        
+                logger.info(
+                    f"  {domain}: {count} citations ({count / len(citations_df) * 100:.1f}%)"
+                )
+
         # Top domains (base without subdomains)
         domain_counts = citations_df["domain"].value_counts()
-        logger.info(f"Top cited domains (base without subdomains) (top 10):")
+        logger.info("Top cited domains (base without subdomains) (top 10):")
         for domain, count in domain_counts.head(10).items():
             if domain:  # Skip None domains
-                logger.info(f"  {domain}: {count} citations ({count/len(citations_df)*100:.1f}%)")
+                logger.info(
+                    f"  {domain}: {count} citations ({count / len(citations_df) * 100:.1f}%)"
+                )
 
         # URL validity
         valid_urls = citations_df["url_valid"].sum()
-        logger.info(f"URL validity: {valid_urls}/{len(citations_df)} ({valid_urls/len(citations_df)*100:.1f}%) valid")
+        logger.info(
+            f"URL validity: {valid_urls}/{len(citations_df)} ({valid_urls / len(citations_df) * 100:.1f}%) valid"
+        )
 
     # Save to parquet
     logger.info(f"Saving citations table to {output_file}")
@@ -240,47 +269,47 @@ def process_web_search_trace(web_search_trace, responses, config, total_citation
     citations = []
     invalid_urls = 0
     parsing_errors = 0
-    
+
     # web_search_trace is typically organized by turns
     # Each turn can have multiple citation arrays
     for turn_idx, turn_trace in enumerate(web_search_trace):
-        if not hasattr(turn_trace, '__iter__'):
+        if not hasattr(turn_trace, "__iter__"):
             continue
-            
+
         # Find the corresponding response for this turn
         turn_number = turn_idx + 1
-        turn_responses = responses[responses['turn_number'] == turn_number]
-        
+        turn_responses = responses[responses["turn_number"] == turn_number]
+
         if len(turn_responses) == 0:
             continue
-            
-        response_id = turn_responses.iloc[0]['response_id']
-        
+
+        response_id = turn_responses.iloc[0]["response_id"]
+
         # Extract citations from this turn's trace
         citation_order = 0
-        
+
         # turn_trace can be nested arrays of citations
         for citation_array in turn_trace:
-            if not hasattr(citation_array, '__iter__'):
+            if not hasattr(citation_array, "__iter__"):
                 continue
-                
+
             # Each citation should be in format ['[1]', 'https://example.com']
             try:
                 if len(citation_array) >= 2:
                     citation_ref = str(citation_array[0])
                     citation_url = str(citation_array[1])
-                    
+
                     # Extract citation number
                     citation_number = extract_citation_number(citation_ref)
-                    
+
                     # Validate and process URL
                     url_valid = is_valid_url(citation_url)
                     if not url_valid:
                         invalid_urls += 1
-                    
+
                     domain_full = extract_domain_full(citation_url)
                     domain = extract_domain(citation_url)
-                    
+
                     # Create citation record
                     citation_id = f"{config['citation_id_prefix']}{total_citations:08d}"
                     citation_record = {
@@ -293,21 +322,21 @@ def process_web_search_trace(web_search_trace, responses, config, total_citation
                         "url_valid": url_valid,
                         "citation_order": citation_order,
                     }
-                    
+
                     citations.append(citation_record)
                     total_citations += 1
                     citation_order += 1
-                    
+
             except Exception as e:
                 parsing_errors += 1
                 if parsing_errors <= 10:  # Log first few errors
                     logger.warning(f"Citation parsing error: {e}")
-    
+
     return {
-        'citations': citations,
-        'total_count': total_citations,
-        'invalid_urls': invalid_urls,
-        'parsing_errors': parsing_errors
+        "citations": citations,
+        "total_count": total_citations,
+        "invalid_urls": invalid_urls,
+        "parsing_errors": parsing_errors,
     }
 
 

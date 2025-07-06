@@ -34,7 +34,7 @@ def explore_arena_data():
 
     # Capture output for writing to file
     report_lines = []
-    report_lines.append(f"=== SEARCH ARENA DATA EXPLORATION REPORT ===\n")
+    report_lines.append("=== SEARCH ARENA DATA EXPLORATION REPORT ===\n")
     report_lines.append(f"Generated: {pd.Timestamp.now()}\n")
     report_lines.append(f"Input file: {input_file}\n")
 
@@ -131,7 +131,7 @@ def explore_arena_data():
         logger.info(f"Sample language entries: {list(sample_languages)}")
 
     # Add comprehensive findings to report
-    report_lines.append(f"\n=== BASIC DATA OVERVIEW ===\n")
+    report_lines.append("\n=== BASIC DATA OVERVIEW ===\n")
     report_lines.append(f"Shape: {df.shape}\n")
     report_lines.append(f"Columns: {list(df.columns)}\n\n")
 
@@ -157,7 +157,7 @@ def explore_arena_data():
             ]:
                 # For complex nested columns, just show sample
                 sample_values = df[col].dropna().iloc[:2].tolist()
-                report_lines.append(f"  - Type: Complex nested structure\n")
+                report_lines.append("  - Type: Complex nested structure\n")
                 report_lines.append(f"  - Sample values: {sample_values}\n")
             else:
                 unique_count = df[col].nunique()
@@ -267,7 +267,7 @@ def explore_arena_data():
     with open(output_file, "w") as f:
         f.writelines(report_lines)
 
-    logger.info(f"\n=== EXPLORATION COMPLETE ===")
+    logger.info("\n=== EXPLORATION COMPLETE ===")
     logger.info(f"Report written to {output_file}")
 
 

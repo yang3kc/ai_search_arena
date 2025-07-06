@@ -29,7 +29,7 @@ def extract_domains_from_citations(citations_df):
 
     print(f"Extracted {len(domains_df)} unique domains")
     print(f"Total citations represented: {domains_df['citation_count'].sum():,}")
-    print(f"Top 5 most cited domains:")
+    print("Top 5 most cited domains:")
     for i, row in domains_df.head().iterrows():
         print(f"  {row['domain']}: {row['citation_count']:,} citations")
 
@@ -54,7 +54,7 @@ def main():
     print(f"\nSaving domains to {output_path}")
     domains_df.to_parquet(output_path, index=False)
 
-    print(f"✅ Domain extraction completed!")
+    print("✅ Domain extraction completed!")
     print(f"Output: {len(domains_df):,} unique domains")
 
 

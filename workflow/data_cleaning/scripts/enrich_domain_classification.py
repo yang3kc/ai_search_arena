@@ -151,14 +151,14 @@ def enrich_with_domain_classification(domains, manual_data, news_domains_set):
     print(f"Total citations represented: {total_citations:,}")
 
     # Classification distribution by domain count
-    print(f"\nClassification distribution (by domain count):")
+    print("\nClassification distribution (by domain count):")
     class_counts = domains["domain_classification"].value_counts()
     for classification, count in class_counts.items():
         pct = count / total_domains * 100
         print(f"  {classification}: {count:,} domains ({pct:.1f}%)")
 
     # Classification distribution by citation count
-    print(f"\nClassification distribution (by citation count):")
+    print("\nClassification distribution (by citation count):")
     for classification in class_counts.index:
         citations = domains[domains["domain_classification"] == classification][
             "citation_count"
@@ -167,7 +167,7 @@ def enrich_with_domain_classification(domains, manual_data, news_domains_set):
         print(f"  {classification}: {citations:,} citations ({pct:.1f}%)")
 
     # Show examples for each classification
-    print(f"\nTop domains by classification (by citation count):")
+    print("\nTop domains by classification (by citation count):")
     for classification in [
         "news",
         "social_media",

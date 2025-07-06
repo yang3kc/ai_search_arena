@@ -30,14 +30,14 @@ def extract_news_citations(data):
     )
 
     # Basic statistics about news citations
-    print(f"\nNews citations statistics:")
+    print("\nNews citations statistics:")
     print(f"  Unique news domains: {news_citations['domain'].nunique():,}")
     print(
         f"  Date range: {pd.to_datetime(news_citations['timestamp']).min()} to {pd.to_datetime(news_citations['timestamp']).max()}"
     )
 
     # Top news domains
-    print(f"\nTop 10 most cited news domains:")
+    print("\nTop 10 most cited news domains:")
     top_news_domains = news_citations["domain"].value_counts().head(10)
     for domain, count in top_news_domains.items():
         pct = count / len(news_citations) * 100
@@ -55,7 +55,7 @@ def analyze_political_bias_coverage(news_data):
     has_bias_score = news_data["political_leaning_score"].notna().sum()
     has_bias_label = news_data["political_leaning"].notna().sum()
 
-    print(f"Political bias data coverage:")
+    print("Political bias data coverage:")
     print(f"  Total news citations: {total_news:,}")
     print(
         f"  With political leaning score: {has_bias_score:,} ({has_bias_score / total_news * 100:.1f}%)"
@@ -66,7 +66,7 @@ def analyze_political_bias_coverage(news_data):
 
     # Political leaning distribution
     if has_bias_label > 0:
-        print(f"\nPolitical leaning distribution:")
+        print("\nPolitical leaning distribution:")
         bias_dist = news_data["political_leaning"].value_counts()
         for leaning, count in bias_dist.items():
             pct = count / has_bias_label * 100
@@ -75,7 +75,7 @@ def analyze_political_bias_coverage(news_data):
     # Score distribution statistics
     if has_bias_score > 0:
         bias_scores = news_data["political_leaning_score"].dropna()
-        print(f"\nPolitical leaning score statistics:")
+        print("\nPolitical leaning score statistics:")
         print(f"  Mean: {bias_scores.mean():.3f}")
         print(f"  Median: {bias_scores.median():.3f}")
         print(f"  Std: {bias_scores.std():.3f}")
@@ -98,7 +98,7 @@ def analyze_quality_coverage(news_data):
     has_quality_score = news_data["domain_quality_score"].notna().sum()
     has_quality_label = news_data["domain_quality"].notna().sum()
 
-    print(f"Source quality data coverage:")
+    print("Source quality data coverage:")
     print(f"  Total news citations: {total_news:,}")
     print(
         f"  With quality score: {has_quality_score:,} ({has_quality_score / total_news * 100:.1f}%)"
@@ -109,7 +109,7 @@ def analyze_quality_coverage(news_data):
 
     # Quality label distribution
     if has_quality_label > 0:
-        print(f"\nQuality label distribution:")
+        print("\nQuality label distribution:")
         quality_dist = news_data["domain_quality"].value_counts()
         for quality, count in quality_dist.items():
             pct = count / has_quality_label * 100
@@ -118,7 +118,7 @@ def analyze_quality_coverage(news_data):
     # Score distribution statistics
     if has_quality_score > 0:
         quality_scores = news_data["domain_quality_score"].dropna()
-        print(f"\nQuality score statistics:")
+        print("\nQuality score statistics:")
         print(f"  Mean: {quality_scores.mean():.3f}")
         print(f"  Median: {quality_scores.median():.3f}")
         print(f"  Std: {quality_scores.std():.3f}")
@@ -144,7 +144,7 @@ def analyze_model_news_patterns(news_data):
 
     # Citations per model
     model_citations = news_data["model_name_raw"].value_counts()
-    print(f"News citations by model:")
+    print("News citations by model:")
     for model, count in model_citations.items():
         pct = count / len(news_data) * 100
         print(f"  {model}: {count:,} citations ({pct:.1f}%)")
@@ -152,7 +152,7 @@ def analyze_model_news_patterns(news_data):
     # Model families
     if "model_family" in news_data.columns:
         family_citations = news_data["model_family"].value_counts()
-        print(f"\nNews citations by model family:")
+        print("\nNews citations by model family:")
         for family, count in family_citations.items():
             pct = count / len(news_data) * 100
             print(f"  {family}: {count:,} citations ({pct:.1f}%)")
@@ -185,7 +185,7 @@ def create_bias_quality_subset(news_data):
 
         # Model distribution in complete dataset
         if "model_name_raw" in complete_data.columns:
-            print(f"\nModel representation in complete dataset:")
+            print("\nModel representation in complete dataset:")
             model_dist = complete_data["model_name_raw"].value_counts()
             for model, count in model_dist.head(5).items():
                 pct = count / len(complete_data) * 100
@@ -274,7 +274,7 @@ def main():
     with open(summary_output_path, "w") as f:
         json.dump(summary, f, indent=2, default=str)
 
-    print(f"\n✅ News citations extraction completed!")
+    print("\n✅ News citations extraction completed!")
     print(f"News citations: {news_output_path}")
     print(f"Extraction summary: {summary_output_path}")
     print(

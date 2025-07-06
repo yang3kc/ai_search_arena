@@ -30,11 +30,18 @@ def load_political_leaning_data(filepath):
 
     # Create categorical political leaning variable
     df["political_leaning"] = "unknown_leaning"
-    df.loc[df["political_leaning_score"] < 0, "political_leaning"] = "left_leaning"
-    df.loc[df["political_leaning_score"] >= 0, "political_leaning"] = "right_leaning"
-    df.loc[df["political_leaning_score"].isna(), "political_leaning"] = "unknown_leaning"
+    df.loc[df["political_leaning_score"] < -0.33, "political_leaning"] = "left_leaning"
+    df.loc[df["political_leaning_score"] >= 0.33, "political_leaning"] = "right_leaning"
+    df.loc[
+        (df["political_leaning_score"] >= -0.33)
+        & (df["political_leaning_score"] < 0.33),
+        "political_leaning",
+    ] = "center_leaning"
+    df.loc[df["political_leaning_score"].isna(), "political_leaning"] = (
+        "unknown_leaning"
+    )
 
-    print(f"Political leaning distribution:")
+    print("Political leaning distribution:")
     leaning_counts = df["political_leaning"].value_counts()
     for leaning, count in leaning_counts.items():
         print(f"  {leaning}: {count} ({count / len(df) * 100:.1f}%)")

@@ -1,0 +1,158 @@
+# Snakemake workflow for Question Analysis
+#
+# This workflow analyzes how different questions are related to AI models'
+# news citation patterns
+
+import os
+from pathlib import Path
+
+# Configuration
+configfile: "config/config.yaml"
+
+# Define paths from config
+BASE_DIR = config["base_dir"]
+CLEANED_DATA_DIR = config["cleaned_data_dir"]
+CITATION_ANALYSIS_DIR = config["citation_analysis_dir"]
+QUESTION_ANALYSIS_DIR = config["question_analysis_dir"]
+OUTPUT_DIR = config["output_dir"]
+
+# Target rule - what we want to produce
+rule all:
+    input:
+        # Phase 1: English question filtering
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        # Phase 2: Question embeddings generation
+        f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet",
+        # Phase 3: Question topic modeling
+        f"{QUESTION_ANALYSIS_DIR}/question_topics.parquet",
+        f"{QUESTION_ANALYSIS_DIR}/question_topic_probabilities.parquet",
+        # Phase 4: Question feature extraction
+        f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
+        # Phase 5: Citation patterns computation
+        f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
+        # Phase 6: Data integration
+        f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet",
+        # Phase 7: Feature cleaning
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet",
+        # Phase 8: Regression analysis
+        f"{OUTPUT_DIR}/regression_results.json",
+        # Phase 9: Final report
+        f"{OUTPUT_DIR}/question_analysis_report.html",
+        # Phase 10: LaTeX regression coefficients table
+        f"{OUTPUT_DIR}/regression_coefficients_table.tex",
+        # Phase 11: LaTeX topics table
+        f"{OUTPUT_DIR}/topics_table.tex"
+
+# Phase 1: Filter English Questions
+rule filter_english_questions:
+    input:
+        questions=f"{CLEANED_DATA_DIR}/questions.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
+    script:
+        "scripts/filter_english_questions.py"
+
+# Phase 2: Generate Question Embeddings
+rule generate_question_embeddings:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet"
+    script:
+        "scripts/generate_question_embeddings.py"
+
+# Phase 3: Generate Question Topics
+rule generate_question_topics:
+    input:
+        questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        embeddings=f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet"
+    output:
+        topics=f"{QUESTION_ANALYSIS_DIR}/question_topics.parquet",
+        probabilities=f"{QUESTION_ANALYSIS_DIR}/question_topic_probabilities.parquet",
+        info=f"{QUESTION_ANALYSIS_DIR}/topic_info.json"
+    script:
+        "scripts/generate_question_topics.py"
+
+# Phase 4: Extract Question Features
+rule extract_question_features:
+    input:
+        questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/question_features.parquet"
+    script:
+        "scripts/extract_question_features.py"
+
+# Phase 5: Compute Citation Patterns
+rule compute_citation_patterns:
+    input:
+        questions=f"{QUESTION_ANALYSIS_DIR}/english_questions.parquet",
+        citations=f"{CITATION_ANALYSIS_DIR}/integrated_citations.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet"
+    script:
+        "scripts/compute_citation_patterns.py"
+
+# Phase 6: Integrate Analysis Data
+rule integrate_analysis_data:
+    input:
+        question_embeddings=f"{QUESTION_ANALYSIS_DIR}/question_embeddings.parquet",
+        question_features=f"{QUESTION_ANALYSIS_DIR}/question_features.parquet",
+        citation_patterns=f"{QUESTION_ANALYSIS_DIR}/citation_patterns.parquet",
+        threads=f"{CLEANED_DATA_DIR}/threads.parquet",
+        responses=f"{CLEANED_DATA_DIR}/responses.parquet",
+        question_topics=f"{QUESTION_ANALYSIS_DIR}/question_topics.parquet",
+        question_topic_probabilities=f"{QUESTION_ANALYSIS_DIR}/question_topic_probabilities.parquet",
+        topic_info=f"{QUESTION_ANALYSIS_DIR}/topic_info.json"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
+    script:
+        "scripts/integrate_analysis_data.py"
+
+# Phase 7: Clean Features
+rule clean_features:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/integrated_analysis_data.parquet"
+    output:
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet"
+    script:
+        "scripts/clean_features.py"
+
+# Phase 8: Regression Analysis
+rule regression_analysis:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet"
+    output:
+        f"{OUTPUT_DIR}/regression_results.json"
+    script:
+        "scripts/regression_analysis.py"
+
+# Phase 9: Generate Analysis Report
+rule generate_report:
+    input:
+        data=f"{QUESTION_ANALYSIS_DIR}/cleaned_features.parquet",
+        results=f"{OUTPUT_DIR}/regression_results.json"
+    output:
+        f"{OUTPUT_DIR}/question_analysis_report.html"
+    script:
+        "scripts/generate_question_analysis_report.py"
+
+# Phase 10: Generate LaTeX tables
+rule generate_latex_table:
+    input:
+        f"{OUTPUT_DIR}/regression_results.json"
+    output:
+        f"{OUTPUT_DIR}/regression_coefficients_table.tex"
+    script:
+        "scripts/generate_latex_regression_table.py"
+
+# Phase 11: Generate LaTeX topics table
+rule generate_latex_topics_table:
+    input:
+        f"{QUESTION_ANALYSIS_DIR}/topic_info.json"
+    output:
+        f"{OUTPUT_DIR}/topics_table.tex"
+    script:
+        "scripts/generate_latex_topics_table.py"

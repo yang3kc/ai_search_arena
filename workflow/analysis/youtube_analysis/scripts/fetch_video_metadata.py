@@ -194,7 +194,7 @@ def fetch_all_video_metadata(unique_videos):
         print(f"  Success: {len(success_videos)} videos")
         print(f"  Failed: {len(failed_ids)} videos")
 
-    print(f"\nFetch completed:")
+    print("\nFetch completed:")
     print(f"  Total successful: {len(all_video_metadata):,}")
     print(f"  Total failed: {len(failed_video_ids):,}")
 
@@ -212,7 +212,7 @@ def generate_video_metadata_summary(video_metadata_df):
     print(f"Total videos with metadata: {total_videos:,}")
 
     # Basic statistics
-    print(f"\nBasic statistics:")
+    print("\nBasic statistics:")
     print(f"  Videos with titles: {video_metadata_df['title'].notna().sum():,}")
     print(
         f"  Videos with descriptions: {video_metadata_df['description'].notna().sum():,}"
@@ -222,7 +222,7 @@ def generate_video_metadata_summary(video_metadata_df):
 
     # View count statistics
     if (video_metadata_df["view_count"] > 0).any():
-        print(f"\nView count statistics:")
+        print("\nView count statistics:")
         view_stats = video_metadata_df[video_metadata_df["view_count"] > 0][
             "view_count"
         ]
@@ -232,14 +232,14 @@ def generate_video_metadata_summary(video_metadata_df):
         print(f"  Min views: {view_stats.min():,.0f}")
 
     # Channel distribution
-    print(f"\nChannel distribution:")
+    print("\nChannel distribution:")
     channel_counts = video_metadata_df["channel_title"].value_counts()
     print(f"  Unique channels: {len(channel_counts):,}")
     print(f"  Channels with 1 video: {(channel_counts == 1).sum():,}")
     print(f"  Channels with 2+ videos: {(channel_counts >= 2).sum():,}")
 
     # Top channels by video count
-    print(f"\nTop 10 channels by video count:")
+    print("\nTop 10 channels by video count:")
     for channel, count in channel_counts.head(10).items():
         print(f"  {channel}: {count} videos")
 
@@ -249,7 +249,7 @@ def generate_video_metadata_summary(video_metadata_df):
             video_metadata_df["published_at"]
         ).dt.year
         year_counts = video_metadata_df["published_year"].value_counts().sort_index()
-        print(f"\nPublication year distribution (top 10):")
+        print("\nPublication year distribution (top 10):")
         for year, count in year_counts.tail(10).items():
             if pd.notna(year):
                 print(f"  {int(year)}: {count} videos")
@@ -285,7 +285,7 @@ def main():
         print(f"\nSaving video metadata to {output_path}")
         video_metadata_df.to_parquet(output_path, index=False)
 
-        print(f"\n✅ Video metadata collection completed!")
+        print("\n✅ Video metadata collection completed!")
         print(f"Successfully processed: {len(video_metadata_df):,} videos")
         print(f"Failed to process: {len(failed_video_ids):,} videos")
         print(f"Columns: {list(video_metadata_df.columns)}")

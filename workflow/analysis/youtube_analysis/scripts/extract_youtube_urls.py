@@ -59,11 +59,11 @@ def is_youtube_video_url(url):
     # YouTube video patterns
     youtube_patterns = [
         r"youtube\.com/watch\?.*[&?]v=",  # watch URL with v parameter (can have other params before)
-        r"youtube\.com/watch\?v=",       # watch URL with v as first parameter
-        r"youtu\.be/",                   # short URL format
-        r"youtube\.com/embed/",          # embed URL format
+        r"youtube\.com/watch\?v=",  # watch URL with v as first parameter
+        r"youtu\.be/",  # short URL format
+        r"youtube\.com/embed/",  # embed URL format
         r"m\.youtube\.com/watch\?.*[&?]v=",  # mobile with v parameter (can have other params before)
-        r"m\.youtube\.com/watch\?v=",    # mobile with v as first parameter
+        r"m\.youtube\.com/watch\?v=",  # mobile with v as first parameter
     ]
 
     return any(re.search(pattern, url, re.IGNORECASE) for pattern in youtube_patterns)
@@ -126,11 +126,11 @@ def generate_summary_stats(youtube_citations):
     print(f"Total YouTube citations: {total_citations:,}")
     print(f"Unique videos: {unique_videos:,}")
     print(f"Unique responses containing YouTube: {unique_responses:,}")
-    print(f"Average citations per video: {total_citations/unique_videos:.1f}")
+    print(f"Average citations per video: {total_citations / unique_videos:.1f}")
 
     # Citation frequency distribution
     citation_counts = youtube_citations["video_id"].value_counts()
-    print(f"\nVideo citation frequency:")
+    print("\nVideo citation frequency:")
     print(f"  Videos cited once: {(citation_counts == 1).sum():,}")
     print(
         f"  Videos cited 2-5 times: {((citation_counts >= 2) & (citation_counts <= 5)).sum():,}"
@@ -138,7 +138,7 @@ def generate_summary_stats(youtube_citations):
     print(f"  Videos cited 6+ times: {(citation_counts >= 6).sum():,}")
 
     # Most cited videos
-    print(f"\nTop 10 most cited videos:")
+    print("\nTop 10 most cited videos:")
     top_videos = citation_counts.head(10)
     for video_id, count in top_videos.items():
         sample_url = youtube_citations[youtube_citations["video_id"] == video_id][
@@ -147,7 +147,7 @@ def generate_summary_stats(youtube_citations):
         print(f"  {video_id}: {count} citations - {sample_url}")
 
     # URL format distribution
-    print(f"\nURL format distribution:")
+    print("\nURL format distribution:")
     url_formats = {
         "youtube.com/watch": youtube_citations["url"]
         .str.contains("youtube.com/watch", case=False)
@@ -189,7 +189,7 @@ def main():
     print(f"\nSaving YouTube citations to {output_path}")
     youtube_citations.to_parquet(output_path, index=False)
 
-    print(f"\n✅ YouTube URL extraction completed!")
+    print("\n✅ YouTube URL extraction completed!")
     print(f"Output: {len(youtube_citations):,} YouTube video citations")
     print(f"Columns: {list(youtube_citations.columns)}")
 
