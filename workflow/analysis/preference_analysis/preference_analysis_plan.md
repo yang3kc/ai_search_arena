@@ -1,7 +1,9 @@
 # Preference Analysis with News Citation Patterns
 
 ## Overview
-Create a modular preference analysis pipeline using Snakemake that focuses on competitions where both models cite news sources, analyzing how different citation patterns affect user preferences. This builds on the existing citation style analysis framework but adds news-specific metrics through a series of smaller, manageable scripts.
+**Status**: ✅ **PRODUCTION-READY** - Complete Bradley-Terry preference analysis pipeline with comprehensive news citation pattern analysis.
+
+Modular preference analysis pipeline using Snakemake that focuses on competitions where both models cite news sources, analyzing how different citation patterns affect user preferences. This builds on the existing citation style analysis framework but adds news-specific metrics through a series of smaller, manageable scripts.
 
 ## Snakemake Workflow Structure
 
@@ -64,16 +66,38 @@ Store intermediate outputs for reproducibility and debugging:
   - Include thread-level winner information
   - Export battle-ready dataset
 
-### 5. Statistical Analysis Script
-- **File**: `workflow/analysis/preference_analysis/scripts/analyze_preferences.py`
+### 5. Statistical Analysis Scripts (3 separate analyses)
+
+#### 5a. Bradley-Terry Ratings
+- **File**: `workflow/analysis/preference_analysis/scripts/bt_ratings.py`
 - **Input**: `battle_data.parquet`
-- **Output**: `preference_results.json`, `preference_coefficients.csv`
-- **Purpose**: Run Bradley-Terry models with bootstrap confidence intervals
+- **Output**: `bt_ratings_results.json`, `bt_ratings_coefficients.csv`
+- **Purpose**: Compute basic Bradley-Terry ratings with bootstrap confidence intervals
 - **Features**:
-  - Multiple analysis configurations (volume, quality, bias effects)
+  - Anchor model for consistent rating scale
   - Bootstrap resampling for confidence intervals
+  - Model ranking and rating computation
+
+#### 5b. Individual Effects Analysis
+- **File**: `workflow/analysis/preference_analysis/scripts/individual_effects.py`
+- **Input**: `battle_data.parquet`
+- **Output**: `individual_effects_results.json`, `individual_effects_coefficients.csv`
+- **Purpose**: Analyze individual feature effects on user preferences
+- **Features**:
+  - Response length effects
+  - Citation count effects
+  - Quality and bias metrics effects
   - Statistical significance testing
-  - Export detailed results
+
+#### 5c. Citation Style Effects
+- **File**: `workflow/analysis/preference_analysis/scripts/citation_style_effects.py`
+- **Input**: `battle_data.parquet`
+- **Output**: `citation_style_effects_results.json`, `citation_style_effects_coefficients.csv`
+- **Purpose**: Analyze citation style patterns with flexible models
+- **Features**:
+  - Contextual Bradley-Terry modeling
+  - Citation pattern analysis
+  - Style control effects
 
 ### 6. Reporting and Visualization Script
 - **File**: `workflow/analysis/preference_analysis/scripts/generate_report.py`
@@ -87,37 +111,46 @@ Store intermediate outputs for reproducibility and debugging:
   - Interactive HTML report
 
 ### 7. Utility Functions Module
-- **File**: `workflow/analysis/preference_analysis/scripts/preference_utils.py`
-- **Purpose**: Shared functions across scripts
+- **File**: `workflow/analysis/preference_analysis/scripts/bt_utils.py`
+- **Purpose**: Shared Bradley-Terry functions across scripts
 - **Features**:
   - Bradley-Terry model implementation
+  - Contextual Bradley-Terry models
   - Bootstrap resampling utilities
   - Data validation functions
-  - Common statistical operations
+  - Result handling and export utilities
 
 ## Snakemake Workflow Configuration
 
-### Target Rules
-- `all`: Complete preference analysis pipeline
+### Implemented Rules
+- `all`: Complete preference analysis pipeline with all outputs
 - `prepare_data`: Data preparation phase only
-- `compute_signals`: Through signal computation
-- `create_battles`: Through battle data creation
-- `analyze`: Through statistical analysis
-- `report`: Complete analysis with reporting
+- `compute_response_signals`: Response signal computation
+- `create_battles`: Battle data creation
+- `compute_bt_ratings`: Bradley-Terry ratings analysis
+- `analyze_individual_effects`: Individual feature effects analysis
+- `analyze_citation_style_effects`: Citation style effects analysis
+- `generate_report`: Comprehensive HTML report with visualizations
 
 ### File Organization
 ```
 data/intermediate/preference_analysis/
-├── news_competitions.parquet      # Phase 1 output
-├── response_signals.parquet       # Phase 2 output
-├── battle_data.parquet           # Phase 3 output
-├── preference_results.json       # Phase 4 output
-├── preference_coefficients.csv   # Phase 4 output
-├── preference_analysis_report.html # Phase 5 output
-└── visualizations/               # Phase 5 output
-    ├── effect_sizes.png
-    ├── confidence_intervals.png
-    └── statistical_significance.png
+├── news_competitions.parquet                    # Phase 1 output
+├── news_competitions_responses.parquet          # Phase 1 output
+├── news_competitions_citations.parquet          # Phase 1 output
+├── news_competitions_response_signals.parquet  # Phase 2 output
+├── battle_data.parquet                         # Phase 3 output
+├── bt_ratings_results.json                     # Phase 4a output
+├── bt_ratings_coefficients.csv                 # Phase 4a output
+├── individual_effects_results.json             # Phase 4b output
+├── individual_effects_coefficients.csv         # Phase 4b output
+├── citation_style_effects_results.json         # Phase 4c output
+├── citation_style_effects_coefficients.csv     # Phase 4c output
+├── preference_analysis_report.html             # Phase 5 output
+└── visualizations/                             # Phase 5 output
+    ├── individual_effects.png
+    ├── citation_style_effects.png
+    └── model_comparison.png
 ```
 
 ## Expected Insights
@@ -128,16 +161,51 @@ data/intermediate/preference_analysis/
 - How do different response lengths interact with citation patterns?
 
 ## Technical Approach
-- **Modular Design**: Each script handles one specific task
-- **Intermediate Storage**: All phases save intermediate results
-- **Dependency Management**: Snakemake ensures proper execution order
-- **Statistical Rigor**: Bootstrap confidence intervals for all estimates
-- **Reproducibility**: Clear data lineage and version control
-- **Scalability**: Scripts can handle large datasets efficiently
+- **Modular Design**: Each script handles one specific task with clear responsibilities
+- **Intermediate Storage**: All phases save intermediate results for debugging and inspection
+- **Dependency Management**: Snakemake ensures proper execution order with clear dependencies
+- **Statistical Rigor**: Bootstrap confidence intervals for all estimates (configurable sample sizes)
+- **Reproducibility**: Clear data lineage, version control, and configurable random seeds
+- **Scalability**: Scripts optimized for large datasets with memory-efficient processing
+- **Multiple Analysis Types**: Separate scripts for different statistical approaches
+- **Comprehensive Reporting**: HTML report with interactive visualizations
 
-## Benefits of This Approach
+## Implementation Status: ✅ COMPLETED
+
+### Production-Ready Pipeline Achievements
+1. ✅ **Complete 5-phase preference analysis pipeline**
+2. ✅ **Three separate statistical analysis approaches** (ratings, individual effects, style effects)
+3. ✅ **Comprehensive utility module** with Bradley-Terry implementations
+4. ✅ **Configurable parameters** for statistical analysis and filtering
+5. ✅ **HTML reporting** with interactive visualizations
+6. ✅ **Bootstrap confidence intervals** for robust statistical inference
+7. ✅ **Snakemake workflow integration** for reproducible execution
+
+### Ready for News Citation Preference Analysis
+The pipeline produces comprehensive analysis of:
+- **User preference patterns** based on news citation behavior
+- **Bradley-Terry model rankings** with confidence intervals
+- **Individual feature effects** (response length, citation count, quality, bias)
+- **Citation style effects** using contextual models
+- **Model comparison** across different AI systems
+
+### Running the Complete Pipeline
+```bash
+# Run full preference analysis pipeline
+cd workflow/analysis/preference_analysis
+snakemake --cores 1
+
+# Or target specific analyses
+snakemake compute_bt_ratings --cores 1      # Basic Bradley-Terry ratings
+snakemake analyze_individual_effects --cores 1  # Feature effect analysis
+snakemake generate_report --cores 1         # Comprehensive report
+```
+
+### Benefits Realized
 - **Debugging**: Easy to identify and fix issues in specific phases
 - **Iteration**: Can re-run individual steps during development
 - **Transparency**: Clear data flow and intermediate inspection
 - **Efficiency**: Snakemake only re-runs changed components
 - **Collaboration**: Smaller scripts easier to review and modify
+- **Statistical Rigor**: Multiple approaches for robust analysis
+- **Comprehensive Output**: HTML reports with publication-ready visualizations
