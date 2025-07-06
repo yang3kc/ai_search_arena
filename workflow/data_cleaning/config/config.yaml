@@ -16,15 +16,3 @@ thread_id_prefix: "thread_"
 question_id_prefix: "q_"
 response_id_prefix: "resp_"
 citation_id_prefix: "cite_"
-
-# Leaderboard configuration
-leaderboard:
-  anchor_model: "api-gpt-4o-search"      # Model to anchor at rating
-  anchor_rating: 1000                     # Rating for anchor model
-  num_bootstrap_samples: 100              # Bootstrap samples for confidence intervals
-  filter_ties: false                      # Whether to exclude tie games
-  variants:
-    - basic                               # Basic Bradley-Terry ratings
-    - citation_style                      # Control for citation formatting
-    - response_length                     # Control for response length
-    - citation_count                      # Control for number of citations
