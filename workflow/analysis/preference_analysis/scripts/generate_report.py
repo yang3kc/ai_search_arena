@@ -8,15 +8,16 @@ This script generates HTML reports and visualizations from all analysis componen
 - Citation style effects with flexible models
 """
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import json
 import sys
-from pathlib import Path
-from datetime import datetime
 import warnings
+from datetime import datetime
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 # Suppress matplotlib warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")

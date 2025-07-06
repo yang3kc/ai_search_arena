@@ -6,11 +6,12 @@ This module contains all the core functions for Bradley-Terry model fitting,
 contextual Bradley-Terry models, data preprocessing, and result handling.
 """
 
-import pandas as pd
-import numpy as np
-import scipy.optimize as opt
-from pathlib import Path
 import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import scipy.optimize as opt
 
 
 def load_battle_data(battle_data_path):

@@ -6,9 +6,10 @@ This script calculates response-level metrics including response length,
 citation counts, quality metrics, and bias metrics for news citation analysis.
 """
 
-import pandas as pd
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pandas as pd
 
 
 def load_competition_data(threads_path, responses_path, citations_path):
