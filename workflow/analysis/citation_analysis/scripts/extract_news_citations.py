@@ -6,8 +6,9 @@ This script extracts news citations from the integrated dataset for
 political bias and source quality analysis.
 """
 
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 
 def load_integrated_data(data_path):

@@ -6,11 +6,12 @@ This script analyzes political bias patterns in news citations,
 examining how AI models cite sources across the political spectrum.
 """
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
-from scipy.stats import mannwhitneyu, linregress
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from scipy.stats import linregress, mannwhitneyu
 
 
 def load_news_citations(data_path):

@@ -6,12 +6,13 @@ This script analyzes how similar different AI models are in terms of which news
 domains they cite, providing insights into citation diversity and overlap patterns.
 """
 
-import pandas as pd
-import numpy as np
 import json
-from pathlib import Path
-from itertools import combinations
 import logging
+from itertools import combinations
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Configure logging

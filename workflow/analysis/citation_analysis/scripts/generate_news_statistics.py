@@ -7,10 +7,11 @@ temporal patterns, domain analysis, model comparison, political bias
 distribution, and source quality metrics for research papers.
 """
 
-import pandas as pd
-from pathlib import Path
-from datetime import datetime
 import logging
+from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(
