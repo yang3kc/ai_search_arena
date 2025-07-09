@@ -2,6 +2,8 @@
 
 **A comprehensive analysis of news sources cited by AI search systems**
 
+Read the paper: [News Source Citing Patterns in AI Search Systems](https://arxiv.org/abs/2507.05301).
+
 This project analyzes citation patterns in AI search systems using data from the [AI Search Arena](https://huggingface.co/datasets/lmarena-ai/search-arena-24k), focusing on the news sources cited by different AI models and their potential biases in terms of political leaning and source credibility.
 
 ## 🎯 Research Goals
@@ -125,4 +127,14 @@ Since the project mainly use Parquet files, it's advised to install the [parquet
 
 If you use this work in your research, please cite:
 
-**TO be added**
+```bib
+@misc{yang2025newssourcecitingpatterns,
+      title={News Source Citing Patterns in AI Search Systems}, 
+      author={Kai-Cheng Yang},
+      year={2025},
+      eprint={2507.05301},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2507.05301}, 
+}
+```
