@@ -26,7 +26,7 @@ We downloaded it in order to replicate the leaderboard and make sure the impleme
 The `domain` contains the domain name.
 The `leaning_score_users` contains the political leaning of the domain.
 
-Please refer to the paper [DomainDemo: a dataset of domain-sharing activities among different demographic groups on Twitter](https://arxiv.org/abs/2501.09035) for more details.
+Please refer to the paper [DomainDemo: a dataset of domain-sharing activities among different demographic groups on Twitter](https://doi.org/10.1038/s41597-025-05604-6) for more details.
 The dataset can be downloaded from [here](https://github.com/LazerLab/DomainDemo).
 
 ## Domain credibility data
